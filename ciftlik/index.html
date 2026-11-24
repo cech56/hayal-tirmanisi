@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Bereket Çiftliği</title>
+<meta name="theme-color" content="#2f4a24">
+<style>
+:root{
+  --panel:rgba(255,251,242,.97);--panel2:#f3ead7;--ink:#2b2418;--muted:#7a6d58;--line:rgba(60,45,20,.14);
+  --accent:#3f7d2c;--accent-ink:#fff;--gold:#d99a1e;--danger:#b8392b;--chip:rgba(255,251,242,.9);
+  --bar-bg:rgba(60,45,20,.12);--sky:#9cc6e4;color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --panel:rgba(34,31,26,.97);--panel2:#2c2821;--ink:#f3ecdf;--muted:#b9ad97;--line:rgba(255,240,210,.12);
+  --chip:rgba(34,31,26,.88);--bar-bg:rgba(255,240,210,.12);color-scheme:dark}}
+:root[data-theme="dark"]{--panel:rgba(34,31,26,.97);--panel2:#2c2821;--ink:#f3ecdf;--muted:#b9ad97;--line:rgba(255,240,210,.12);--chip:rgba(34,31,26,.88);--bar-bg:rgba(255,240,210,.12);color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--sky);color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.hidden{display:none!important}
+#hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 0;pointer-events:none;z-index:5}
+#hud .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{pointer-events:auto;background:var(--chip);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:999px;padding:6px 11px;font-weight:600;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap}
+.chip.money{color:#2e6b1e;font-size:16px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip.money{color:#9be07a}}
+.chip.ic{margin-left:auto;padding:6px 9px}
+#hQuest{display:inline-block;margin-top:6px;white-space:normal;max-width:100%;font-weight:600;font-size:13px;border-radius:14px}
+#hQuest small{color:var(--muted);font-weight:500}
+#alerts{display:flex;flex-direction:column;gap:4px;margin-top:6px;align-items:flex-start}
+#alerts .chip{background:rgba(184,57,43,.92);color:#fff;font-size:12.5px;padding:5px 10px}
+#icons{position:fixed;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+.ic{position:absolute;left:0;top:0;pointer-events:auto;transform:translate(-50%,-100%);background:var(--panel);border-radius:14px;padding:3px 7px;font-size:17px;line-height:1.2;box-shadow:0 2px 6px rgba(0,0,0,.25);white-space:nowrap;font-weight:700}
+.ic::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-5px;border:5px solid transparent;border-bottom:0;border-top-color:var(--panel)}
+.ic.warn{background:#c0392b;color:#fff}.ic.warn::after{border-top-color:#c0392b}
+.ic.name{font-size:12px;padding:2px 8px;font-weight:700;pointer-events:none}
+.ft{position:absolute;left:0;top:0;transform:translate(-50%,-100%);font-weight:800;font-size:16px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7),0 0 2px rgba(0,0,0,.6);pointer-events:none;white-space:nowrap}
+#toasts{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 96px);z-index:20;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,420px)}
+.toast{background:var(--panel);border-radius:12px;padding:8px 14px;box-shadow:0 4px 14px rgba(0,0,0,.25);font-weight:600;font-size:14px;text-align:center;animation:tin .25s ease-out}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+#nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;gap:4px;padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 8px);background:linear-gradient(to top,rgba(0,0,0,.28),transparent)}
+#nav button{flex:1;max-width:96px;background:var(--panel);border-radius:14px;padding:6px 2px 5px;font-size:11.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:1px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#nav button span{font-size:22px;line-height:1.1}
+#nav button.on{background:var(--accent);color:var(--accent-ink)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;margin:0 auto;max-width:560px;background:var(--panel);border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.3);display:flex;flex-direction:column;max-height:min(74vh,640px);padding-bottom:env(safe-area-inset-bottom,0px);animation:sup .22s ease-out}
+@keyframes sup{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
+.sh-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px;font-size:18px;font-weight:800}
+.x{width:34px;height:34px;border-radius:50%;background:var(--bar-bg);font-size:16px;font-weight:700}
+.tabs{display:flex;gap:6px;padding:2px 16px 8px;overflow-x:auto}
+.tabs button{padding:7px 14px;border-radius:999px;background:var(--bar-bg);font-weight:700;font-size:13.5px;white-space:nowrap}
+.tabs button.on{background:var(--accent);color:var(--accent-ink)}
+.body{overflow-y:auto;padding:4px 16px 16px;-webkit-overflow-scrolling:touch}
+.item{display:flex;gap:10px;align-items:center;padding:10px;border-radius:14px;background:var(--panel2);margin-bottom:8px}
+.ie{font-size:30px;width:40px;text-align:center;flex:none}
+.ib{flex:1;min-width:0}
+.ib b{display:block;font-size:15px}
+.ib small{display:block;color:var(--muted);font-size:12.5px;line-height:1.3}
+.ib small.bad{color:var(--danger);font-weight:600}
+.btn{background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:9px 12px;font-weight:800;font-size:14px;white-space:nowrap;flex:none}
+.btn.alt{background:var(--bar-bg);color:var(--ink)}
+.btn.gold{background:var(--gold);color:#2b1d05}
+.btn.red{background:var(--danger);color:#fff}
+.btn:disabled{opacity:.42;cursor:default}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btns .btn{flex:1 1 auto;padding:9px 8px;font-size:13.5px}
+.sec{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 2px 6px}
+.bar{height:8px;border-radius:5px;background:var(--bar-bg);overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%;border-radius:5px;background:var(--accent)}
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:8px}
+.bars label{font-size:12px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between}
+.card{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 78px);z-index:8;max-width:480px;margin:0 auto;background:var(--panel);border-radius:18px;padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.3);animation:sup .2s ease-out}
+.ch{display:flex;align-items:center;gap:10px}
+.ch .ce{font-size:32px}
+.ch b{font-size:17px;display:block}
+.ch small{color:var(--muted);font-weight:600}
+.ch .x{margin-left:auto}
+.stat{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:1px solid var(--line);font-size:14px}
+.stat:last-child{border-bottom:0}
+.price{font-size:12px;font-weight:700}
+.up{color:#2e8b2e}.down{color:var(--danger)}
+#modal{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.mbox{background:var(--panel);border-radius:20px;padding:20px;max-width:420px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.mbox h2{margin:0 0 8px;font-size:22px}
+.mbox p{margin:6px 0;color:var(--ink)}
+.mbox ul{padding-left:20px;margin:8px 0}
+.mbox li{margin:4px 0}
+#loading{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:linear-gradient(#9cc6e4,#cfe3ef 55%,#6f9a45 55%,#4f7a31);text-align:center}
+.ld-logo{font-size:64px}.ld-t{font-size:28px;font-weight:900;color:#24361a;margin:6px 0}#ldmsg{color:#24361a;font-weight:600}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="loading"><div><div class="ld-logo">🐄🐑🐔</div><div class="ld-t">Bereket Çiftliği</div><div id="ldmsg">Çiftlik hazırlanıyor…</div></div></div>
+<div id="hud">
+  <div class="row">
+    <div class="chip money" id="hMoney">0₺</div>
+    <div class="chip" id="hTime">☀️ Gün 1 · 06:00</div>
+    <div class="chip" id="hDepo">📦 0/150</div>
+    <button class="chip ic" data-act="settings" aria-label="Ayarlar">⚙️</button>
+  </div>
+  <div class="chip" id="hQuest" data-act="quests"></div>
+  <div id="alerts"></div>
+</div>
+<div id="icons"></div>
+<div id="toasts"></div>
+<div id="card" class="card hidden"></div>
+<div id="sheet" class="sheet hidden"><div class="sh-head"><span id="shTitle"></span><button class="x" data-act="close" aria-label="Kapat">✕</button></div><div class="tabs" id="shTabs"></div><div class="body" id="shBody"></div></div>
+<nav id="nav">
+  <button data-act="open" data-p="shop"><span>🏪</span>Pazar</button>
+  <button data-act="open" data-p="depo"><span>📦</span>Depo</button>
+  <button data-act="open" data-p="pens"><span>🏡</span>Bölmeler</button>
+  <button data-act="open" data-p="staff"><span>🧑‍🌾</span>Eleman</button>
+  <button data-act="open" data-p="up"><span>🔨</span>Geliştir</button>
+</nav>
+<div id="modal" class="hidden"></div>
+<script>
+setTimeout(function(){if(!window.__farmStarted){var m=document.getElementById('ldmsg');if(m)m.textContent='Yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.'}},20000);
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ================= yardımcılar ================= */
+const rand=(a=1,b)=>b===undefined?Math.random()*a:a+Math.random()*(b-a);
+const irand=n=>Math.floor(Math.random()*n);
+const pick=a=>a[irand(a.length)];
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
+function hash(x,y){const s=Math.sin(x*127.1+y*311.7)*43758.5453;return s-Math.floor(s)}
+function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);return lerp(lerp(hash(xi,yi),hash(xi+1,yi),u),lerp(hash(xi,yi+1),hash(xi+1,yi+1),u),v)}
+function fbm(x,y){let s=0,a=.5,f=1;for(let i=0;i<4;i++){s+=a*vnoise(x*f,y*f);f*=2.03;a*=.5}return s}
+const tl=n=>Math.round(n).toLocaleString('tr-TR')+'₺';
+const f1=n=>(Math.round(n*10)/10).toLocaleString('tr-TR');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ================= oyun verisi ================= */
+const DAY=240; // bir oyun günü = 4 dakika
+const PENS={
+  kumes:{ad:'Kümes',e:'🐔',x:-22,z:-8,w:12,d:10,front:1,floor:'dirt',feed:'tahil',feedCap:30,waterCap:30,cap:[6,12,20],capCost:[0,1200,3500],unlock:0,autoCost:600,fl:2.6},
+  agil:{ad:'Ağıl',e:'🐑',x:-2,z:-16,w:16,d:11,front:1,floor:'grass',feed:'saman',feedCap:80,waterCap:100,cap:[4,8,14],capCost:[0,3000,8000],unlock:1500,autoCost:1200,fl:3.6},
+  ahir:{ad:'Ahır',e:'🐄',x:18,z:-12,w:16,d:14,front:1,floor:'dirt',feed:'saman',feedCap:200,waterCap:300,cap:[2,5,10],capCost:[0,8000,20000],unlock:6000,autoCost:2500,fl:5},
+  padok:{ad:'At Padoku',e:'🐎',x:6,z:14,w:20,d:12,front:-1,floor:'grass',feed:'saman',feedCap:120,waterCap:200,cap:[2,4,6],capCost:[0,12000,30000],unlock:12000,autoCost:2500,fl:4},
+};
+const PEN_IDS=Object.keys(PENS);
+const AT={
+  tavuk:{ad:'Tavuk',e:'🐔',pen:'kumes',fiyat:120,ogun:.12,su:.25,urun:'yumurta',aralik:40,miktar:1,hiz:1.1,r:.25,
+    bilgi:'Her ~40 sn\'de 1 yumurta'},
+  kaz:{ad:'Kaz',e:'🪿',pen:'kumes',fiyat:350,ogun:.25,su:.4,urun:'kazYumurta',aralik:90,miktar:1,hiz:.9,r:.32,
+    bilgi:'Her ~1,5 dk\'da 1 kaz yumurtası'},
+  koyun:{ad:'Koyun',e:'🐑',pen:'agil',fiyat:1100,ogun:1.2,su:2,urun:'koyunSut',aralik:70,miktar:2,sagim:1,yun:{aralik:300,miktar:3},yavru:'kuzu',dogum:720,hiz:.8,r:.5,
+    bilgi:'Süt verir, 5 dk\'da bir kırkılır, kuzu doğurur'},
+  kuzu:{ad:'Kuzu',e:'🐑',pen:'agil',fiyat:450,ogun:.5,su:1,buyur:'koyun',buyume:480,hiz:1,r:.32,genc:1,
+    bilgi:'8 dk\'da koyun olur'},
+  keci:{ad:'Keçi',e:'🐐',pen:'agil',fiyat:950,ogun:1,su:2,urun:'keciSut',aralik:60,miktar:2.5,sagim:1,yavru:'oglak',dogum:600,hiz:.9,r:.45,
+    bilgi:'Değerli keçi sütü verir, oğlak doğurur'},
+  oglak:{ad:'Oğlak',e:'🐐',pen:'agil',fiyat:400,ogun:.5,su:1,buyur:'keci',buyume:420,hiz:1.1,r:.3,genc:1,
+    bilgi:'7 dk\'da keçi olur'},
+  inek:{ad:'İnek',e:'🐄',pen:'ahir',fiyat:3200,ogun:4,su:10,urun:'inekSut',aralik:75,miktar:12,sagim:1,yavru:'buzagi',dogum:960,hiz:.65,r:.95,
+    bilgi:'Sağımda 12 L süt, buzağı doğurur'},
+  buzagi:{ad:'Buzağı',e:'🐮',pen:'ahir',fiyat:1300,ogun:1.5,su:4,buyur:'inek',buyume:720,hiz:.9,r:.55,genc:1,
+    bilgi:'12 dk\'da inek olur'},
+  at:{ad:'At',e:'🐎',pen:'padok',fiyat:6000,ogun:3,su:8,gelir:{aralik:90,miktar:150},yavru:'tay',dogum:1200,hiz:1.3,r:.95,
+    bilgi:'Binicilik turlarından 1,5 dk\'da bir 150₺, tay doğurur'},
+  tay:{ad:'Tay',e:'🐴',pen:'padok',fiyat:2500,ogun:1.2,su:3,buyur:'at',buyume:900,hiz:1.4,r:.6,genc:1,
+    bilgi:'15 dk\'da at olur'},
+};
+const SHOP=['tavuk','kaz','koyun','kuzu','keci','oglak','inek','buzagi','at','tay'];
+const PR={
+  yumurta:{ad:'Yumurta',b:'adet',f:7,e:'🥚'},kazYumurta:{ad:'Kaz Yumurtası',b:'adet',f:30,e:'🥚'},
+  koyunSut:{ad:'Koyun Sütü',b:'L',f:14,e:'🥛'},keciSut:{ad:'Keçi Sütü',b:'L',f:16,e:'🥛'},
+  inekSut:{ad:'İnek Sütü',b:'L',f:11,e:'🥛'},yun:{ad:'Yün',b:'kg',f:50,e:'🧶'}};
+const FEED={
+  tahil:{ad:'Tahıl Yemi',e:'🌾',kim:'Tavuk ve kaz',paket:[[25,90,'Çuval'],[250,850,'10 çuval']],cap:1000},
+  saman:{ad:'Saman & Ot',e:'🌿',kim:'Koyun, keçi, inek, at',paket:[[20,70,'Balya'],[200,650,'10 balya'],[1000,3000,'50 balya']],cap:4000}};
+const WK={
+  bakici:{ad:'Bakıcı',e:'🧑‍🌾',is:'Yemlikleri depodan doldurur, suyu tazeler',ucret:500,maas:80,max:3,shirt:'#3a6ea5'},
+  sagimci:{ad:'Sağımcı',e:'👩‍🌾',is:'Hayvanları sağar, yumurta toplar, yün kırkar',ucret:800,maas:120,max:3,shirt:'#b04a3a'},
+  pazarci:{ad:'Pazarcı',e:'🧔',is:'Her akşam 18:00\'de depodaki ürünleri satar (%5 komisyon)',ucret:600,maas:60,max:1,shirt:'#6b8e23'},
+  veteriner:{ad:'Veteriner',e:'🧑‍⚕️',is:'Hasta hayvanları ücretsiz iyileştirir',ucret:1500,maas:150,max:1,shirt:'#f0f0f0'}};
+const DEPO=[150,400,1000,2500],DEPO_COST=[0,1500,5000,15000];
+const VET_COST=250,SAGIM_MAK=6000;
+const NAMES=['Sarıkız','Benekli','Pamuk','Karabaş','Duman','Minnoş','Boncuk','Zeytin','Fındık','Papatya','Menekşe','Yıldız','Tarçın','Kınalı','Gümüş','Rüzgar','Şimşek','Lale','Nergis','Karamel','Bulut','Kömür','Ceylan','Maviş','Cimcime','Pırıl','Tosun','Sultan','Kartopu','Elma','Badem','Fıstık','Çakıl','Mısır','Kestane','Gelincik','Sümbül','Paşa','Efe','Nazlı','Çiçek','Limon','Haylaz','Paytak','Ayva','Hünkar','Dolunay','Safran'];
+
+/* ================= kayıt ================= */
+const KEY='bereket_ciftligi_v1';
+function newState(){
+  const s={v:1,money:600,t:.33,day:1,feed:{tahil:25,saman:0},prod:{},pm:{},pens:{},animals:[],nid:1,
+    wk:{bakici:0,sagimci:0,pazarci:0,veteriner:0},depo:0,sagimMak:0,q:0,
+    stats:{eggs:0,milk:0,wool:0,sold:0,milkings:0,born:0,fed:0},savedAt:Date.now(),welcomed:0,quality:1};
+  for(const k in PR){s.prod[k]=0;s.pm[k]=1}
+  for(const id of PEN_IDS)s.pens[id]={un:id==='kumes'?1:0,lvl:0,feed:0,water:PENS[id].waterCap,eggs:0,geggs:0,auto:0};
+  return s;
+}
+function load(){
+  const d=newState();
+  try{const raw=localStorage.getItem(KEY);if(!raw)return d;const s=JSON.parse(raw);
+    const m=Object.assign(d,s);m.feed=Object.assign(newState().feed,s.feed);m.prod=Object.assign(newState().prod,s.prod);
+    m.pm=Object.assign(newState().pm,s.pm);m.wk=Object.assign(newState().wk,s.wk);m.stats=Object.assign(newState().stats,s.stats);
+    for(const id of PEN_IDS)m.pens[id]=Object.assign(newState().pens[id],(s.pens||{})[id]);
+    m.animals=(s.animals||[]).filter(a=>AT[a.t]);return m;
+  }catch(e){return d}
+}
+let S=load();
+function save(){
+  S.savedAt=Date.now();
+  const o=Object.assign({},S,{animals:S.animals.map(a=>{const c=Object.assign({},a);delete c._v;return c})});
+  try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}
+}
+
+/* ================= three kurulumu ================= */
+const HQ=S.quality!==0;
+const renderer=new THREE.WebGLRenderer({antialias:HQ,powerPreference:'high-performance'});
+renderer.domElement.id='gl';
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,HQ?2:1));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+renderer.shadowMap.enabled=HQ;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.3,900);
+camera.position.set(4,34,40);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,0,-3);controls.enableDamping=true;controls.dampingFactor=.08;
+controls.maxPolarAngle=1.36;controls.minPolarAngle=.25;controls.minDistance=5;controls.maxDistance=90;
+controls.screenSpacePanning=false;controls.rotateSpeed=.6;controls.zoomSpeed=1.1;controls.panSpeed=1.1;
+controls.touches={ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN};
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+
+const hemi=new THREE.HemisphereLight(0xcfe6ff,0x4b5a2a,.6);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xfff1d6,2.4);sun.castShadow=HQ;
+sun.shadow.mapSize.set(2048,2048);const sc=sun.shadow.camera;sc.left=-48;sc.right=48;sc.top=48;sc.bottom=-48;sc.near=10;sc.far=200;
+sun.shadow.bias=-.0004;sun.shadow.normalBias=.03;
+scene.add(sun,sun.target);
+scene.fog=new THREE.Fog(0xcfe3ef,90,300);
+
+// gökyüzü
+const skyU={top:{value:new THREE.Color()},bot:{value:new THREE.Color()},sunDir:{value:new THREE.Vector3(0,1,0)},sunCol:{value:new THREE.Color(1,.9,.7)},glow:{value:1}};
+const sky=new THREE.Mesh(new THREE.SphereGeometry(500,32,16),new THREE.ShaderMaterial({uniforms:skyU,side:THREE.BackSide,depthWrite:false,fog:false,
+  vertexShader:`varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`uniform vec3 top,bot,sunDir,sunCol;uniform float glow;varying vec3 vP;void main(){float h=clamp(vP.y,0.,1.);vec3 c=mix(bot,top,pow(h,.55));float s=max(dot(normalize(vP),normalize(sunDir)),0.);c+=sunCol*(pow(s,800.)*3.+pow(s,12.)*.25)*glow;gl_FragColor=vec4(c,1.);}`}));
+sky.renderOrder=-1;scene.add(sky);
+const starGeo=new THREE.BufferGeometry();{const p=[];for(let i=0;i<700;i++){const th=rand(Math.PI*2),ph=rand(.08,1.5);p.push(Math.cos(th)*Math.cos(ph)*450,Math.sin(ph)*450,Math.sin(th)*Math.cos(ph)*450)}starGeo.setAttribute('position',new THREE.Float32BufferAttribute(p,3))}
+const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:1.6,sizeAttenuation:false,transparent:true,opacity:0,fog:false,depthWrite:false}));scene.add(stars);
+
+/* ================= malzeme & geometri ================= */
+const MC={};
+function M(c,r=.85,extra){const k=c+'|'+r+'|'+(extra?JSON.stringify(extra):'');return MC[k]||(MC[k]=new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r},extra||{})))}
+const G={sph:new THREE.SphereGeometry(1,18,12),lump:new THREE.SphereGeometry(1,7,5),cyl:new THREE.CylinderGeometry(1,1,1,10),
+  cone:new THREE.ConeGeometry(1,1,10),box:new THREE.BoxGeometry(1,1,1),neck:new THREE.CylinderGeometry(.6,1,1,12),
+  horn:new THREE.TorusGeometry(.12,.022,6,12,Math.PI*.78)};
+function part(geo,mat,sx,sy,sz,x,y,z,parent,rx=0,ry=0,rz=0){const m=new THREE.Mesh(geo,mat);m.scale.set(sx,sy,sz);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+function bake(grp,shadow=true){
+  const by=new Map();
+  for(const ch of [...grp.children]){if(!ch.isMesh)continue;ch.updateMatrix();const g=ch.geometry.clone().applyMatrix4(ch.matrix);const k=ch.material.uuid;if(!by.has(k))by.set(k,{m:ch.material,gs:[]});by.get(k).gs.push(g);grp.remove(ch)}
+  for(const {m,gs} of by.values()){const mg=gs.length>1?mergeGeometries(gs):gs[0];const mesh=new THREE.Mesh(mg,m);mesh.castShadow=shadow;mesh.receiveShadow=true;grp.add(mesh)}
+  return grp;
+}
+function leg(parent,x,y,z,r,len,mat,hoof){const p=new THREE.Group();p.position.set(x,y,z);parent.add(p);part(G.cyl,mat,r,len,r,0,-len/2,0,p);if(hoof)part(G.cyl,hoof,r*1.08,.09,r*1.08,0,-len+.045,0,p);bake(p);return p}
+
+/* ================= arazi ================= */
+const BLD=[]; // [x,z,w,d]
+const PATHS=[[0,0,-22,-3],[0,0,-2,-10.5],[0,0,18,-5],[0,0,6,8],[0,0,-21,12],[0,0,-3,80],[-21,12,-22,-3]];
+function segDist(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,t=clamp(((px-ax)*dx+(pz-az)*dz)/(dx*dx+dz*dz),0,1);return Math.hypot(px-ax-dx*t,pz-az-dz*t)}
+function pathD(x,z){let m=1e9;for(const p of PATHS)m=Math.min(m,segDist(x,z,...p));return m}
+function inPen(x,z,pad=0){for(const id of PEN_IDS){const P=PENS[id];if(Math.abs(x-P.x)<P.w/2+pad&&Math.abs(z-P.z)<P.d/2+pad)return id}return null}
+function getH(x,z){const r=Math.hypot(x,z*1.15);const m=smooth(52,105,r);return m*(fbm(x*.022+3,z*.022+7)*24+1)+(1-m)*fbm(x*.15,z*.15)*.12*smooth(3,6,pathD(x,z))}
+{
+  const SZ=420,SEG=200,geo=new THREE.PlaneGeometry(SZ,SZ,SEG,SEG);geo.rotateX(-Math.PI/2);
+  const pos=geo.attributes.position,col=[];const c=new THREE.Color(),g1=new THREE.Color('#5d8c38'),g2=new THREE.Color('#7ea94a'),g3=new THREE.Color('#4a7530'),dirt=new THREE.Color('#8d6b46'),dirt2=new THREE.Color('#a4825a'),dry=new THREE.Color('#9aa84e');
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),z=pos.getZ(i);const y=getH(x,z);pos.setY(i,y);
+    const n=fbm(x*.08,z*.08),n2=vnoise(x*.6,z*.6);
+    c.copy(g1).lerp(g2,clamp(n*1.4-.3,0,1)).lerp(g3,clamp(.6-n2,0,1)*.35).lerp(dry,smooth(4,16,y)*.5);
+    const pd=pathD(x,z);if(pd<2.2)c.lerp(dirt2,smooth(2.2,1.1,pd)*(.85+n2*.15));
+    const pid=inPen(x,z,.2);if(pid&&PENS[pid].floor==='dirt')c.copy(dirt).lerp(dirt2,n2*.5).lerp(g3,clamp(n-.55,0,1)*.6);
+    if(Math.hypot(x+22,z-16)<6.5)c.lerp(dirt2,.6);
+    col.push(c.r,c.g,c.b);
+  }
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));geo.computeVertexNormals();
+  const ground=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));ground.receiveShadow=true;scene.add(ground);
+}
+// çimen tutamları
+function plantGrass(){
+  const bg=new THREE.BufferGeometry();const v=[];
+  for(let k=0;k<3;k++){const a=k*Math.PI/3,cx=Math.cos(a)*.06,cz=Math.sin(a)*.06,w=.05;const px=Math.cos(a+Math.PI/2)*w,pz=Math.sin(a+Math.PI/2)*w;v.push(cx-px,0,cz-pz,cx+px,0,cz+pz,cx*2.2,.34,cz*2.2)}
+  bg.setAttribute('position',new THREE.Float32BufferAttribute(v,3));bg.computeVertexNormals();
+  const N=HQ?9000:3500;const im=new THREE.InstancedMesh(bg,new THREE.MeshLambertMaterial({color:0xffffff,side:THREE.DoubleSide}),N);
+  const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),s=new THREE.Vector3(),p=new THREE.Vector3(),c=new THREE.Color();let n=0,tries=0;
+  while(n<N&&tries<N*6){tries++;const r=Math.sqrt(Math.random())*95,a=rand(Math.PI*2),x=Math.cos(a)*r,z=Math.sin(a)*r;
+    if(pathD(x,z)<2.3)continue;const pid=inPen(x,z,.4);if(pid&&PENS[pid].floor==='dirt')continue;if(inBuilding(x,z))continue;
+    const sc=rand(.7,1.6)*(fbm(x*.1,z*.1)>.45?1.3:1);p.set(x,getH(x,z),z);e.set(rand(-.2,.2),rand(6.3),rand(-.2,.2));q.setFromEuler(e);s.set(sc,sc*rand(.8,1.4),sc);
+    m4.compose(p,q,s);im.setMatrixAt(n,m4);c.setHSL(rand(.21,.29),rand(.45,.65),rand(.25,.4));im.setColorAt(n,c);n++}
+  im.count=n;im.receiveShadow=true;scene.add(im);
+}
+function inBuilding(x,z){for(const b of BLD)if(Math.abs(x-b[0])<b[2]/2+.5&&Math.abs(z-b[1])<b[3]/2+.5)return true;return false}
+
+/* ================= binalar ================= */
+const winMats=[];
+function winMat(){const m=new THREE.MeshStandardMaterial({color:'#2d3e4a',roughness:.2,metalness:.3,emissive:'#ffc66b',emissiveIntensity:0});winMats.push(m);return m}
+function gable(g,w,d,h,wall,roof,pitch=.55,over=.35){
+  part(G.box,M(wall,.9),w,h,d,0,h/2,0,g);
+  const half=d/2/Math.cos(pitch)+over,rise=Math.tan(pitch)*d/2;
+  const rm=M(roof,.75);
+  part(G.box,rm,w+over*2,.14,half,0,h+rise/2+.05,d/4+over/2*Math.cos(pitch)-.0,g,pitch);
+  part(G.box,rm,w+over*2,.14,half,0,h+rise/2+.05,-d/4-over/2*Math.cos(pitch)+.0,g,-pitch);
+  const sh=new THREE.Shape();sh.moveTo(-d/2,0);sh.lineTo(d/2,0);sh.lineTo(0,rise);sh.closePath();
+  const tg=new THREE.ShapeGeometry(sh);
+  for(const sx of [-1,1]){const t=new THREE.Mesh(tg,M(wall,.9));t.position.set(sx*w/2*1.001,h,0);t.rotation.y=sx*Math.PI/2;t.castShadow=true;g.add(t);const t2=t.clone();t2.rotation.y=-sx*Math.PI/2;g.add(t2)}
+  return rise;
+}
+function place(g,x,z,ry,w,d){g.position.set(x,getH(x,z),z);g.rotation.y=ry;scene.add(g);g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  const sw=Math.abs(Math.sin(ry))>.5;BLD.push([x,z,sw?d:w,sw?w:d]);return g}
+function door(g,w,h,z,col='#5a3820'){part(G.box,M(col,.8),w,h,.08,0,h/2,z,g)}
+function windowAt(g,x,y,z,w=.8,h=.7,ry=0){const m=part(G.box,winMat(),w,h,.06,x,y,z,g,0,ry);const fr=M('#f1ead8',.8);part(G.box,fr,w+.12,.08,.09,x,y+h/2,z,g,0,ry);part(G.box,fr,w+.12,.08,.09,x,y-h/2,z,g,0,ry);return m}
+function hayBale(x,z,ry=0,stand=false){const b=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,1.1,16),M('#d9b45a',1));b.position.set(x,getH(x,z)+.55,z);if(!stand){b.rotation.z=Math.PI/2;b.rotation.y=ry}b.castShadow=b.receiveShadow=true;scene.add(b)}
+// Kümes binası
+{const P=PENS.kumes,g=new THREE.Group();gable(g,5,3.2,2.2,'#9a6a3b','#5b3b25',.6);door(g,.8,1.3,1.62,'#5a3820');
+ windowAt(g,1.5,1.4,1.62,.6,.5);part(G.box,M('#7a5230'),.6,.05,1.6,0,.4,2.3,g,-.45);
+ for(let i=-2;i<=2;i++)part(G.box,M('#7a5a3a'),.04,2.15,.04,i*1.2,1.1,1.63,g);
+ place(g,P.x,P.z-P.d/2-1.75,0,5,3.2);}
+// Ağıl sundurması
+{const P=PENS.agil,g=new THREE.Group();const w=10,d=4,h=2.6;const wd=M('#8a6440',.9);
+ for(const sx of [-1,-.33,.33,1])for(const sz of [-1,1])part(G.box,wd,.18,h+(sz<0?.5:0),.18,sx*w/2,(h+(sz<0?.5:0))/2,sz*d/2,g);
+ part(G.box,M('#7d5b3a',.9),w,h+.4,.12,0,(h+.4)/2,-d/2,g);
+ part(G.box,M('#6b6f73',.5,{metalness:.5}),w+.6,.1,d+1,0,h+.25,0,g,.12);
+ hayBaleLocal(g,-3,-1);hayBaleLocal(g,-1.8,-1.2);
+ place(g,P.x,P.z-P.d/2-2.1,0,w,d);}
+function hayBaleLocal(g,x,z){const b=new THREE.Mesh(new THREE.BoxGeometry(1.1,.5,.55),M('#d6b560',1));b.position.set(x,.25,z);g.add(b);const b2=b.clone();b2.position.set(x+.3,.75,z+.1);g.add(b2)}
+// Ahır (kırmızı ambar)
+{const P=PENS.ahir,g=new THREE.Group();const w=11,d=8,h=4.4;gable(g,w,d,h,'#9e2f25','#3f3d3b',.72,.4);
+ const wt=M('#f2ede2',.8);
+ for(const sx of [-1,1]){part(G.box,wt,.22,h,.22,sx*w/2,h/2,d/2,g);part(G.box,wt,.22,h,.22,sx*w/2,h/2,-d/2,g)}
+ part(G.box,M('#7c231b',.85),3.4,3.2,.1,0,1.6,d/2+.03,g);
+ part(G.box,wt,3.6,.18,.14,0,3.25,d/2+.07,g);part(G.box,wt,.18,3.2,.14,-1.75,1.6,d/2+.07,g);part(G.box,wt,.18,3.2,.14,1.75,1.6,d/2+.07,g);
+ part(G.box,wt,.16,4.2,.12,0,1.6,d/2+.08,g,0,0,.82);part(G.box,wt,.16,4.2,.12,0,1.6,d/2+.08,g,0,0,-.82);
+ part(G.box,M('#5a1a14'),1.5,1.2,.1,0,h+.9,d/2+.03,g);part(G.box,wt,1.7,.14,.12,0,h+1.55,d/2+.07,g);
+ windowAt(g,-3.8,2.6,d/2+.04,.9,.8);windowAt(g,3.8,2.6,d/2+.04,.9,.8);
+ const cup=new THREE.Group();cup.position.set(0,h+Math.tan(.72)*d/2+.1,0);g.add(cup);part(G.box,wt,1,1,1,0,.4,0,cup);part(G.cone,M('#3f3d3b'),.85,.8,.85,0,1.3,0,cup,0,Math.PI/4);
+ place(g,P.x,P.z-P.d/2-4.3,0,w,d);
+ hayBale(P.x+7.6,P.z-P.d/2-2.5,.3,true);hayBale(P.x+7.4,P.z-P.d/2-4.0,.3,true);hayBale(P.x+7.6,P.z-P.d/2-3.2,0,false);}
+// Ahır silosu
+{const g=new THREE.Group();const met=M('#c9cdd0',.35,{metalness:.65});part(G.cyl,met,2,8.5,2,0,4.25,0,g);
+ const dome=new THREE.Mesh(new THREE.SphereGeometry(2.05,20,10,0,Math.PI*2,0,Math.PI/2),M('#9ea4a8',.35,{metalness:.7}));dome.position.y=8.5;g.add(dome);
+ for(let i=1;i<6;i++)part(G.cyl,M('#a9aeb2',.4,{metalness:.6}),2.04,.08,2.04,0,i*1.5,0,g);
+ part(G.box,M('#6c7074',.5,{metalness:.5}),.1,8.4,.5,0,4.2,2.02,g);
+ place(g,31,-20,0,4,4);}
+// At ahırı
+{const P=PENS.padok,g=new THREE.Group();const w=12,d=4.5,h=3;gable(g,w,d,h,'#a27448','#4d3a2c',.5);
+ for(let i=0;i<4;i++){const x=-4.5+i*3;part(G.box,M('#5c3b22'),1.6,2.1,.08,x,1.05,d/2+.03,g);part(G.box,M('#3a2616'),1.6,.9,.09,x,2.4,d/2+.035,g);part(G.box,M('#e9dfc8'),.1,2.1,.1,x-.85,1.05,d/2+.06,g);part(G.box,M('#e9dfc8'),.1,2.1,.1,x+.85,1.05,d/2+.06,g)}
+ place(g,P.x,P.z+P.d/2+2.5,Math.PI,w,d);}
+// Çiftlik evi
+{const g=new THREE.Group();const w=8,d=6.5,h=3.2;gable(g,w,d,h,'#efe4cf','#a8432f',.62,.45);
+ door(g,1.1,2.1,d/2+.03,'#6b3e22');windowAt(g,-2.4,1.8,d/2+.04,1.1,1);windowAt(g,2.4,1.8,d/2+.04,1.1,1);
+ windowAt(g,-2,1.8,-d/2-.04,1.1,1);windowAt(g,2,1.8,-d/2-.04,1.1,1);
+ for(const sx of[-1,1])windowAt(g,sx*(w/2+.04),1.8,0,1,1,Math.PI/2);
+ part(G.box,M('#8b4a35',.9),.8,2.6,.8,2.4,h+1.5,-1,g);
+ part(G.box,M('#a7865f'),w+.6,.15,2,0,.1,d/2+1,g);
+ for(const sx of[-1,1])part(G.box,M('#f3ecdd'),.15,2.5,.15,sx*(w/2+.1),1.3,d/2+1.85,g);
+ part(G.box,M('#a8432f',.75),w+1,.12,2.2,0,2.6,d/2+1,g,.12);
+ place(g,-22,19,0,w,d+2);}
+// gölet
+{const pg=new THREE.CircleGeometry(6,40);pg.rotateX(-Math.PI/2);const pond=new THREE.Mesh(pg,new THREE.MeshStandardMaterial({color:'#3f6f86',roughness:.08,metalness:.25,transparent:true,opacity:.92}));pond.position.set(30,.06,15);pond.receiveShadow=true;pond.scale.set(1,1,.75);scene.add(pond);
+ const sh=new THREE.Mesh(new THREE.RingGeometry(5.9,6.8,40),M('#8a7650',1));sh.rotation.x=-Math.PI/2;sh.position.set(30,.04,15);sh.scale.set(1,.75,1);scene.add(sh);
+ for(let i=0;i<14;i++){const a=rand(6.3);const x=30+Math.cos(a)*6.4,z=15+Math.sin(a)*4.8;const r=new THREE.Mesh(G.lump,M('#8f8c86',.9,{flatShading:true}));r.scale.set(rand(.2,.5),rand(.15,.35),rand(.2,.5));r.position.set(x,.1,z);r.castShadow=true;scene.add(r)}
+ for(let i=0;i<22;i++){const a=rand(6.3),x=30+Math.cos(a)*rand(5.6,6.3),z=15+Math.sin(a)*rand(4.2,4.8);const rd=new THREE.Mesh(G.cyl,M('#5c7a2e'));rd.scale.set(.025,rand(.6,1.3),.025);rd.position.set(x,rd.scale.y/2,z);rd.rotation.set(rand(-.2,.2),0,rand(-.2,.2));scene.add(rd)}
+ BLD.push([30,15,13,10]);}
+// ağaçlar ve kayalar
+{const trunk=M('#5b4030',.95),leafs=[M('#3d6b2a',.9,{flatShading:true}),M('#4a7a31',.9,{flatShading:true}),M('#355f26',.9,{flatShading:true})],pine=M('#2f5230',.9,{flatShading:true});
+ const ico=new THREE.IcosahedronGeometry(1,1);
+ function tree(x,z,s){if(pathD(x,z)<3||inPen(x,z,2)||inBuilding(x,z))return;const g=new THREE.Group();
+   if(Math.random()<.35){part(G.cyl,trunk,.18,1.6,.18,0,.8,0,g);const lm=pine;for(let i=0;i<4;i++)part(G.cone,lm,1.5-i*.3,1.6,1.5-i*.3,0,1.6+i*.95,0,g)}
+   else{part(G.cyl,trunk,.22,2.4,.22,0,1.2,0,g);const lm=pick(leafs);part(ico,lm,1.6,1.4,1.6,0,3.2,0,g);part(ico,lm,1.2,1.1,1.2,.8,3.9,.3,g);part(ico,lm,1.1,1,1.1,-.7,3.7,-.4,g);part(ico,lm,1,.9,1,.1,4.5,-.2,g)}
+   bake(g);g.position.set(x,getH(x,z)-.05,z);g.scale.setScalar(s);g.rotation.y=rand(6.3);scene.add(g)}
+ for(let i=0;i<120;i++){const a=rand(6.3),r=rand(42,110);tree(Math.cos(a)*r,Math.sin(a)*r*.95,rand(.9,1.6))}
+ for(const [x,z] of [[-30,10],[-14,24],[-29,23],[-33,-2],[36,4],[38,-6],[24,24],[-10,-30],[12,-30],[-36,-16]])tree(x+rand(-1,1),z+rand(-1,1),rand(1,1.4));
+ for(let i=0;i<40;i++){const a=rand(6.3),r=rand(36,90),x=Math.cos(a)*r,z=Math.sin(a)*r;if(pathD(x,z)<3||inPen(x,z,2))continue;const k=new THREE.Mesh(G.lump,M('#8d8a84',.95,{flatShading:true}));k.scale.set(rand(.3,1.1),rand(.25,.7),rand(.3,1.1));k.position.set(x,getH(x,z),z);k.rotation.y=rand(6);k.castShadow=k.receiveShadow=true;scene.add(k)}
+ // çiçekler
+ const fl=new THREE.InstancedMesh(new THREE.SphereGeometry(.07,5,4),new THREE.MeshLambertMaterial(),HQ?700:250);const m4=new THREE.Matrix4(),c=new THREE.Color();let n=0;
+ for(let i=0;i<4000&&n<fl.count;i++){const r=rand(8,70),a=rand(6.3),x=Math.cos(a)*r,z=Math.sin(a)*r;if(pathD(x,z)<2.5||inPen(x,z,.5)||inBuilding(x,z))continue;m4.makeTranslation(x,getH(x,z)+.3,z);fl.setMatrixAt(n,m4);c.set(pick(['#f4f1e8','#f2d348','#e25c7a','#b98ee6','#f08a3c']));fl.setColorAt(n,c);n++}
+ fl.count=n;scene.add(fl);}
+plantGrass();
+
+/* ================= çitler, yemlik, suluk ================= */
+const penObj={};
+const postIM=new THREE.InstancedMesh(new THREE.BoxGeometry(.15,1.2,.15),M('#7b5a3a',.95),600);let postN=0;postIM.castShadow=true;postIM.receiveShadow=true;
+const railMat=M('#8c6a45',.9);
+function fenceLine(ax,az,bx,bz){const L=Math.hypot(bx-ax,bz-az),n=Math.max(1,Math.round(L/2.2)),ang=Math.atan2(bz-az,bx-ax),m4=new THREE.Matrix4();
+  for(let i=0;i<=n;i++){const x=lerp(ax,bx,i/n),z=lerp(az,bz,i/n);m4.makeTranslation(x,.6,z);postIM.setMatrixAt(postN++,m4)}
+  for(const y of [.5,.95]){const r=new THREE.Mesh(G.box,railMat);r.scale.set(L,.1,.06);r.position.set((ax+bx)/2,y,(az+bz)/2);r.rotation.y=-ang;r.castShadow=true;r.receiveShadow=true;scene.add(r)}}
+function signTex(lines,bg='#efe2c4'){const c=document.createElement('canvas');c.width=512;c.height=256;const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,512,256);x.strokeStyle='#6b4a2a';x.lineWidth=14;x.strokeRect(7,7,498,242);x.fillStyle='#3b2816';x.textAlign='center';x.textBaseline='middle';
+  x.font='bold 64px system-ui,sans-serif';x.fillText(lines[0],256,90);x.font='bold 54px system-ui,sans-serif';x.fillText(lines[1]||'',256,175);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t}
+for(const id of PEN_IDS){
+  const P=PENS[id],x0=P.x-P.w/2,x1=P.x+P.w/2,z0=P.z-P.d/2,z1=P.z+P.d/2;
+  fenceLine(x0,z0,x1,z0);fenceLine(x1,z0,x1,z1);fenceLine(x0,z1,x0,z0);
+  const fz=P.front>0?z1:z0;fenceLine(x0,fz,P.x-1.4,fz);fenceLine(P.x+1.4,fz,x1,fz);
+  // kapı
+  const gate=new THREE.Group();const gm=M('#a07a50',.9);for(const y of[.35,.7,1.05])part(G.box,gm,2.6,.1,.06,0,y,0,gate);part(G.box,gm,.08,1.1,.06,-1.25,.65,0,gate);part(G.box,gm,.08,1.1,.06,1.25,.65,0,gate);part(G.box,gm,.08,1.6,.06,0,.68,0,gate,0,0,1.15);
+  gate.position.set(P.x,0,fz);scene.add(gate);
+  const o={};penObj[id]=o;
+  // yemlik
+  const fzIn=fz-P.front*1.1,fl=P.fl;
+  const fd=new THREE.Group();fd.position.set(P.x-P.w*.27,0,fzIn);fd.userData.pen=id;
+  const wd=M('#6e4c2e',.9);part(G.box,wd,fl,.12,.7,0,.42,0,fd);part(G.box,wd,fl,.38,.08,0,.6,.33,fd);part(G.box,wd,fl,.38,.08,0,.6,-.33,fd);part(G.box,wd,.08,.38,.7,fl/2,.6,0,fd);part(G.box,wd,.08,.38,.7,-fl/2,.6,0,fd);
+  for(const sx of[-1,1])part(G.box,wd,.1,.45,.1,sx*(fl/2-.1),.2,0,fd);
+  const food=part(G.box,M(P.feed==='tahil'?'#c79d52':'#cdb055',1),fl-.14,.3,.56,0,.5,0,fd);food.userData.pen=id;
+  scene.add(fd);o.feeder=fd;o.food=food;o.fpos=new THREE.Vector3(P.x-P.w*.27,0,fzIn);
+  // suluk
+  const tr=new THREE.Group();tr.position.set(P.x+P.w*.27,0,fzIn);tr.userData.pen=id;
+  const mt=M('#8d969c',.35,{metalness:.7});part(G.box,mt,fl*.8,.08,.7,0,.3,0,tr);part(G.box,mt,fl*.8,.42,.06,0,.5,.34,tr);part(G.box,mt,fl*.8,.42,.06,0,.5,-.34,tr);part(G.box,mt,.06,.42,.7,fl*.4,.5,0,tr);part(G.box,mt,.06,.42,.7,-fl*.4,.5,0,tr);
+  const water=part(G.box,new THREE.MeshStandardMaterial({color:'#4a8db0',roughness:.05,metalness:.2,transparent:true,opacity:.85}),fl*.8-.1,.3,.6,0,.5,0,tr);water.castShadow=false;
+  const tap=part(G.cyl,M('#5b6166',.4,{metalness:.7}),.06,1.2,.06,fl*.4+.2,.6,0,tr);
+  scene.add(tr);o.trough=tr;o.water=water;o.wpos=new THREE.Vector3(P.x+P.w*.27,0,fzIn);o.tap=tap;
+  // yumurta yuvası (kümes)
+  if(id==='kumes'){o.eggs=[];const eg=new THREE.SphereGeometry(.07,10,8);const em=M('#f3ead8',.5),bm=M('#c58e5a',.5),gm2=M('#fbf8f0',.5);
+    const nest=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.5,.12,20),M('#d3b464',1));nest.position.set(P.x,.06,P.z-P.d/2+1.3);nest.scale.z=.5;scene.add(nest);nest.userData.pen=id;o.nest=nest;
+    for(let i=0;i<30;i++){const e=new THREE.Mesh(eg,i%7===6?gm2:(i%2?em:bm));const big=i%7===6;e.scale.set(1,1.3,1).multiplyScalar(big?1.5:1);e.position.set(P.x+rand(-1.25,1.25),.16,P.z-P.d/2+1.3+rand(-.55,.55));e.rotation.set(rand(-1,1),0,rand(-1,1));e.visible=false;e.castShadow=true;scene.add(e);o.eggs.push(e)}}
+  // kilit tabelası
+  const sg=new THREE.Group();const post=M('#6b4a2a');part(G.box,post,.12,2,.12,-.8,1,0,sg);part(G.box,post,.12,2,.12,.8,1,0,sg);
+  const sm=new THREE.MeshStandardMaterial({map:signTex(['🔒 '+P.ad,tl(P.unlock)]),roughness:.9});const board=part(G.box,sm,2.2,1.1,.08,0,1.7,0,sg);
+  sg.position.set(P.x,0,fz+P.front*1.2);sg.rotation.y=P.front>0?0:Math.PI;sg.userData.pen=id;scene.add(sg);o.sign=sg;
+}
+postIM.count=postN;postIM.instanceMatrix.needsUpdate=true;scene.add(postIM);
+
+/* ================= hayvan modelleri ================= */
+function hideTex(base,spot,n){const c=document.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,256,128);x.fillStyle=spot;
+  for(let i=0;i<n;i++){const cx=rand(256),cy=rand(20,108),r=rand(10,26);for(let j=0;j<8;j++){x.beginPath();x.arc(cx+rand(-r,r),cy+rand(-r*.6,r*.6),rand(r*.35,r*.85),0,7);x.fill()}}
+  // ince kıl dokusu
+  const id=x.getImageData(0,0,256,128),d=id.data;for(let i=0;i<d.length;i+=4){const k=rand(-10,10);d[i]+=k;d[i+1]+=k;d[i+2]+=k}x.putImageData(id,0,0);
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+function rig0(kind){const g=new THREE.Group(),body=new THREE.Group();g.add(body);return {g,body,legs:[],kind}}
+function eyes(head,x,y,z,r=.03){const dk=M('#120f0d',.25);part(G.sph,dk,r,r,r,x,y,z,head);part(G.sph,dk,r,r,r,x,y,-z,head)}
+function mkCow(c,young){
+  const R=rig0('cow'),{body}=R;const V=[['#f5f2ea','#1c1a19',9],['#f2ebdf','#8b4a26',11],['#7a5236','#5c3a24',3],['#24201e','#f2eee6',2]][c%4];
+  const hide=new THREE.MeshStandardMaterial({map:hideTex(V[0],V[1],V[2]),roughness:.88});const L=.74,by=L+.42;
+  part(G.sph,hide,.8,.5,.46,0,by,0,body);part(G.sph,hide,.5,.5,.46,-.52,by+.04,0,body);part(G.sph,hide,.48,.52,.45,.5,by,0,body);
+  part(G.sph,hide,.6,.2,.3,-.1,by+.38,0,body);
+  if(!young){const pk=M('#e5a19b',.6);part(G.sph,pk,.21,.16,.2,-.36,by-.44,0,body);for(const [dx,dz] of [[.07,.07],[.07,-.07],[-.07,.07],[-.07,-.07]])part(G.cyl,pk,.025,.12,.025,-.36+dx,by-.6,dz,body)}
+  bake(body);
+  const head=new THREE.Group();head.position.set(.92,by+.14,0);body.add(head);R.head=head;
+  part(G.sph,hide,.3,.3,.25,-.08,0,0,head);part(G.sph,hide,.27,.22,.19,.26,-.04,0,head,0,0,-.25);
+  part(G.sph,M('#d89a90',.55),.15,.13,.16,.5,-.16,0,head);
+  eyes(head,.33,.05,.16);const dk=M('#2a1d1a',.4);part(G.sph,dk,.025,.02,.025,.63,-.13,.06,head);part(G.sph,dk,.025,.02,.025,.63,-.13,-.06,head);
+  part(G.sph,hide,.05,.04,.14,.18,.1,.27,head,0,0,.2);part(G.sph,hide,.05,.04,.14,.18,.1,-.27,head,0,0,.2);
+  if(!young){const hn=M('#e8dcc0',.45);part(G.cone,hn,.035,.17,.035,.2,.22,.13,head,.7);part(G.cone,hn,.035,.17,.035,.2,.22,-.13,head,-.7)}
+  bake(head);
+  const hoof=M('#2b2420',.6);for(const [lx,lz] of [[.55,.25],[.55,-.25],[-.56,.25],[-.56,-.25]])R.legs.push(leg(body,lx,L,lz,.1,L,hide,hoof));
+  const tail=new THREE.Group();tail.position.set(-1,by+.32,0);body.add(tail);part(G.cyl,hide,.025,.75,.025,0,-.37,0,tail);part(G.sph,M(V[0]==='#24201e'?'#f2eee6':'#2a211c',1),.055,.13,.055,0,-.76,0,tail);bake(tail);R.tail=tail;
+  if(young)R.g.scale.setScalar(.58);R.h=by+.4;return R}
+function mkSheep(c,young){
+  const R=rig0('sheep'),{body}=R;const L=.42,by=L+.32;const black=!young&&c%5===4;
+  const wm=M(black?'#3b3430':'#ebe4d4',1,{flatShading:true});const wool=new THREE.Group();wool.position.set(0,by,0);body.add(wool);
+  part(G.lump,wm,.52,.32,.31,0,0,0,wool);
+  for(let i=0;i<24;i++){const u=rand(-.95,.95),th=rand(-.3,Math.PI+.3),r=Math.sqrt(1-u*u);const s=rand(.13,.2);part(G.lump,wm,s,s,s,u*.48,Math.sin(th)*r*.27+.03,Math.cos(th)*r*.27,wool,rand(3),rand(3),0)}
+  part(G.lump,wm,.1,.1,.1,-.55,.05,0,wool);bake(wool);R.wool=wool;
+  const face=M(young?'#efe5d6':(c%2?'#2a2420':'#e2d4c0'),.8);
+  bake(body);
+  const head=new THREE.Group();head.position.set(.5,by+.14,0);body.add(head);R.head=head;
+  part(G.sph,face,.18,.13,.12,.1,-.02,0,head,0,0,-.4);part(G.sph,face,.04,.025,.1,.0,.04,.13,head,.4);part(G.sph,face,.04,.025,.1,.0,.04,-.13,head,-.4);
+  part(G.lump,wm,.11,.09,.11,-.02,.09,0,head);eyes(head,.1,.03,.1,.022);part(G.sph,M('#1a1414',.5),.03,.02,.04,.25,-.1,0,head);
+  bake(head);
+  for(const [lx,lz] of [[.3,.14],[.3,-.14],[-.3,.14],[-.3,-.14]])R.legs.push(leg(body,lx,L,lz,.045,L,face,M('#2a2420',.6)));
+  if(young)R.g.scale.setScalar(.56);R.h=by+.4;return R}
+function mkGoat(c,young){
+  const R=rig0('goat'),{body}=R;const V=[['#ece6da','#ece6da'],['#7b5233','#2f241c'],['#2b2622','#2b2622'],['#8a5a35','#f0ebe0'],['#c8b59a','#5a4634']][c%5];
+  const bm=M(V[0],.85),hm=M(V[1],.85);const L=.5,by=L+.28;
+  part(G.sph,bm,.5,.27,.25,0,by,0,body);part(G.sph,bm,.3,.3,.24,.32,by+.03,0,body);part(G.sph,bm,.28,.28,.24,-.32,by+.02,0,body);
+  part(G.neck,bm,.14,.42,.14,.5,by+.24,0,body,0,0,-.55);
+  if(!young)part(G.cone,hm,.05,.16,.04,-.56,by+.2,0,body,0,0,.7);
+  bake(body);
+  const head=new THREE.Group();head.position.set(.62,by+.44,0);body.add(head);R.head=head;
+  part(G.sph,hm,.19,.11,.1,.08,-.04,0,head,0,0,-.5);part(G.sph,M('#3a2f29',.6),.04,.03,.04,.24,-.14,0,head);
+  part(G.sph,hm,.03,.1,.05,-.01,-.04,.11,head,.5);part(G.sph,hm,.03,.1,.05,-.01,-.04,-.11,head,-.5);
+  eyes(head,.08,.03,.085,.02);
+  if(!young){const hn=M('#6f6a62',.6);part(G.horn,hn,1,1,1,-.12,.06,.05,head);part(G.horn,hn,1,1,1,-.12,.06,-.05,head);part(G.cone,M(V[1]==='#ece6da'?'#d8d0c0':'#3a2f27',1),.04,.14,.03,.16,-.2,0,head,0,0,Math.PI)}
+  bake(head);
+  const hoof=M('#2b2420',.6);for(const [lx,lz] of [[.32,.13],[.32,-.13],[-.32,.13],[-.32,-.13]])R.legs.push(leg(body,lx,L,lz,.045,L,bm,hoof));
+  if(young)R.g.scale.setScalar(.55);R.h=by+.6;return R}
+function mkHorse(c,young){
+  const R=rig0('horse'),{body}=R;const V=[['#6b3b1f','#1a1412'],['#1e1a18','#0f0d0c'],['#a3a39e','#55534f'],['#8a4a24','#e0c487'],['#ebe6dc','#cfc7b6']][c%5];
+  const bm=M(V[0],.55),mm=M(V[1],.9);const L=1.02,by=L+.38;
+  part(G.sph,bm,.75,.4,.37,0,by,0,body);part(G.sph,bm,.42,.44,.38,.5,by+.03,0,body);part(G.sph,bm,.45,.44,.39,-.52,by+.04,0,body);
+  part(G.neck,bm,.24,.95,.24,.86,by+.48,0,body,0,0,-.62);
+  part(G.box,mm,.08,.9,.07,.67,by+.6,0,body,0,0,-.62);
+  bake(body);
+  const head=new THREE.Group();head.position.set(1.14,by+.86,0);body.add(head);R.head=head;
+  part(G.sph,bm,.34,.15,.14,.16,-.12,0,head,0,0,-1.05);part(G.sph,M(V[0]==='#ebe6dc'?'#c9bfb0':'#3a2a22',.6),.12,.1,.12,.3,-.4,0,head);
+  eyes(head,.1,0,.12,.03);part(G.cone,bm,.04,.14,.035,-.04,.16,.06,head);part(G.cone,bm,.04,.14,.035,-.04,.16,-.06,head);
+  part(G.box,mm,.18,.08,.1,.0,.1,0,head,0,0,-.5);
+  bake(head);
+  const hoof=M('#2a2622',.6);for(const [lx,lz] of [[.52,.19],[.52,-.19],[-.56,.19],[-.56,-.19]])R.legs.push(leg(body,lx,L,lz,.07,L,bm,hoof));
+  const tail=new THREE.Group();tail.position.set(-.95,by+.24,0);tail.rotation.z=-.25;body.add(tail);part(G.cone,mm,.13,.85,.11,0,-.42,0,tail,0,0,Math.PI);bake(tail);R.tail=tail;
+  if(young)R.g.scale.setScalar(.62);R.h=by+1.1;return R}
+function mkChicken(c){
+  const R=rig0('chicken'),{body}=R;const V=[['#f3efe6','#e8e0d0'],['#9c5a2b','#2a3a2a'],['#c9893d','#3a2c1c'],['#262322','#1b3326']][c%4];
+  const bm=M(V[0],.9),tm=M(V[1],.7);const L=.16,by=L+.17;
+  part(G.sph,bm,.2,.16,.15,0,by,0,body);part(G.sph,bm,.12,.13,.12,.1,by,0,body);
+  part(G.sph,tm,.05,.14,.1,-.18,by+.1,0,body,0,0,.5);part(G.sph,tm,.04,.12,.08,-.15,by+.13,0,body,0,0,.2);
+  part(G.sph,bm,.13,.07,.03,0,by+.02,.14,body);part(G.sph,bm,.13,.07,.03,0,by+.02,-.14,body);
+  bake(body);
+  const head=new THREE.Group();head.position.set(.13,by+.13,0);body.add(head);R.head=head;
+  part(G.sph,bm,.075,.08,.068,.02,.02,0,head);const rd=M('#c8261c',.6);
+  for(let i=0;i<3;i++)part(G.sph,rd,.022,.03,.012,-.02+i*.03,.1-Math.abs(i-1)*.01,0,head);
+  part(G.sph,rd,.018,.03,.012,.07,-.05,0,head);part(G.cone,M('#e0a32a',.5),.018,.06,.018,.11,.0,0,head,0,0,-Math.PI/2);
+  eyes(head,.06,.03,.05,.012);bake(head);
+  const lg=M('#e0a32a',.6);for(const lz of [.05,-.05])R.legs.push(leg(body,0,L,lz,.012,L,lg));
+  R.h=.55;return R}
+function mkGoose(c){
+  const R=rig0('goose'),{body}=R;const bm=M(c%3===2?'#958f84':'#f2f0ea',.85),or=M('#ea8a24',.5);const L=.2,by=L+.2;
+  part(G.sph,bm,.3,.2,.19,0,by,0,body,0,0,.1);part(G.sph,bm,.1,.08,.12,-.3,by+.08,0,body,0,0,.5);
+  part(G.cyl,bm,.045,.4,.045,.25,by+.24,0,body,0,0,-.2);
+  bake(body);
+  const head=new THREE.Group();head.position.set(.3,by+.45,0);body.add(head);R.head=head;
+  part(G.sph,bm,.075,.065,.06,0,0,0,head);part(G.cone,or,.032,.1,.026,.1,-.01,0,head,0,0,-Math.PI/2);part(G.sph,or,.025,.025,.02,.05,.03,0,head);
+  eyes(head,.03,.02,.05,.012);bake(head);
+  for(const lz of [.06,-.06]){const l=leg(body,0,L,lz,.02,L,or);part(G.box,or,.1,.02,.08,.03,-L+.01,0,l)}
+  R.legs=body.children.filter(o=>o.isGroup&&o!==head);
+  R.h=.8;return R}
+function mkHuman(shirt){
+  const R=rig0('human'),{body}=R;const sk=M('#e0b48e',.7),pants=M('#34495e',.9),shoe=M('#2a211b',.8),sh=M(shirt,.85);const L=.85;
+  part(G.sph,sh,.17,.3,.13,0,L+.32,0,body);part(G.sph,pants,.16,.12,.12,0,L+.04,0,body);
+  bake(body);
+  const head=new THREE.Group();head.position.set(0,L+.72,0);body.add(head);R.head=head;
+  part(G.sph,sk,.12,.13,.12,0,0,0,head);const hat=M('#d8c08a',.95);part(G.cyl,hat,.26,.03,.26,0,.08,0,head);part(G.cyl,hat,.13,.12,.13,0,.15,0,head);
+  part(G.sph,sk,.03,.04,.03,.11,-.01,0,head);eyes(head,.1,.03,.045,.015);bake(head);
+  for(const lz of [.08,-.08])R.legs.push(leg(body,0,L,lz,.065,L,pants,shoe));
+  R.arms=[];for(const lz of [.21,-.21]){const a=leg(body,0,L+.55,lz,.05,.58,sh,sk);R.arms.push(a)}
+  R.h=1.9;return R}
+function makeModel(t,c){switch(t){case'inek':return mkCow(c,0);case'buzagi':return mkCow(c,1);case'koyun':return mkSheep(c,0);case'kuzu':return mkSheep(c,1);case'keci':return mkGoat(c,0);case'oglak':return mkGoat(c,1);case'at':return mkHorse(c,0);case'tay':return mkHorse(c,1);case'tavuk':return mkChicken(c);case'kaz':return mkGoose(c)}}
+
+/* ================= hayvan görselleri ================= */
+const pickables=[];
+function penRandPos(pid,m=.9){const P=PENS[pid];return [P.x+rand(-P.w/2+m,P.w/2-m),P.z+rand(-P.d/2+m,P.d/2-m)]}
+function spawnVis(a){
+  const R=makeModel(a.t,a.c);R.g.position.set(a.x,0,a.z);const h=rand(6.3);R.g.rotation.y=-h;
+  R.g.traverse(o=>{o.userData.aid=a.id});scene.add(R.g);pickables.push(R.g);
+  a._v={R,h,tx:a.x,tz:a.z,wait:rand(3),ph:rand(6),goal:null,eat:0,graze:0,ic:null,icKey:''};
+}
+function killVis(a){if(!a._v)return;scene.remove(a._v.R.g);const i=pickables.indexOf(a._v.R.g);if(i>=0)pickables.splice(i,1);if(a._v.ic)a._v.ic.remove();a._v.R.g.traverse(o=>{if(o.isMesh&&o.material.map&&!MC[o.material.uuid])o.material.map.dispose()});a._v=null}
+const tmpV=new THREE.Vector3();
+function updateAnimalVis(a,dt,night){
+  const v=a._v;if(!v)return;const d=AT[a.t],R=v.R,P=PENS[d.pen];
+  let moving=false;
+  if(v.eat>0){v.eat-=dt}
+  else if(v.wait>0){v.wait-=dt;if(v.wait<=0&&!v.goal){if(Math.random()<(night?.25:.75)){const [x,z]=penRandPos(d.pen);v.tx=x;v.tz=z}else v.wait=rand(2,6);if(R.kind!=='chicken'&&R.kind!=='goose'&&Math.random()<.4)v.graze=rand(2,5)}}
+  else{
+    const dx=v.tx-a.x,dz=v.tz-a.z,dist=Math.hypot(dx,dz);
+    if(dist<.25){
+      if(v.goal==='feed'){eat(a);v.eat=rand(3,5)}else if(v.goal==='water'){drink(a);v.eat=rand(2,3)}
+      v.goal=null;v.wait=rand(1.5,7)*(night?2:1);
+    }else{
+      const want=Math.atan2(dz,dx);let df=want-v.h;df=Math.atan2(Math.sin(df),Math.cos(df));v.h+=df*Math.min(1,dt*4);
+      const sp=d.hiz*(night?.5:1)*(Math.abs(df)>1?.3:1)*(v.goal?1.3:1);
+      a.x+=Math.cos(v.h)*sp*dt;a.z+=Math.sin(v.h)*sp*dt;moving=true;
+    }
+  }
+  a.x=clamp(a.x,P.x-P.w/2+.5,P.x+P.w/2-.5);a.z=clamp(a.z,P.z-P.d/2+.5,P.z+P.d/2-.5);
+  R.g.position.set(a.x,0,a.z);R.g.rotation.y=-v.h;
+  v.ph+=dt*(moving?d.hiz*7*(R.kind==='chicken'?1.8:1):0);
+  const sw=moving?Math.sin(v.ph)*.55:0;
+  if(R.legs.length===4){R.legs[0].rotation.z=sw;R.legs[3].rotation.z=sw;R.legs[1].rotation.z=-sw;R.legs[2].rotation.z=-sw}
+  else if(R.legs.length===2){R.legs[0].rotation.z=sw;R.legs[1].rotation.z=-sw}
+  R.body.position.y=moving?Math.abs(Math.cos(v.ph))*.03:0;
+  // kafa: yeme / otlama / gagalama
+  let hr=0;const t=performance.now()/1000;
+  if(v.eat>0||v.graze>0){if(v.graze>0)v.graze-=dt;hr=(R.kind==='chicken'||R.kind==='goose')?-.7-Math.abs(Math.sin(t*9))*.5:-.85+Math.sin(t*3)*.08}
+  else if((R.kind==='chicken')&&!moving)hr=Math.sin(t*2+a.id)*.15+(Math.sin(t*.7+a.id*3)>.7?-.9:0);
+  else hr=Math.sin(t*.8+a.id)*.08;
+  R.head.rotation.z=lerp(R.head.rotation.z,hr,Math.min(1,dt*8));
+  if(R.tail)R.tail.rotation.x=Math.sin(t*2.2+a.id)*.35;
+  if(R.wool&&d.yun){const s=a.wr?1:.72+.28*clamp(a.wp/d.yun.aralik,0,1);R.wool.scale.set(1,s*.9+.1,s)}
+  if(a.sick)R.g.rotation.z=0;
+}
+function goTo(a,goal){const v=a._v,o=penObj[AT[a.t].pen],P=PENS[AT[a.t].pen],src=goal==='feed'?o.fpos:o.wpos;const L=P.fl*.42;
+  v.goal=goal;v.tx=src.x+rand(-L,L);v.tz=src.z-P.front*(.55+AT[a.t].r*.9);v.wait=0;v.eat=0;v.graze=0}
+function separate(){
+  const by={};for(const a of S.animals){if(!a._v)continue;(by[AT[a.t].pen]||(by[AT[a.t].pen]=[])).push(a)}
+  for(const k in by){const L=by[k];for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++){const A=L[i],B=L[j],dx=B.x-A.x,dz=B.z-A.z,d=Math.hypot(dx,dz),m=AT[A.t].r+AT[B.t].r;if(d<m&&d>1e-4){const p=(m-d)/d*.25;A.x-=dx*p;A.z-=dz*p;B.x+=dx*p;B.z+=dz*p}}}
+}
+
+/* ================= işçi görselleri ================= */
+const humans=[];
+function poiList(){const L=[[-21,13],[0,0],[31,-16]];for(const id of PEN_IDS){if(!S.pens[id].un)continue;const P=PENS[id];const fz=P.z+P.front*(P.d/2+1.2);L.push([P.x-P.w*.27,fz],[P.x+P.w*.27,fz],[P.x,fz])}return L}
+function syncHumans(){
+  const want=[];for(const k in WK)for(let i=0;i<S.wk[k];i++)want.push(k);
+  while(humans.length>want.length){const h=humans.pop();scene.remove(h.R.g)}
+  for(let i=0;i<want.length;i++){if(humans[i]&&humans[i].k===want[i])continue;if(humans[i])scene.remove(humans[i].R.g);
+    const R=mkHuman(WK[want[i]].shirt);const [x,z]=pick(poiList());R.g.position.set(x+rand(-1,1),0,z+rand(-1,1));scene.add(R.g);humans[i]={k:want[i],R,x:R.g.position.x,z:R.g.position.z,tx:x,tz:z,h:0,wait:rand(2),ph:0}}
+}
+function updateHumans(dt){for(const H of humans){let mv=false;if(H.wait>0){H.wait-=dt;if(H.wait<=0){const [x,z]=pick(poiList());H.tx=x+rand(-1,1);H.tz=z+rand(-.5,.5)}}else{const dx=H.tx-H.x,dz=H.tz-H.z,d=Math.hypot(dx,dz);if(d<.2)H.wait=rand(2,6);else{const w=Math.atan2(dz,dx);let df=w-H.h;df=Math.atan2(Math.sin(df),Math.cos(df));H.h+=df*Math.min(1,dt*5);H.x+=Math.cos(H.h)*1.5*dt;H.z+=Math.sin(H.h)*1.5*dt;mv=true}}
+  H.R.g.position.set(H.x,getH(H.x,H.z),H.z);H.R.g.rotation.y=-H.h;H.ph+=mv?dt*9:0;const s=mv?Math.sin(H.ph)*.6:0;H.R.legs[0].rotation.z=s;H.R.legs[1].rotation.z=-s;H.R.arms[0].rotation.z=-s*.8;H.R.arms[1].rotation.z=s*.8}}
+
+/* ================= simülasyon ================= */
+const cnt=t=>S.animals.filter(a=>a.t===t).length;
+const penCount=pid=>S.animals.filter(a=>AT[a.t].pen===pid).length;
+const penCap=pid=>PENS[pid].cap[S.pens[pid].lvl];
+const depoCap=()=>DEPO[S.depo];
+const depoUsed=()=>{let s=0;for(const k in S.prod)s+=S.prod[k];return s};
+const hour=()=>S.t*24;
+const isNight=()=>{const h=hour();return h<5.5||h>=20.5};
+function addProd(k,n){const room=depoCap()-depoUsed();const add=Math.min(n,Math.max(0,room));if(add<=0)return 0;S.prod[k]=Math.round((S.prod[k]+add)*10)/10;return add}
+function eat(a){const d=AT[a.t],p=S.pens[d.pen];if(p.feed>=d.ogun){p.feed-=d.ogun;a.hu=Math.min(100,a.hu+50)}}
+function drink(a){const d=AT[a.t],p=S.pens[d.pen];if(p.water>=d.su){p.water-=d.su;a.th=Math.min(100,a.th+55)}}
+const wt={b:0,s:0,v:0};let LIVE=false;
+function sim(dt,live){
+  LIVE=live;const prevT=S.t;S.t+=dt/DAY;
+  if(prevT<.75&&S.t>=.75&&S.wk.pazarci)sellAll(.05,true);
+  if(S.t>=1){S.t-=1;newDay()}
+  const k=isNight()?.5:1;
+  for(const id of PEN_IDS){const p=S.pens[id];if(p.un&&p.auto)p.water=PENS[id].waterCap}
+  for(const a of [...S.animals]){
+    const d=AT[a.t],p=S.pens[d.pen];
+    a.hu=Math.max(0,a.hu-.4*k*dt);a.th=Math.max(0,a.th-.5*k*dt);a.ag+=dt;
+    const busy=live&&a._v&&a._v.goal;
+    if(!busy){
+      if(a.hu<60&&p.feed>=d.ogun){if(live&&a._v)goTo(a,'feed');else eat(a)}
+      else if(a.th<60&&p.water>=d.su){if(live&&a._v)goTo(a,'water');else drink(a)}
+    }
+    if(a.hu<=0||a.th<=0)a.hp-=.08*dt;else if(!a.sick)a.hp=Math.min(100,a.hp+.04*dt);
+    a.hp=Math.max(0,a.hp);
+    if(a.hp<30&&!a.sick){a.sick=1;if(live)toast(`🤒 ${a.n} (${d.ad}) hastalandı! Veteriner gerekiyor.`)}
+    const ok=!a.sick&&a.hu>25&&a.th>25,mood=(a.hu+a.th+a.hp)/300,rate=dt*(.5+mood*.7);
+    if(d.buyur&&a.ag>=d.buyume){grow(a,live);continue}
+    if(ok&&d.urun&&!a.rd){a.pr+=rate;if(a.pr>=d.aralik){a.pr=0;
+      if(a.t==='tavuk'){if(p.eggs+p.geggs<60)p.eggs++}else if(a.t==='kaz'){if(p.eggs+p.geggs<60)p.geggs++}else a.rd=1}}
+    if(ok&&d.yun&&!a.wr){a.wp+=rate;if(a.wp>=d.yun.aralik)a.wr=1}
+    if(ok&&d.gelir){a.pr+=rate;if(a.pr>=d.gelir.aralik){a.pr=0;S.money+=d.gelir.miktar;if(live)floatAt(a,'+'+tl(d.gelir.miktar)+' 🏇')}}
+    if(ok&&d.yavru&&a.hp>60&&a.hu>40){a.br+=rate;if(a.br>=d.dogum){if(penCount(d.pen)<penCap(d.pen)){a.br=0;birth(a,live)}else{a.br=d.dogum;if(live&&!a.fullWarn){a.fullWarn=1;toast(`🍼 ${a.n} doğuruma hazır ama ${PENS[d.pen].ad} dolu. Bölmeyi genişlet!`)}}}}
+  }
+  workerSim(dt,live);
+}
+function workerSim(dt,live){
+  const W=S.wk;
+  if(W.bakici){wt.b+=dt;const iv=4/W.bakici;while(wt.b>=iv){wt.b-=iv;bakiciJob()}}else wt.b=0;
+  if(W.sagimci){wt.s+=dt;const iv=2.5/W.sagimci;while(wt.s>=iv){wt.s-=iv;sagimciJob()}}else wt.s=0;
+  if(W.veteriner){wt.v+=dt;if(wt.v>=5){wt.v=0;const a=S.animals.find(a=>a.sick);if(a)heal(a,0)}}
+}
+let feedWarnDay=0;
+function bakiciJob(){
+  for(const id of PEN_IDS){const p=S.pens[id],P=PENS[id];if(!p.un)continue;
+    if(p.water<P.waterCap*.5){fillWater(id,true);return}
+    if(p.feed<P.feedCap*.5&&penCount(id)){if(S.feed[P.feed]>0){fillFeed(id,true);return}else if(feedWarnDay!==S.day&&LIVE){feedWarnDay=S.day;toast(`🧑‍🌾 Bakıcı: "Depoda ${FEED[P.feed].ad.toLowerCase()} kalmadı patron!"`)}}}
+}
+function sagimciJob(){
+  for(const id of PEN_IDS){const p=S.pens[id];if(p.eggs+p.geggs>0&&depoUsed()<depoCap()){collectEggs(id,true);return}}
+  const a=S.animals.find(a=>a.rd&&!a.sick)||S.animals.find(a=>a.wr);
+  if(a&&depoUsed()<depoCap()){if(a.rd)milk(a,true);else shear(a,true)}
+}
+function newDay(){
+  S.day++;let wages=0;for(const k in WK)wages+=WK[k].maas*S.wk[k];
+  const quit=[];
+  while(wages>0&&S.money<wages){const ks=Object.keys(WK).filter(k=>S.wk[k]>0).sort((a,b)=>WK[b].maas-WK[a].maas);if(!ks.length)break;S.wk[ks[0]]--;wages-=WK[ks[0]].maas;quit.push(WK[ks[0]].ad)}
+  S.money-=wages;
+  for(const k in PR)S.pm[k]=clamp(S.pm[k]*rand(.86,1.16)*(1+(1-S.pm[k])*.3),.7,1.4);
+  if(LIVE){toast(`🌅 Gün ${S.day} başladı${wages?` · Maaşlar: -${tl(wages)}`:''}`);if(quit.length)toast(`😞 Maaş ödenemedi: ${quit.join(', ')} işi bıraktı.`);syncHumans()}
+}
+function grow(a,live){const d=AT[a.t];const old=d.ad;a.t=d.buyur;a.pr=rand(AT[a.t].aralik||10)*.3;a.br=0;a.rd=0;a.wr=0;a.wp=0;
+  if(live&&a._v){const x=a.x,z=a.z;killVis(a);spawnVis(a);toast(`🎉 ${old} ${a.n} büyüdü, artık bir ${AT[a.t].ad.toLowerCase()}!`);if(SEL===a.id)renderCard()}}
+function newAnimal(t,x,z){const d=AT[t];return {id:S.nid++,t,n:pick(NAMES),c:irand(20),x,z,hu:85,th:85,hp:100,pr:rand(0,(d.aralik||d.gelir?.aralik||10)*.5),rd:0,wp:0,wr:0,ag:d.genc?0:DAY*rand(3,8),br:rand(0,(d.dogum||1)*.3),sick:0}}
+function birth(par,live){const d=AT[par.t];const b=newAnimal(d.yavru,par.x+rand(-.6,.6),par.z+rand(-.6,.6));b.ag=0;b.hu=100;b.th=100;b.br=0;S.animals.push(b);S.stats.born++;
+  if(live){spawnVis(b);toast(`🍼 ${par.n} bir ${AT[b.t].ad.toLowerCase()} doğurdu! Adı: ${b.n}`);floatAt(b,'🎉')}}
+
+/* ================= eylemler ================= */
+function canPay(n){if(S.money>=n)return true;toast('💸 Paran yetmiyor!');return false}
+function buyAnimal(t){const d=AT[t],pid=d.pen;if(!S.pens[pid].un)return toast(`🔒 Önce ${PENS[pid].ad} açılmalı.`);if(penCount(pid)>=penCap(pid))return toast(`${PENS[pid].ad} dolu! Geliştir menüsünden genişlet.`);if(!canPay(d.fiyat))return;
+  S.money-=d.fiyat;const [x,z]=penRandPos(pid);const a=newAnimal(t,x,z);S.animals.push(a);spawnVis(a);toast(`${d.e} ${a.n} adında bir ${d.ad.toLowerCase()} aldın!`);
+  closeSheet();focusPen(pid);selectAnimal(a.id);refresh()}
+function buyFeed(k,i){const [kg,pr]=FEED[k].paket[i];if(S.feed[k]+kg>FEED[k].cap)return toast(`Yem ambarı dolu (en fazla ${FEED[k].cap} kg).`);if(!canPay(pr))return;S.money-=pr;S.feed[k]+=kg;toast(`${FEED[k].e} ${kg} kg ${FEED[k].ad.toLowerCase()} alındı.`);refresh()}
+function fillFeed(pid,silent){const P=PENS[pid],p=S.pens[pid];const need=P.feedCap-p.feed;if(need<.05){if(!silent)toast('Yemlik zaten dolu.');return}const take=Math.min(need,S.feed[P.feed]);if(take<=0){if(!silent)toast(`Depoda ${FEED[P.feed].ad.toLowerCase()} yok! Pazardan al.`);return}
+  S.feed[P.feed]=Math.round((S.feed[P.feed]-take)*100)/100;p.feed+=take;S.stats.fed++;if(!silent){toast(`${FEED[P.feed].e} ${PENS[pid].ad} yemliğine ${f1(take)} kg yem kondu.`);refresh()}}
+function fillWater(pid,silent){const P=PENS[pid],p=S.pens[pid];if(P.waterCap-p.water<.05){if(!silent)toast('Suluk zaten dolu.');return}p.water=P.waterCap;if(!silent){toast(`💧 ${P.ad} suluğu dolduruldu.`);refresh()}}
+function collectEggs(pid,silent){const p=S.pens[pid];if(p.eggs+p.geggs<=0)return;let a=addProd('yumurta',p.eggs);p.eggs-=a;let b=addProd('kazYumurta',p.geggs);p.geggs-=b;S.stats.eggs+=a+b;
+  if(!silent){if(a+b<=0)return toast('📦 Depo dolu! Ürün sat ya da depoyu büyüt.');toast(`🥚 ${a+b} yumurta toplandı.`);floatWorld(penObj[pid].nest.position,`+${a+b} 🥚`);refresh()}}
+function milk(a,silent){if(!a.rd)return;const d=AT[a.t];const amt=d.miktar*(S.sagimMak?1.3:1);const got=addProd(d.urun,amt);if(got<=0){if(!silent)toast('📦 Depo dolu! Ürün sat ya da depoyu büyüt.');return}
+  a.rd=0;S.stats.milk+=got;S.stats.milkings++;if(LIVE)floatAt(a,`+${f1(got)} L 🥛`);if(!silent)refresh()}
+function shear(a,silent){if(!a.wr)return;const got=addProd('yun',AT[a.t].yun.miktar);if(got<=0){if(!silent)toast('📦 Depo dolu!');return}a.wr=0;a.wp=0;S.stats.wool+=got;if(LIVE)floatAt(a,`+${f1(got)} kg 🧶`);if(!silent)refresh()}
+function heal(a,cost){if(!a.sick)return;if(cost&&!canPay(cost))return;S.money-=cost;a.sick=0;a.hp=80;a.hu=Math.max(a.hu,40);a.th=Math.max(a.th,40);if(LIVE){toast(`🧑‍⚕️ ${a.n} iyileşti!`);floatAt(a,'💚')}refresh()}
+function animalValue(a){const d=AT[a.t];return Math.round(d.fiyat*(a.sick?.3:.65)*(.5+a.hp/200))}
+function sellAnimal(a){const v=animalValue(a);S.money+=v;killVis(a);S.animals=S.animals.filter(x=>x!==a);toast(`${AT[a.t].e} ${a.n} ${tl(v)}'ye satıldı.`);deselect();refresh()}
+function price(k){return PR[k].f*S.pm[k]}
+function sell(k,fee=0){const n=S.prod[k];if(n<=0)return 0;const m=n*price(k)*(1-fee);S.money+=m;S.stats.sold+=m;S.prod[k]=0;return m}
+function sellAll(fee,auto){let m=0;for(const k in PR)m+=sell(k,fee);if(m>0&&LIVE)toast(auto?`🧔 Pazarcı ürünleri sattı: +${tl(m)}`:`💰 Hepsi satıldı: +${tl(m)}`);if(!auto&&m<=0)toast('Depoda satılacak ürün yok.');refresh();return m}
+function unlockPen(pid){const P=PENS[pid];if(S.pens[pid].un)return;if(!canPay(P.unlock))return;S.money-=P.unlock;S.pens[pid].un=1;penObj[pid].sign.visible=false;toast(`🎉 ${P.ad} açıldı!`);closeSheet();focusPen(pid);refresh()}
+function upgradePen(pid){const p=S.pens[pid],P=PENS[pid];if(p.lvl>=P.cap.length-1)return;const c=P.capCost[p.lvl+1];if(!canPay(c))return;S.money-=c;p.lvl++;toast(`🔨 ${P.ad} genişletildi: ${penCap(pid)} hayvan kapasitesi.`);S.animals.forEach(a=>a.fullWarn=0);refresh()}
+function buyAuto(pid){const p=S.pens[pid],P=PENS[pid];if(p.auto)return;if(!canPay(P.autoCost))return;S.money-=P.autoCost;p.auto=1;toast(`🚰 ${P.ad} için otomatik suluk kuruldu.`);refresh()}
+function upgradeDepo(){if(S.depo>=DEPO.length-1)return;const c=DEPO_COST[S.depo+1];if(!canPay(c))return;S.money-=c;S.depo++;toast(`📦 Depo büyütüldü: ${depoCap()} birim.`);refresh()}
+function buySagimMak(){if(S.sagimMak)return;if(!canPay(SAGIM_MAK))return;S.money-=SAGIM_MAK;S.sagimMak=1;toast('⚙️ Sağım makinesi kuruldu: %30 daha fazla süt!');refresh()}
+function hire(k){const w=WK[k];if(S.wk[k]>=w.max)return;if(!canPay(w.ucret))return;S.money-=w.ucret;S.wk[k]++;toast(`${w.e} Yeni ${w.ad.toLowerCase()} işe başladı!`);syncHumans();refresh()}
+function fire(k){if(S.wk[k]<=0)return;S.wk[k]--;toast(`${WK[k].e} Bir ${WK[k].ad.toLowerCase()} işten ayrıldı.`);syncHumans();refresh()}
+
+/* ================= görevler ================= */
+const Q=[
+  {t:'Pazardan 3 tavuk al',c:()=>cnt('tavuk')>=3,p:()=>`${Math.min(3,cnt('tavuk'))}/3`,r:150},
+  {t:'Kümesin yemliğini doldur (Bölmeler)',c:()=>S.stats.fed>=1,r:50},
+  {t:'10 yumurta topla',c:()=>S.stats.eggs>=10,p:()=>`${Math.min(10,S.stats.eggs)}/10`,r:100},
+  {t:'Depodan ürün sat',c:()=>S.stats.sold>=100,p:()=>`${tl(Math.min(100,S.stats.sold))}/100₺`,r:150},
+  {t:'Kümese bir kaz al',c:()=>cnt('kaz')>=1,r:150},
+  {t:'Ağılı aç (Geliştir)',c:()=>S.pens.agil.un,r:300},
+  {t:'Bir koyun ya da keçi sağ',c:()=>S.stats.milkings>=1,r:250},
+  {t:'İlk elemanını işe al',c:()=>Object.values(S.wk).some(v=>v>0),r:300},
+  {t:'Bir koyunun yününü kırk',c:()=>S.stats.wool>=1,r:300},
+  {t:'Ahırı aç',c:()=>S.pens.ahir.un,r:600},
+  {t:'İlk ineğini al',c:()=>cnt('inek')>=1,r:600},
+  {t:'Bir yavru doğsun',c:()=>S.stats.born>=1,r:800},
+  {t:'At Padokunu aç',c:()=>S.pens.padok.un,r:1000},
+  {t:'İlk atını al',c:()=>cnt('at')>=1,r:1500},
+  {t:'25 hayvana ulaş',c:()=>S.animals.length>=25,p:()=>`${S.animals.length}/25`,r:3000},
+  {t:'50.000₺ biriktir',c:()=>S.money>=50000,p:()=>`${tl(S.money)}`,r:5000},
+];
+function checkQuest(){while(S.q<Q.length&&Q[S.q].c()){const q=Q[S.q];S.money+=q.r;S.q++;toast(`🎯 Görev tamam: ${q.t} · Ödül +${tl(q.r)}`)}
+  const el=$('hQuest');if(S.q>=Q.length){el.innerHTML='🏆 Tüm görevler tamam! Çiftliğin harika.';return}const q=Q[S.q];el.innerHTML=`🎯 ${esc(q.t)}${q.p?` <small>(${q.p()})</small>`:''} <small>· +${tl(q.r)}</small>`}
+
+/* ================= arayüz ================= */
+let SEL=null,UI={p:null,tab:null},pdown=false;
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;const T=$('toasts');T.appendChild(t);while(T.children.length>3)T.firstChild.remove();setTimeout(()=>t.remove(),3200)}
+const floats=[];
+function floatWorld(p,txt){const el=document.createElement('div');el.className='ft';el.textContent=txt;$('icons').appendChild(el);floats.push({el,p:p.clone(),t:0})}
+function floatAt(a,txt){floatWorld(new THREE.Vector3(a.x,(a._v?a._v.R.h:1)+.3,a.z),txt)}
+function bar(v,max=100,col){const p=clamp(v/max*100,0,100);const c=col||(p<25?'#c0392b':p<50?'#d99a1e':'#3f7d2c');return `<div class="bar"><i style="width:${p}%;background:${c}"></i></div>`}
+function setHTML(el,h){if(el._h!==h){el._h=h;el.innerHTML=h}}
+function refresh(){updateHUD();if(UI.p)renderSheet();if(SEL)renderCard()}
+function updateHUD(){
+  $('hMoney').textContent=tl(S.money);const h=hour(),hh=Math.floor(h),mm=Math.floor((h-hh)*60/10)*10;
+  $('hTime').textContent=`${isNight()?'🌙':h<8||h>18.5?'🌅':'☀️'} Gün ${S.day} · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  $('hDepo').textContent=`📦 ${Math.floor(depoUsed())}/${depoCap()}`;
+  const al=[];
+  for(const id of PEN_IDS){const p=S.pens[id],P=PENS[id];if(!p.un||!penCount(id))continue;if(p.feed<AT[S.animals.find(a=>AT[a.t].pen===id).t].ogun)al.push(`⚠️ ${P.ad}: yemlik boş`);else if(p.water<P.waterCap*.1)al.push(`⚠️ ${P.ad}: su bitti`)}
+  const sick=S.animals.filter(a=>a.sick).length;if(sick)al.push(`🤒 ${sick} hasta hayvan`);
+  if(depoUsed()>=depoCap())al.push('📦 Depo dolu: ürün sat');
+  const html=al.slice(0,3).map(t=>`<div class="chip" data-act="open" data-p="pens">${t}</div>`).join('');setHTML($('alerts'),html);
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===UI.p));
+}
+function openSheet(p,tab){UI.p=p;UI.tab=tab||({shop:'animals',depo:'sell',pens:null,staff:null,up:null})[p];deselect();$('sheet').classList.remove('hidden');$('shBody').scrollTop=0;renderSheet();updateHUD()}
+function closeSheet(){UI.p=null;$('sheet').classList.add('hidden');updateHUD()}
+function tabs(list){return list.map(([k,l])=>`<button class="${UI.tab===k?'on':''}" data-act="tab" data-t="${k}">${l}</button>`).join('')}
+function penStatus(id){const p=S.pens[id],P=PENS[id];const food=AT[P.feed==='tahil'?'tavuk':'koyun'];
+  return `<div class="bars"><div><label><span>${FEED[P.feed].e} Yemlik</span><span>${f1(p.feed)}/${P.feedCap} kg</span></label>${bar(p.feed,P.feedCap)}</div><div><label><span>💧 Su</span><span>${Math.round(p.water)}/${P.waterCap} L</span></label>${bar(p.water,P.waterCap,'#3a87b8')}</div></div>`}
+function penCardHTML(id,full=true){
+  const p=S.pens[id],P=PENS[id];
+  if(!p.un)return `<div class="item"><div class="ie">🔒</div><div class="ib"><b>${P.ad}</b><small>${P.ad==='Kümes'?'':'Açınca: '+[...new Set(Object.keys(AT).filter(t=>AT[t].pen===id).map(t=>AT[t].ad))].join(', ')}</small></div><button class="btn gold" data-act="unlock" data-id="${id}" ${S.money<P.unlock?'disabled':''}>Aç ${tl(P.unlock)}</button></div>`;
+  const ready=S.animals.filter(a=>AT[a.t].pen===id&&a.rd&&!a.sick).length,wool=S.animals.filter(a=>AT[a.t].pen===id&&a.wr).length,eggs=p.eggs+p.geggs;
+  return `<div class="item" style="display:block"><div style="display:flex;align-items:center;gap:10px"><div class="ie">${P.e}</div><div class="ib"><b>${P.ad}</b><small>${penCount(id)}/${penCap(id)} hayvan${p.auto?' · 🚰 otomatik suluk':''}</small></div>${full?`<button class="btn alt" data-act="focus" data-id="${id}">📍 Git</button>`:''}</div>
+  ${penStatus(id)}
+  <div class="btns"><button class="btn" data-act="fill" data-id="${id}">${FEED[P.feed].e} Yem koy</button>${p.auto?'':`<button class="btn" style="background:#3a87b8" data-act="water" data-id="${id}">💧 Su doldur</button>`}
+  ${id==='kumes'?`<button class="btn gold" data-act="eggs" data-id="${id}" ${eggs?'':'disabled'}>🥚 Topla (${eggs})</button>`:''}
+  ${ready?`<button class="btn gold" data-act="milkall" data-id="${id}">🥛 Hepsini sağ (${ready})</button>`:''}
+  ${wool?`<button class="btn gold" data-act="shearall" data-id="${id}">✂️ Kırk (${wool})</button>`:''}</div>
+  <small style="display:block;margin-top:6px;color:var(--muted)">Ambarda: ${f1(S.feed[P.feed])} kg ${FEED[P.feed].ad.toLowerCase()}</small></div>`}
+function renderSheet(){
+  const p=UI.p;let title='',tb='',body='';
+  if(p==='shop'){title='🏪 Pazar';tb=tabs([['animals','🐄 Hayvanlar'],['feed','🌾 Yem']]);
+    if(UI.tab==='animals'){body=SHOP.map(t=>{const d=AT[t],pid=d.pen,un=S.pens[pid].un,full=penCount(pid)>=penCap(pid);
+      const why=!un?`<small class="bad">🔒 ${PENS[pid].ad} kilitli</small>`:full?`<small class="bad">${PENS[pid].ad} dolu (${penCount(pid)}/${penCap(pid)})</small>`:'';
+      return `<div class="item"><div class="ie">${d.e}</div><div class="ib"><b>${d.ad}${d.genc?' <small style="display:inline">(yavru)</small>':''}</b><small>${PENS[pid].ad} · ${d.bilgi}</small>${why}</div><button class="btn" data-act="buy" data-t="${t}" ${!un||full||S.money<d.fiyat?'disabled':''}>${tl(d.fiyat)}</button></div>`}).join('')}
+    else{body=Object.keys(FEED).map(k=>{const F=FEED[k];return `<div class="sec">${F.e} ${F.ad} · ${F.kim}</div><div class="item"><div class="ib"><b>Ambarda: ${f1(S.feed[k])} kg</b>${bar(S.feed[k],F.cap,'#c79d52')}<small>Ambar kapasitesi ${F.cap} kg</small></div></div>`+F.paket.map((pk,i)=>`<div class="item"><div class="ie">${F.e}</div><div class="ib"><b>${pk[2]} · ${pk[0]} kg</b><small>kg başı ${f1(pk[1]/pk[0])}₺</small></div><button class="btn" data-act="feed" data-k="${k}" data-i="${i}" ${S.money<pk[1]?'disabled':''}>${tl(pk[1])}</button></div>`).join('')}).join('')}}
+  else if(p==='depo'){title='📦 Depo';tb='';
+    body=`<div class="item"><div class="ib"><b>Doluluk: ${Math.floor(depoUsed())}/${depoCap()}</b>${bar(depoUsed(),depoCap(),depoUsed()>=depoCap()?'#c0392b':'#3f7d2c')}<small>Fiyatlar her gün değişir. Ucuz günde bekle, pahalı günde sat!</small></div></div>`;
+    body+=Object.keys(PR).map(k=>{const P=PR[k],n=S.prod[k],pr=price(k),tr=S.pm[k]>1.04?`<span class="up">▲ %${Math.round((S.pm[k]-1)*100)}</span>`:S.pm[k]<.96?`<span class="down">▼ %${Math.round((1-S.pm[k])*100)}</span>`:'<span>—</span>';
+      return `<div class="item"><div class="ie">${P.e}</div><div class="ib"><b>${P.ad}: ${f1(n)} ${P.b}</b><small class="price">${f1(pr)}₺/${P.b} ${tr}</small></div><button class="btn" data-act="sell" data-k="${k}" ${n>0?'':'disabled'}>${n>0?tl(n*pr):'Sat'}</button></div>`}).join('');
+    body+=`<button class="btn gold" style="width:100%;padding:12px" data-act="sellall">💰 Hepsini sat</button>`}
+  else if(p==='pens'){title='🏡 Bölmeler';body=PEN_IDS.map(id=>penCardHTML(id)).join('')}
+  else if(p==='staff'){title='🧑‍🌾 Elemanlar';let w=0;for(const k in WK)w+=WK[k].maas*S.wk[k];
+    body=`<div class="item"><div class="ib"><b>Günlük maaş toplamı: ${tl(w)}</b><small>Maaşlar her gece 00:00'da ödenir. Paran yetmezse eleman işi bırakır.</small></div></div>`+
+    Object.keys(WK).map(k=>{const W=WK[k],n=S.wk[k];return `<div class="item" style="display:block"><div style="display:flex;gap:10px;align-items:center"><div class="ie">${W.e}</div><div class="ib"><b>${W.ad} ${n?`× ${n}`:''}</b><small>${W.is}</small><small>İşe alma ${tl(W.ucret)} · Günlük ${tl(W.maas)}</small></div></div><div class="btns">${n<W.max?`<button class="btn" data-act="hire" data-k="${k}" ${S.money<W.ucret?'disabled':''}>İşe al ${tl(W.ucret)}</button>`:'<button class="btn alt" disabled>En fazla</button>'}${n?`<button class="btn alt" data-act="fire" data-k="${k}">Çıkar</button>`:''}</div></div>`}).join('')}
+  else if(p==='up'){title='🔨 Geliştir';
+    body=`<div class="sec">Bölmeler</div>`+PEN_IDS.map(id=>{const P=PENS[id],s=S.pens[id];if(!s.un)return penCardHTML(id,false);
+      const nx=s.lvl<P.cap.length-1;return `<div class="item" style="display:block"><div style="display:flex;gap:10px;align-items:center"><div class="ie">${P.e}</div><div class="ib"><b>${P.ad} · Seviye ${s.lvl+1}</b><small>Kapasite ${penCap(id)} hayvan${nx?` → ${P.cap[s.lvl+1]}`:' (en büyük)'}</small></div></div><div class="btns">${nx?`<button class="btn" data-act="upgrade" data-id="${id}" ${S.money<P.capCost[s.lvl+1]?'disabled':''}>Genişlet ${tl(P.capCost[s.lvl+1])}</button>`:''}${s.auto?'<button class="btn alt" disabled>🚰 Otomatik suluk var</button>':`<button class="btn alt" data-act="auto" data-id="${id}" ${S.money<P.autoCost?'disabled':''}>🚰 Otomatik suluk ${tl(P.autoCost)}</button>`}</div></div>`}).join('')+
+    `<div class="sec">Çiftlik</div><div class="item"><div class="ie">📦</div><div class="ib"><b>Depo · ${depoCap()} birim</b><small>${S.depo<DEPO.length-1?`Sonraki: ${DEPO[S.depo+1]} birim`:'En büyük depo'}</small></div>${S.depo<DEPO.length-1?`<button class="btn" data-act="depo" ${S.money<DEPO_COST[S.depo+1]?'disabled':''}>${tl(DEPO_COST[S.depo+1])}</button>`:''}</div>
+    <div class="item"><div class="ie">⚙️</div><div class="ib"><b>Sağım Makinesi</b><small>Her sağımda %30 daha fazla süt</small></div>${S.sagimMak?'<button class="btn alt" disabled>Kurulu</button>':`<button class="btn" data-act="sagimmak" ${S.money<SAGIM_MAK?'disabled':''}>${tl(SAGIM_MAK)}</button>`}</div>`}
+  $('shTitle').textContent=title;setHTML($('shTabs'),tb);$('shTabs').classList.toggle('hidden',!tb);
+  setHTML($('shBody'),body);
+}
+// seçili hayvan kartı
+const ring=new THREE.Mesh(new THREE.RingGeometry(.8,1,32),new THREE.MeshBasicMaterial({color:0xffd34d,transparent:true,opacity:.85,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.visible=false;scene.add(ring);
+function selectAnimal(id){SEL=id;if(UI.p)closeSheet();ring.visible=true;$('card').classList.remove('hidden');renderCard()}
+function deselect(){SEL=null;ring.visible=false;$('card').classList.add('hidden');SELPEN=null}
+let SELPEN=null;
+function selectPen(id){deselect();if(UI.p)closeSheet();SELPEN=id;$('card').classList.remove('hidden');renderCard()}
+function renderCard(){
+  let h='';
+  if(SELPEN){const P=PENS[SELPEN];h=`<div class="ch"><span class="ce">${P.e}</span><div><b>${P.ad}</b><small>${S.pens[SELPEN].un?penCount(SELPEN)+'/'+penCap(SELPEN)+' hayvan':'Kilitli'}</small></div><button class="x" data-act="desel">✕</button></div>${penCardHTML(SELPEN,false).replace('class="item"','class="item" style="display:block;background:none;padding:6px 0 0;margin:0"')}`}
+  else{const a=S.animals.find(a=>a.id===SEL);if(!a)return deselect();const d=AT[a.t];
+    const days=Math.floor(a.ag/DAY);
+    h=`<div class="ch"><span class="ce">${d.e}</span><div><b>${esc(a.n)}</b><small>${d.ad} · ${days} günlük${a.sick?' · <span class="down">🤒 Hasta</span>':''}</small></div><button class="x" data-act="desel">✕</button></div>
+    <div class="bars"><div><label><span>🌾 Tokluk</span><span>${Math.round(a.hu)}%</span></label>${bar(a.hu)}</div><div><label><span>💧 Su</span><span>${Math.round(a.th)}%</span></label>${bar(a.th,100)}</div>
+    <div><label><span>❤️ Sağlık</span><span>${Math.round(a.hp)}%</span></label>${bar(a.hp)}</div>`;
+    if(d.urun)h+=`<div><label><span>${PR[d.urun].e} ${d.sagim?'Süt':'Yumurta'}</span><span>${a.rd?'Hazır!':Math.round(a.pr/d.aralik*100)+'%'}</span></label>${bar(a.rd?1:a.pr,a.rd?1:d.aralik,'#d99a1e')}</div>`;
+    if(d.yun)h+=`<div><label><span>🧶 Yün</span><span>${a.wr?'Hazır!':Math.round(a.wp/d.yun.aralik*100)+'%'}</span></label>${bar(a.wr?1:a.wp,a.wr?1:d.yun.aralik,'#b98ee6')}</div>`;
+    if(d.gelir)h+=`<div><label><span>🏇 Binicilik</span><span>${Math.round(a.pr/d.gelir.aralik*100)}%</span></label>${bar(a.pr,d.gelir.aralik,'#d99a1e')}</div>`;
+    if(d.buyur)h+=`<div><label><span>🌱 Büyüme</span><span>${Math.round(a.ag/d.buyume*100)}%</span></label>${bar(a.ag,d.buyume,'#7ab648')}</div>`;
+    if(d.yavru)h+=`<div><label><span>🍼 Yavru</span><span>${Math.round(a.br/d.dogum*100)}%</span></label>${bar(a.br,d.dogum,'#e58fb0')}</div>`;
+    h+=`</div><div class="btns">`;
+    if(d.sagim)h+=`<button class="btn gold" data-act="milk" ${a.rd&&!a.sick?'':'disabled'}>🥛 Sağ</button>`;
+    if(d.yun)h+=`<button class="btn gold" data-act="shear" ${a.wr?'':'disabled'}>✂️ Kırk</button>`;
+    if(a.sick)h+=`<button class="btn red" data-act="heal">🧑‍⚕️ Veteriner ${tl(VET_COST)}</button>`;
+    h+=`<button class="btn alt" data-act="penof">${PENS[d.pen].e} Bölme</button><button class="btn alt" data-act="sellan" data-c="0">Sat ${tl(animalValue(a))}</button></div>`}
+  setHTML($('card'),h);
+}
+function modal(html){$('modal').innerHTML=`<div class="mbox">${html}</div>`;$('modal').classList.remove('hidden')}
+function closeModal(){$('modal').classList.add('hidden')}
+function welcome(){modal(`<h2>🐄 Bereket Çiftliği'ne hoş geldin!</h2><p>Elinde <b>600₺</b>, bir kümes ve biraz tahıl var. Hayvan al, besle, ürünlerini topla, pazarda sat ve çiftliğini büyüt!</p>
+<ul><li>🐔 Önce <b>Pazar</b>'dan tavuk al</li><li>🌾 <b>Bölmeler</b>'den yemliğe yem koy, suyu doldur</li><li>🥛 Hayvanın üstünde simge çıkınca ona dokun: sağ, kırk, topla</li><li>💰 <b>Depo</b>'dan ürünleri sat</li><li>🧑‍🌾 Para biriktirince <b>eleman</b> al, işleri onlar yapsın</li></ul>
+<p style="color:var(--muted);font-size:13px">Tek parmakla kamerayı döndür, iki parmakla yaklaştır ve kaydır. Bir oyun günü 4 dakika sürer. Oyun kendini kaydeder.</p>
+<button class="btn" style="width:100%;padding:13px;margin-top:8px" data-act="startgame">Başlayalım! 🚜</button>`)}
+function settings(){modal(`<h2>⚙️ Ayarlar</h2>
+<div class="stat"><span>Grafik</span><span><button class="btn ${HQ?'':'alt'}" data-act="q" data-v="1">Yüksek</button> <button class="btn ${HQ?'alt':''}" data-act="q" data-v="0">Düşük</button></span></div>
+<p style="font-size:13px;color:var(--muted)">Telefon ısınır ya da oyun kasarsa <b>Düşük</b> seç.</p>
+<div class="stat"><span>Toplam hayvan</span><b>${S.animals.length}</b></div><div class="stat"><span>Toplanan yumurta</span><b>${S.stats.eggs}</b></div><div class="stat"><span>Sağılan süt</span><b>${f1(S.stats.milk)} L</b></div><div class="stat"><span>Doğan yavru</span><b>${S.stats.born}</b></div><div class="stat"><span>Toplam satış</span><b>${tl(S.stats.sold)}</b></div>
+<div class="btns" style="margin-top:14px"><button class="btn alt" data-act="closemodal">Kapat</button><button class="btn red" data-act="reset" data-c="0">Yeni oyun</button></div>`)}
+
+document.addEventListener('pointerdown',e=>{if(e.target.closest('.sheet,.card'))pdown=true},true);
+document.addEventListener('pointerup',()=>{setTimeout(()=>pdown=false,50)},true);
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const D=b.dataset,a=S.animals.find(x=>x.id===SEL);
+  switch(D.act){
+    case'open':UI.p===D.p?closeSheet():openSheet(D.p);break;
+    case'close':closeSheet();break;case'tab':UI.tab=D.t;renderSheet();break;
+    case'buy':buyAnimal(D.t);break;case'feed':buyFeed(D.k,+D.i);break;
+    case'sell':{const m=sell(D.k);if(m)toast(`💰 +${tl(m)}`);refresh();break}
+    case'sellall':sellAll(0,false);break;
+    case'fill':fillFeed(D.id);break;case'water':fillWater(D.id);break;case'eggs':collectEggs(D.id);break;
+    case'milkall':{let n=0;for(const x of S.animals)if(AT[x.t].pen===D.id&&x.rd&&!x.sick){const before=x.rd;milk(x,true);if(!x.rd&&before)n++}if(!n)toast('📦 Depo dolu!');refresh();break}
+    case'shearall':{for(const x of S.animals)if(AT[x.t].pen===D.id&&x.wr)shear(x,true);refresh();break}
+    case'focus':closeSheet();focusPen(D.id);selectPen(D.id);break;
+    case'unlock':unlockPen(D.id);break;case'upgrade':upgradePen(D.id);break;case'auto':buyAuto(D.id);break;
+    case'depo':upgradeDepo();break;case'sagimmak':buySagimMak();break;
+    case'hire':hire(D.k);break;case'fire':fire(D.k);break;
+    case'desel':deselect();break;
+    case'milk':if(a)milk(a);break;case'shear':if(a)shear(a);break;case'heal':if(a)heal(a,VET_COST);break;
+    case'penof':if(a){const p=AT[a.t].pen;selectPen(p)}break;
+    case'sellan':if(a){if(D.c==='0'){b.dataset.c='1';b.textContent=`Emin misin? ${tl(animalValue(a))}`;b.classList.remove('alt');b.classList.add('red');pdown=true;setTimeout(()=>pdown=false,2500)}else sellAnimal(a)}break;
+    case'icon':{const x=S.animals.find(z=>z.id===+D.id);if(!x)break;if(x.sick){selectAnimal(x.id)}else if(x.rd)milk(x);else if(x.wr)shear(x);else selectAnimal(x.id);break}
+    case'penicon':if(D.w==='eggs')collectEggs(D.id);else if(D.w==='feed')fillFeed(D.id);else fillWater(D.id);break;
+    case'settings':settings();break;case'closemodal':closeModal();break;
+    case'quests':modal(`<h2>🎯 Görevler</h2>${Q.map((q,i)=>`<div class="stat"><span>${i<S.q?'✅':i===S.q?'👉':'⬜'} ${esc(q.t)}</span><b>+${tl(q.r)}</b></div>`).join('')}<button class="btn" style="width:100%;margin-top:12px" data-act="closemodal">Tamam</button>`);break;
+    case'q':S.quality=+D.v;save();location.reload();break;
+    case'reset':if(D.c==='0'){b.dataset.c='1';b.textContent='Her şey silinecek, emin misin?'}else{try{localStorage.removeItem(KEY)}catch(e){}S=newState();S.welcomed=1;save();location.reload()}break;
+    case'startgame':S.welcomed=1;save();closeModal();break;
+  }
+});
+
+/* ================= kamera odaklama & dokunma ================= */
+let tween=null;
+function camTo(tx,tz,dist,dir){const from={t:controls.target.clone(),c:camera.position.clone()};const t=new THREE.Vector3(tx,0,tz);
+  const off=dir?dir.clone():camera.position.clone().sub(controls.target).normalize();if(dir===undefined){}off.normalize().multiplyScalar(dist);tween={from,to:{t,c:t.clone().add(off)},k:0}}
+function focusPen(pid){const P=PENS[pid];const dist=Math.min(62,Math.max(P.w*1.15/Math.min(1.3,camera.aspect),P.d*1.4)+5);camTo(P.x,P.z,dist,new THREE.Vector3(0,.95,P.front*1.05))}
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();let down=null;
+renderer.domElement.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:performance.now()};tween=null});
+renderer.domElement.addEventListener('pointerup',e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;const tap=Math.hypot(dx,dy)<9&&performance.now()-down.t<450;down=null;if(!tap)return;
+  ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(ndc,camera);
+  const targets=[...pickables];for(const id of PEN_IDS){const o=penObj[id];targets.push(o.feeder,o.trough,o.sign);if(o.nest)targets.push(o.nest)}
+  const hit=ray.intersectObjects(targets,true)[0];
+  if(hit){let o=hit.object;while(o&&o.userData.aid===undefined&&o.userData.pen===undefined)o=o.parent;
+    if(o&&o.userData.aid!==undefined){selectAnimal(o.userData.aid);return}
+    if(o&&o.userData.pen){const id=o.userData.pen;if(!S.pens[id].un){openSheet('up');return}if(o===penObj[id].nest&&S.pens[id].eggs+S.pens[id].geggs>0){collectEggs(id);return}selectPen(id);return}}
+  if(SEL||SELPEN)deselect();if(UI.p)closeSheet()});
+
+/* ================= simgeler (DOM) ================= */
+const penIcons={};
+function iconEl(html,cls,act,data){const el=document.createElement('div');el.className='ic '+(cls||'');el.dataset.act=act;Object.assign(el.dataset,data);el.innerHTML=html;$('icons').appendChild(el);return el}
+function project(p,el){tmpV.copy(p).project(camera);if(tmpV.z>1||Math.abs(tmpV.x)>1.2||Math.abs(tmpV.y)>1.2){el.style.display='none';return false}el.style.display='';el.style.transform=`translate(${(tmpV.x*.5+.5)*innerWidth}px,${(-tmpV.y*.5+.5)*innerHeight}px) translate(-50%,-100%)`;return true}
+function animalIcon(a){if(a.sick)return['🤒','warn'];const d=AT[a.t];if(a.rd)return['🥛',''];if(a.wr)return['✂️',''];if(a.hu<25)return['🌾','warn'];if(a.th<25)return['💧','warn'];return null}
+function updateIcons(){
+  const camD=camera.position.distanceTo(controls.target);
+  for(const a of S.animals){const v=a._v;if(!v)continue;const ic=camD<75?animalIcon(a):null;const sel=a.id===SEL;
+    const key=ic?ic.join():sel?'sel':'';
+    if(key!==v.icKey){v.icKey=key;if(v.ic){v.ic.remove();v.ic=null}
+      if(ic)v.ic=iconEl(ic[0],ic[1],'icon',{id:a.id});else if(sel)v.ic=iconEl(esc(a.n),'name','none',{})}
+    if(v.ic){tmpV.set(a.x,v.R.h*(AT[a.t].genc?.6:1)+.25,a.z);project(tmpV.clone(),v.ic)}}
+  for(const id of PEN_IDS){const p=S.pens[id],o=penObj[id],P=PENS[id];const L=penIcons[id]||(penIcons[id]={});
+    const show=(k,cond,html,pos,cls)=>{if(cond){if(!L[k]||L[k].dataset.h!==html){if(L[k])L[k].remove();L[k]=iconEl(html,cls,'penicon',{id,w:k,h:html})}project(pos,L[k])}else if(L[k]){L[k].remove();L[k]=null}};
+    const has=p.un&&penCount(id)>0;
+    show('eggs',p.un&&p.eggs+p.geggs>0,`🥚 ${p.eggs+p.geggs}`,o.nest?o.nest.position.clone().setY(.9):o.fpos,'');
+    const fe=S.animals.find(a=>AT[a.t].pen===id);
+    show('feed',has&&fe&&p.feed<AT[fe.t].ogun*2,'🌾 Yem koy',o.fpos.clone().setY(1.5),'warn');
+    show('water',has&&!p.auto&&p.water<P.waterCap*.15,'💧 Su koy',o.wpos.clone().setY(1.5),'warn');}
+  for(let i=floats.length-1;i>=0;i--){const f=floats[i];f.t+=1/60;const p=f.p.clone();p.y+=f.t*1.2;project(p,f.el);f.el.style.opacity=String(clamp(1.6-f.t*1.3,0,1));if(f.t>1.3){f.el.remove();floats.splice(i,1)}}
+}
+
+/* ================= gün / gece ================= */
+const C={dTop:new THREE.Color('#3f80cf'),dBot:new THREE.Color('#cfe4f1'),sTop:new THREE.Color('#41558a'),sBot:new THREE.Color('#f2a66b'),nTop:new THREE.Color('#050916'),nBot:new THREE.Color('#141f38')};
+const cT=new THREE.Color(),cB=new THREE.Color();
+function updateSky(){
+  const h=hour();let a;if(h>=6&&h<=20)a=(h-6)/14*Math.PI;else{const hh=h<6?h+24:h;a=Math.PI+(hh-20)/10*Math.PI}
+  const e=Math.sin(a);const dir=new THREE.Vector3(Math.cos(a)*.85,Math.max(e,-.3),-.45).normalize();
+  const day=smooth(0,.22,e),dusk=smooth(-.14,.04,e);
+  cT.copy(C.nTop).lerp(C.sTop,dusk).lerp(C.dTop,day);cB.copy(C.nBot).lerp(C.sBot,dusk).lerp(C.dBot,day);
+  skyU.top.value.copy(cT);skyU.bot.value.copy(cB);skyU.sunDir.value.copy(e>-.05?dir:dir.clone().negate());skyU.glow.value=e>-.05?1:.15;
+  skyU.sunCol.value.setRGB(1,lerp(.55,.92,day),lerp(.3,.8,day));
+  scene.fog.color.copy(cB);renderer.setClearColor(cB);
+  const lt=controls.target;sun.position.set(lt.x+dir.x*90,Math.max(dir.y,.08)*90,lt.z+dir.z*90);sun.target.position.copy(lt);
+  sun.intensity=2.9*smooth(-.03,.15,e);sun.color.setRGB(1,lerp(.62,.95,day),lerp(.42,.85,day));
+  if(e<0){sun.position.set(lt.x-dir.x*90,60,lt.z-dir.z*90);sun.intensity=.35*smooth(.0,-.25,e);sun.color.setRGB(.6,.7,1)}
+  hemi.intensity=lerp(.6,.95,dusk*.35+day*.65);hemi.color.setRGB(lerp(.5,.82,day),lerp(.6,.9,day),lerp(.95,1,day));
+  stars.material.opacity=smooth(.0,-.2,e);
+  const wn=smooth(.15,-.05,e);for(const m of winMats)m.emissiveIntensity=wn*1.4;
+  renderer.toneMappingExposure=lerp(1.25,1.05,day);
+}
+
+/* ================= döngü ================= */
+let last=performance.now(),acc=0,hudT=0,saveT=0,sepT=0;
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  sim(dt,true);
+  const night=isNight();for(const a of S.animals)updateAnimalVis(a,dt,night);
+  sepT+=dt;if(sepT>.1){sepT=0;separate()}
+  updateHumans(dt);
+  // yemlik / su görsel seviyeleri
+  for(const id of PEN_IDS){const o=penObj[id],p=S.pens[id],P=PENS[id];const fl=clamp(p.feed/P.feedCap,0,1),wl=clamp(p.water/P.waterCap,0,1);
+    o.food.scale.y=Math.max(.001,.3*fl);o.food.position.y=.48+.15*fl;o.food.visible=fl>.01;o.water.scale.y=Math.max(.001,.3*wl);o.water.position.y=.36+.15*wl;o.water.visible=wl>.01;
+    if(o.eggs){const n=Math.min(p.eggs,25),g=Math.min(p.geggs,5);o.eggs.forEach((e,i)=>{e.visible=i%7===6?(Math.floor(i/7)<g):(i-Math.floor(i/7)<n)})}}
+  const sa=S.animals.find(a=>a.id===SEL);if(sa&&sa._v){ring.position.set(sa.x,.04,sa.z);const r=AT[sa.t].r*1.4;ring.scale.setScalar(r);ring.material.opacity=.6+Math.sin(now/200)*.25}
+  if(tween){tween.k=Math.min(1,tween.k+dt*1.8);const k=1-Math.pow(1-tween.k,3);controls.target.lerpVectors(tween.from.t,tween.to.t,k);camera.position.lerpVectors(tween.from.c,tween.to.c,k);if(tween.k>=1)tween=null}
+  controls.update();const tg=controls.target;tg.y=0;const L=Math.hypot(tg.x,tg.z);if(L>45){tg.x*=45/L;tg.z*=45/L}
+  if(camera.position.y<getH(camera.position.x,camera.position.z)+2)camera.position.y=getH(camera.position.x,camera.position.z)+2;
+  updateSky();updateIcons();
+  hudT+=dt;if(hudT>.5){hudT=0;updateHUD();checkQuest();if(!pdown){if(UI.p)renderSheet();if(SEL||SELPEN)renderCard()}}
+  saveT+=dt;if(saveT>5){saveT=0;save()}
+  renderer.render(scene,camera);
+}
+
+/* ================= başlat ================= */
+for(const id of PEN_IDS)penObj[id].sign.visible=!S.pens[id].un;
+{const away=Math.min(1800,(Date.now()-(S.savedAt||Date.now()))/1000);
+ if(away>20&&S.animals.length){const m0=S.money,e0=S.stats.eggs;let r=away;while(r>0){const st=Math.min(1,r);sim(st,false);r-=st}
+   setTimeout(()=>toast(`⏳ Sen yokken çiftlik ${Math.round(away/60)} dakika çalıştı.${S.money!==m0?` Kasa: ${S.money>m0?'+':''}${tl(S.money-m0)}`:''}`),800)}}
+for(const a of S.animals)spawnVis(a);
+syncHumans();updateHUD();checkQuest();
+addEventListener('visibilitychange',()=>{if(document.hidden)save();else last=performance.now()});
+addEventListener('pagehide',save);
+window.__farmStarted=true;$('loading').remove();
+if(!S.welcomed)welcome();
+requestAnimationFrame(frame);
+window.__farm={S,AT,PENS,sim,buyAnimal,focusPen,camera,controls};
+</script>
+</body>
+</html>
