@@ -99,6 +99,12 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 #loading{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:linear-gradient(#9cc6e4,#cfe3ef 55%,#6f9a45 55%,#4f7a31);text-align:center}
 .ld-logo{font-size:64px}.ld-t{font-size:28px;font-weight:900;color:#24361a;margin:6px 0}#ldmsg{color:#24361a;font-weight:600}
 .say{font-size:16px;line-height:1.45;background:var(--panel2);border-radius:14px;padding:12px 14px;margin:10px 0}
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.opt{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-weight:700;font-size:14.5px;line-height:1.3}
+.opt:active{background:var(--accent);color:var(--accent-ink)}
+.fd{display:inline-block;font-weight:800;font-size:13px;padding:3px 10px;border-radius:999px;margin-bottom:6px;background:var(--bar-bg)}
+.fd.up{color:#2e8b2e}.fd.down{color:var(--danger)}
+#trHud{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 96px);z-index:6;text-align:center;white-space:normal;max-width:min(80vw,340px);font-size:13px;border-radius:14px}
 .inp{flex:1;min-width:0;font:inherit;font-weight:600;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);user-select:text;-webkit-user-select:text}
 .mgbig{text-align:center;font-weight:800;font-size:22px;margin:12px 0}
 .mgbtn{width:100%;padding:24px;font-size:24px;touch-action:manipulation}
@@ -129,7 +135,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 <div id="card" class="card hidden"></div>
 <div id="sheet" class="sheet hidden"><div class="sh-head"><span id="shTitle"></span><button class="x" data-act="close" aria-label="Kapat">✕</button></div><div class="tabs" id="shTabs"></div><div class="body" id="shBody"></div></div>
 <div id="modal" class="hidden"></div>
-<div id="fade"></div>
+<div id="fade"></div><div id="trHud" class="chip hidden"></div>
 <script>
 setTimeout(function(){if(!window.__farmStarted){var m=document.getElementById('ldmsg');if(m)m.textContent='Yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.'}},25000);
 </script>
@@ -324,7 +330,7 @@ function segHit(ax,ay,az,bx,by,bz,skip){
 const BLD=[]; // çimen dışlama: [x0,x1,z0,z1]
 const VC={x:-10,z:80},YC={x:-78,z:-62},YH=13;
 const YROAD=[[-14,-8],[-14,-28],[-40,-44],[-62,-56],[-78,-62]];
-const PATHS=[[-2,-9,-14,-8,2],[-14,-8,-14,-28,2.4],[-14,-28,-40,-44,2.6],[-40,-44,-62,-56,2.6],[-62,-56,-74,-60,2.6],[-10,62,-10,96,3],[-10,80,0,72.5,2.4],[-10,80,5,87,2.4],[-10,80,-22,86,2.2],[-10,80,18,72,2.6],[-10,70.5,-13.6,70.5,2],[-14,64,-18,62,2],[-10,92,-17.5,95,2],[-10,92,-3.5,100,2],[5,87,18,89,2],[18,89,18,99,2],[0,0,9,3.5,2],[0,0,-24,-2,2.2],[0,0,-2,-10.5,2.2],[0,0,20,-5,2.4],[0,0,6,9,2.2],[0,0,-8.2,4,2],[0,0,-8,12,2.6],[-8,12,-20,18,2],[-8,12,-9,40,3],[-9,40,-10,62,3],[-9,40,-4,41,2.6]];
+const PATHS=[[-2,-9,-14,-8,2],[-14,-8,-14,-28,2.4],[-14,-28,-40,-44,2.6],[-40,-44,-62,-56,2.6],[-62,-56,-74,-60,2.6],[-10,62,-10,96,3],[-10,80,0,72.5,2.4],[-10,80,5,87,2.4],[-10,80,-22,86,2.2],[-10,80,18,72,2.6],[-10,70.5,-13.6,70.5,2],[-14,64,-18,62,2],[-10,92,-17.5,95,2],[-10,92,-3.5,100,2],[5,87,18,89,2],[18,89,18,99,2],[0,0,9,3.5,2],[0,0,-24,-2,2.2],[0,0,-2,-10.5,2.2],[0,0,20,-5,2.4],[0,0,6,9,2.2],[0,0,-8.2,4,2],[0,0,-8,12,2.6],[-8,12,-20,18,2],[-8,12,-9,40,3],[-9,40,-10,62,3],[-9,40,-4,41,2.6],[-9.4,37,-17.5,37,3]];
 const FIELD={x0:-44,x1:-18,z0:27,z1:47};
 function segDist(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,t=clamp(((px-ax)*dx+(pz-az)*dz)/(dx*dx+dz*dz),0,1);return Math.hypot(px-ax-dx*t,pz-az-dz*t)}
 function pathD(x,z){let m=1e9;for(const p of PATHS)m=Math.min(m,segDist(x,z,p[0],p[1],p[2],p[3])-p[4]+2.2);return Math.min(m,Math.hypot(x,z)-5)}
@@ -514,15 +520,6 @@ const MARKET={x0:-4,x1:8,z0:36,z1:46,h:3.8,doors:[{side:'w',c:41,w:6,h:3}]};
 function signTex(lines,bg='#efe2c4',one=0,fg='#3b2816'){const c=document.createElement('canvas');c.width=512;c.height=one?128:256;const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,512,c.height);x.strokeStyle='rgba(60,40,20,.8)';x.lineWidth=12;x.strokeRect(6,6,500,c.height-12);x.fillStyle=fg;x.textAlign='center';x.textBaseline='middle';
   if(one){x.font='bold 70px system-ui,sans-serif';x.fillText(lines[0],256,68)}else{x.font='bold 64px system-ui,sans-serif';x.fillText(lines[0],256,90);x.font='bold 54px system-ui,sans-serif';x.fillText(lines[1]||'',256,175)}
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=MAXANI;return t}
-// --- Traktör (süs) ---
-{const g=new THREE.Group();const gr=M('#2f7d32',.45,{metalness:.3}),bk=M('#1d1d1d',.8),yl=M('#e8c21c',.5,{metalness:.3}),gl=new THREE.MeshStandardMaterial({color:'#9fc3d6',roughness:.05,metalness:.2,transparent:true,opacity:.45});
- part(G.box,gr,1.8,.8,1,.6,1.15,0,g);part(G.box,gr,1.4,.5,.9,.5,1.65,0,g);part(G.box,M('#bfbfbf',.3,{metalness:.8}),.08,.5,.7,1.52,1.15,0,g);
- part(G.box,gr,1.2,.3,1.4,-.6,1.1,0,g);
- const cab=new THREE.Group();cab.position.set(-.55,1.25,0);g.add(cab);for(const [x,z] of[[.55,.6],[.55,-.6],[-.55,.6],[-.55,-.6]])part(G.box,bk,.06,1.4,.06,x,.7,z,cab);part(G.box,gr,1.3,.08,1.4,0,1.42,0,cab);part(G.box,gl,1.1,1.2,1.2,0,.7,0,cab);
- part(G.cyl,M('#555',.4,{metalness:.8}),.05,.9,.05,1.1,2.2,.3,g);
- const tyre=new THREE.CylinderGeometry(1,1,1,24);for(const [x,z,r,w] of[[-.75,.78,.78,.42],[-.75,-.78,.78,.42],[1.05,.62,.45,.3],[1.05,-.62,.45,.3]]){const t=new THREE.Mesh(tyre,bk);t.scale.set(r,w,r);t.rotation.x=Math.PI/2;t.position.set(x,r,z);g.add(t);const h=new THREE.Mesh(tyre,yl);h.scale.set(r*.55,w+.02,r*.55);h.rotation.x=Math.PI/2;h.position.set(x,r,z);g.add(h)}
- part(G.box,gr,.6,.06,.5,-.6,2.75,0,g);
- g.position.set(-12,0,9.6);g.rotation.y=.15;g.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true});scene.add(g);addCol(-13.4,8.5,-10.6,10.7,2.6);BLD.push([-13.5,-10.5,8.4,10.8]);}
 // gölet
 {const pg=new THREE.CircleGeometry(6,48);pg.rotateX(-Math.PI/2);const pond=new THREE.Mesh(pg,new THREE.MeshStandardMaterial({color:'#3a6c84',roughness:.05,metalness:.3,transparent:true,opacity:.9}));pond.position.set(30,.06,15);pond.receiveShadow=true;pond.scale.set(1,1,.75);scene.add(pond);
  const sh=new THREE.Mesh(new THREE.RingGeometry(5.9,6.9,48),M('#8a7650',1));sh.rotation.x=-Math.PI/2;sh.position.set(30,.04,15);sh.scale.set(1,.75,1);scene.add(sh);
@@ -694,13 +691,9 @@ function bladeGeo(n,hgt,wd){const v=[],c=[];for(let k=0;k<n;k++){const a=k*Math.
     const big=fbm(x*.1,z*.1)>.47;const sc=rand(.7,1.5)*(big?1.35:1);p.set(x,getH(x,z),z);e.set(0,rand(6.3),0);q.setFromEuler(e);s.set(sc,sc*rand(.8,1.4),sc);
     m4.compose(p,q,s);im.setMatrixAt(n,m4);c.setHSL(rand(.2,.28),rand(.45,.65),rand(.28,.42));im.setColorAt(n,c);n++}
   im.count=n;im.receiveShadow=false;im.frustumCulled=false;scene.add(im);
-  // buğday tarlası
-  const W=HQ?(MOBILE?4500:7000):2000;const wh=new THREE.InstancedMesh(bladeGeo(6,1.05,.03),windMat(),W);n=0;
-  for(let x=FIELD.x0+.6;x<FIELD.x1-.4&&n<W;x+=.32)for(let z=FIELD.z0+.5;z<FIELD.z1-.4&&n<W;z+=rand(.3,.55)){if(Math.sin(x*3.2)<-.2)continue;p.set(x+rand(-.06,.06),getH(x,z),z);e.set(0,rand(6.3),0);q.setFromEuler(e);const sc=rand(.85,1.15);s.set(sc,sc,sc);m4.compose(p,q,s);wh.setMatrixAt(n,m4);c.setHSL(rand(.11,.14),rand(.55,.7),rand(.48,.6));wh.setColorAt(n,c);n++}
-  wh.count=n;wh.receiveShadow=false;wh.frustumCulled=false;scene.add(wh);
   // tarla çiti
   const fp=new THREE.InstancedMesh(new THREE.CylinderGeometry(.06,.07,1.1,6),M('#7b5a3a'),200);let k=0;const mm=new THREE.Matrix4();
-  for(let x=FIELD.x0;x<=FIELD.x1;x+=2.6){for(const z of[FIELD.z0,FIELD.z1]){mm.makeTranslation(x,.55,z);fp.setMatrixAt(k++,mm)}}for(let z=FIELD.z0;z<=FIELD.z1;z+=2.6){for(const x of[FIELD.x0,FIELD.x1]){mm.makeTranslation(x,.55,z);fp.setMatrixAt(k++,mm)}}fp.count=k;fp.castShadow=true;scene.add(fp);
+  for(let x=FIELD.x0;x<=FIELD.x1;x+=2.6){for(const z of[FIELD.z0,FIELD.z1]){mm.makeTranslation(x,.55,z);fp.setMatrixAt(k++,mm)}}for(let z=FIELD.z0;z<=FIELD.z1;z+=2.6){for(const x of[FIELD.x0,FIELD.x1]){if(x===FIELD.x1&&z>32.5&&z<41.5)continue;mm.makeTranslation(x,.55,z);fp.setMatrixAt(k++,mm)}}fp.count=k;fp.castShadow=true;scene.add(fp);
 }
 
 /* ================= çitler, yemlik, suluk ================= */
@@ -873,32 +866,52 @@ function makeModel(t,c){switch(t){case'inek':return mkCow(c,0);case'buzagi':retu
 
 
 /* ================= insan modeli ================= */
+/* ================= insan modeli (detaylı) ================= */
+const GP=(()=>{const tp=[[0,-.06],[.12,-.06],[.15,0],[.15,.1],[.135,.24],[.13,.32],[.15,.42],[.185,.52],[.19,.57],[.15,.63],[.06,.67],[0,.675]].map(p=>new THREE.Vector2(p[0],p[1]));
+  const sp=[[0,.02],[.2,.02],[.27,-.3],[.3,-.62],[0,-.62]].map(p=>new THREE.Vector2(p[0],p[1]));
+  return {torso:new THREE.LatheGeometry(tp,20),skirt:new THREE.LatheGeometry(sp,20),limb:new THREE.CylinderGeometry(1,.8,1,14),joint:new THREE.SphereGeometry(1,14,10),ring:new THREE.TorusGeometry(1,.14,6,18),head:new THREE.SphereGeometry(1,26,20)}})();
+const SKINS=['#e8b896','#d9a77f','#c48b66','#a8704e','#f0c8a8'];
 function mkPerson(o={}){
-  const g=new THREE.Group(),R={g,kind:'human',ph:0};
-  const skin=M(o.skin||'#d9a77f',.7),shirt=o.plaid?TMat('shirt',{roughness:.9}):M(o.shirt||'#3a6ea5',.85),pants=M(o.pants||'#35557a',.9),boot=M('#3b2a1d',.75),hair=M(o.hair||'#3a2a1e',.9);
+  const g=new THREE.Group(),R={g,kind:'human',ph:0,blink:rand(3)};
+  const skin=M(o.skin||'#d9a77f',.62),shirt=o.plaid?TMat('shirt',{roughness:.9}):M(o.shirt||'#3a6ea5',.85),pants=M(o.pants||'#35557a',.9),boot=M(o.shoe||'#3b2a1d',.6),sole=M('#1e1814',.8),hair=M(o.hair||'#3a2a1e',.85);
   const hips=new THREE.Group();hips.position.y=.95;g.add(hips);R.hips=hips;
-  part(G.sph,pants,.15,.13,.2,0,0,0,hips);if(o.skirt)part(G.cone,M(o.skirt,.9),.27,.72,.27,0,-.32,0,hips);bake(hips);
+  part(G.sph,pants,.13,.11,.18,0,0,0,hips);part(G.cyl,M(o.belt||'#3a2a1c',.5),.15,.05,.19,0,.06,0,hips);part(G.box,M('#c9b27a',.3,{metalness:.7}),.02,.04,.05,.15,.06,0,hips);
+  if(o.skirt)part(GP.skirt,M(o.skirt,.9),.75,1,1,0,.02,0,hips);bake(hips);
   R.leg=[];R.knee=[];
-  for(const s of[1,-1]){const th=new THREE.Group();th.position.set(0,-.03,s*.1);hips.add(th);part(G.cap,pants,.075,.153,.075,0,-.23,0,th);bake(th);
-    const kn=new THREE.Group();kn.position.y=-.46;th.add(kn);part(G.cap,pants,.066,.147,.066,0,-.22,0,kn);part(G.box,boot,.26,.12,.12,.05,-.44,0,kn);part(G.cyl,boot,.075,.14,.075,0,-.37,0,kn);bake(kn);R.leg.push(th);R.knee.push(kn)}
+  for(const s of[1,-1]){const th=new THREE.Group();th.position.set(0,-.03,s*.095);hips.add(th);
+    part(GP.joint,pants,.085,.085,.085,0,0,0,th);part(GP.limb,pants,.085,.43,.085,0,-.215,0,th);bake(th);
+    const kn=new THREE.Group();kn.position.y=-.44;th.add(kn);
+    part(GP.joint,pants,.066,.066,.066,0,0,0,kn);part(GP.limb,pants,.066,.4,.066,0,-.2,0,kn);part(GP.limb,boot,.062,.12,.062,0,-.4,0,kn);
+    part(G.sph,boot,.13,.065,.068,.055,-.455,0,kn);part(G.box,sole,.25,.025,.12,.05,-.505,0,kn);bake(kn);R.leg.push(th);R.knee.push(kn)}
   const torso=new THREE.Group();torso.position.y=.04;hips.add(torso);R.torso=torso;
-  part(G.cap,shirt,.17,.2,.15,0,.3,0,torso,0,0,0);part(G.sph,shirt,.19,.13,.22,0,.5,0,torso);
-  if(o.overall){part(G.box,pants,.04,.3,.24,.15,.27,0,torso);part(G.box,pants,.035,.36,.04,.07,.48,.09,torso,0,0,-.35);part(G.box,pants,.035,.36,.04,.07,.48,-.09,torso,0,0,-.35);part(G.sph,M('#c9c1a8',.3,{metalness:.6}),.02,.02,.02,.17,.38,.09,torso);part(G.sph,M('#c9c1a8',.3,{metalness:.6}),.02,.02,.02,.17,.38,-.09,torso)}
-  if(o.apron)part(G.box,M(o.apron,.9),.03,.55,.3,.17,.15,0,torso);
+  part(GP.torso,shirt,.72,1,1.12,0,0,0,torso);
+  if(o.plaid||o.collar)part(G.box,shirt,.08,.05,.2,.08,.62,0,torso,0,0,.4);
+  for(let i=0;i<4&&!o.overall&&!o.apron;i++)part(G.sph,M('#efe8d8',.4),.012,.012,.012,.112,.18+i*.11,0,torso);
+  if(o.overall){part(G.box,pants,.04,.3,.24,.11,.28,0,torso);for(const s of[1,-1]){part(G.box,pants,.03,.4,.045,.05,.48,s*.085,torso,0,0,-.3);part(G.sph,M('#c9c1a8',.3,{metalness:.6}),.02,.02,.02,.135,.4,s*.09,torso)}}
+  if(o.apron)part(G.box,M(o.apron,.9),.03,.6,.3,.13,.15,0,torso);
+  if(o.vest)part(GP.torso,M(o.vest,.85),.74,.82,1.14,0,.12,0,torso);
   bake(torso);
-  const head=new THREE.Group();head.position.set(0,.66,0);torso.add(head);R.head=head;
-  part(G.cyl,skin,.055,.12,.055,0,-.04,0,head);part(G.sph,skin,.115,.135,.11,0,.1,0,head);part(G.sph,skin,.03,.035,.025,.115,.08,0,head);
-  part(G.sph,skin,.025,.04,.02,0,.1,.11,head);part(G.sph,skin,.025,.04,.02,0,.1,-.11,head);eyes(head,.1,.13,.042,.016);
-  part(G.box,hair,.03,.012,.04,.105,.165,.045,head);part(G.box,hair,.03,.012,.04,.105,.165,-.045,head);
-  if(o.beard)part(G.sph,hair,.08,.07,.1,.06,.02,0,head);
-  if(o.scarf){const sm=M(o.scarf,.9);part(G.sph,sm,.135,.15,.128,-.01,.11,0,head);part(G.cone,sm,.15,.22,.15,-.02,-.06,0,head)}else part(G.sph,hair,.12,.1,.115,-.015,.15,0,head);
-  if(o.glasses){const gm=M('#222',.3);part(G.box,gm,.02,.04,.07,.115,.13,.045,head);part(G.box,gm,.02,.04,.07,.115,.13,-.045,head)}
-  if(o.hat==='straw'){const hm=M('#d8c08a',.95);part(G.cyl,hm,.27,.025,.27,0,.2,0,head);part(G.cyl,hm,.13,.13,.13,0,.27,0,head);part(G.cyl,M('#7b2d26'),.135,.03,.135,0,.23,0,head)}
-  else if(o.hat==='cap'){const hm=M(o.capCol||'#2f6b3a',.8);part(G.sph,hm,.125,.08,.12,0,.2,0,head);part(G.box,hm,.15,.015,.2,.13,.17,0,head)}
+  const head=new THREE.Group();head.position.set(0,.665,0);torso.add(head);R.head=head;
+  part(GP.limb,skin,.052,.11,.052,0,-.02,0,head);
+  part(GP.head,skin,.1,.122,.096,0,.115,0,head);part(GP.head,skin,.078,.06,.08,.026,.04,0,head);
+  part(G.cone,skin,.022,.05,.026,.105,.098,0,head,0,0,-1.75);part(G.sph,skin,.018,.014,.03,.1,.075,0,head);
+  for(const s of[1,-1]){part(G.sph,skin,.018,.03,.012,-.005,.105,s*.097,head);
+    part(G.sph,M('#f4f1ea',.3),.016,.014,.016,.083,.125,s*.037,head);part(G.sph,M(o.eye||'#3b2a1a',.2),.009,.011,.011,.096,.125,s*.037,head);part(G.sph,M('#0c0a08',.1),.004,.006,.006,.1015,.125,s*.037,head);
+    part(G.box,hair,.012,.009,.036,.093,.152,s*.038,head,s*.12)}
+  part(G.box,M(o.lip||'#a8544a',.5),.01,.008,.036,.095,.057,0,head);part(G.sph,M(o.cheek||'#dda08a',.8),.008,.012,.016,.088,.088,.056,head);part(G.sph,M(o.cheek||'#dda08a',.8),.008,.012,.016,.088,.088,-.056,head);
+  if(o.beard){part(G.sph,hair,.07,.065,.088,.04,.035,0,head);part(G.box,hair,.016,.016,.06,.098,.068,0,head)}else if(o.mustache)part(G.box,hair,.016,.016,.06,.098,.068,0,head);
+  if(o.scarf){const sm=M(o.scarf,.9);part(GP.head,sm,.112,.135,.108,-.008,.12,0,head);part(G.cone,sm,.14,.24,.14,-.02,-.07,0,head)}
+  else{part(GP.head,hair,.104,.08,.1,-.012,.17,0,head);part(GP.head,hair,.09,.09,.098,-.03,.12,0,head);if(o.longHair)part(G.box,hair,.06,.24,.18,-.07,.02,0,head);
+    part(G.box,hair,.03,.025,.15,.08,.2,0,head,0,0,-.25)}
+  if(o.glasses){const gm=M('#222',.3);for(const s of[1,-1])part(GP.ring,gm,.024,.024,.024,.104,.125,s*.037,head,0,Math.PI/2,0);part(G.box,gm,.005,.005,.03,.103,.13,0,head)}
+  if(o.hat==='straw'){const hm=M('#d8c08a',.95);part(G.cyl,hm,.25,.02,.25,0,.215,0,head);part(G.cyl,hm,.115,.12,.115,0,.28,0,head);part(G.cyl,M('#7b2d26'),.118,.03,.118,0,.24,0,head)}
+  else if(o.hat==='cap'){const hm=M(o.capCol||'#2f6b3a',.8);part(GP.head,hm,.108,.07,.104,-.005,.2,0,head);part(G.box,hm,.12,.012,.17,.11,.185,0,head,0,0,-.12)}
   bake(head);
-  R.arm=[];R.elbow=[];
-  for(const s of[1,-1]){const sh=new THREE.Group();sh.position.set(0,.52,s*.23);torso.add(sh);part(G.cap,shirt,.058,.1,.058,0,-.15,0,sh);bake(sh);
-    const el=new THREE.Group();el.position.y=-.3;sh.add(el);part(G.cap,o.sleeve?shirt:skin,.048,.09,.048,0,-.13,0,el);part(G.sph,skin,.055,.06,.04,0,-.28,0,el);bake(el);R.arm.push(sh);R.elbow.push(el)}
+  R.arm=[];R.elbow=[];const sleeve=o.sleeve?shirt:skin;
+  for(const s of[1,-1]){const sh=new THREE.Group();sh.position.set(0,.545,s*.215);torso.add(sh);
+    part(GP.joint,shirt,.068,.068,.068,0,0,0,sh);part(GP.limb,shirt,.06,.29,.06,0,-.145,0,sh);bake(sh);
+    const el=new THREE.Group();el.position.y=-.29;sh.add(el);part(GP.joint,sleeve,.05,.05,.05,0,0,0,el);part(GP.limb,sleeve,.05,.24,.05,0,-.12,0,el);
+    part(G.sph,skin,.035,.05,.026,.004,-.275,0,el);part(G.sph,skin,.022,.04,.02,.0,-.33,0,el);part(G.sph,skin,.012,.03,.012,.03,-.27,s*.02,el,0,0,.5);bake(el);R.arm.push(sh);R.elbow.push(el)}
   R.h=1.95;return R;
 }
 function animPerson(R,dt,spd,pose,t){
@@ -908,6 +921,7 @@ function animPerson(R,dt,spd,pose,t){
   else if(pose==='talk'){A=[.35+Math.sin(t*3)*.25,.1];E=[.9+Math.sin(t*4)*.3,.3];hy=.95+Math.sin(t*1.7)*.01}
   else if(pose==='crouch'){hy=.52;L=[1.45,1.45];K=[-1.9,-1.9];lean=-.35;A=[1.15+Math.sin(t*9)*.25,1.15-Math.sin(t*9)*.25];E=[.5,.5]}
   else if(pose==='sleep'){hy=.3;lean=0}
+  else if(pose==='drive'){hy=.5;L=[1.45,1.45];K=[-1.3,-1.3];A=[1.1+Math.sin(t*2)*.05,1.1-Math.sin(t*2)*.05];E=[.7,.7];lean=.08}
   else{
     if(spd>.1)R.ph+=dt*(spd<3.5?spd*2.9:spd*2.2);
     const amp=clamp(spd/2.8,0,1)*.5+clamp((spd-2.8)/2.8,0,1)*.35,ph=R.ph;
@@ -1051,7 +1065,7 @@ function sim(dt,live){
     if(ok&&d.gelir){a.pr+=rate;if(a.pr>=d.gelir.aralik){a.pr=0;S.money+=d.gelir.miktar;if(live)floatAt(a,'+'+tl(d.gelir.miktar)+' 🏇')}}
     if(ok&&d.yavru&&a.hp>60&&a.hu>40){a.br+=rate;if(a.br>=d.dogum){if(penCount(pid)<penCap(pid)){a.br=0;birth(a,live)}else{a.br=d.dogum;if(live&&!a.fullWarn){a.fullWarn=1;toast(`🍼 ${a.n} doğuruma hazır ama ${PENS[pid].ad} dolu. Bölmeyi genişlet!`)}}}}
   }
-  lifeSim(dt,live,prevT);
+  lifeSim(dt,live,prevT);fieldSim(dt,live);
   workerSim(dt,live);
 }
 function workerSim(dt){
@@ -1186,7 +1200,7 @@ function renderSheet(){
       <p style="font-size:13px;color:var(--muted)">Telefon ısınır ya da oyun kasarsa <b>Düşük</b> seç.</p>
       <div class="stat"><span>Toplam hayvan</span><b>${S.animals.length}</b></div><div class="stat"><span>Toplanan yumurta</span><b>${S.stats.eggs}</b></div><div class="stat"><span>Sağılan süt</span><b>${f1(S.stats.milk)} L</b></div><div class="stat"><span>Doğan yavru</span><b>${S.stats.born}</b></div><div class="stat"><span>Toplam satış</span><b>${tl(S.stats.sold)}</b></div>
       <div class="btns" style="margin-top:14px"><button class="btn alt" data-act="help">❓ Nasıl oynanır</button><button class="btn red" data-act="reset" data-c="0">Yeni oyun</button></div>`}}
-  body=sheetHook(p,UI.tab,body);
+  body=tractorSheet(p,UI.tab,sheetHook(p,UI.tab,body));
   $('shTitle').textContent=title;setHTML($('shTabs'),tb);$('shTabs').classList.toggle('hidden',!tb);setHTML($('shBody'),body);
 }
 const ring=new THREE.Mesh(new THREE.RingGeometry(.8,1,32),new THREE.MeshBasicMaterial({color:0xffd34d,transparent:true,opacity:.85,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.visible=false;scene.add(ring);
@@ -1219,6 +1233,7 @@ function welcome(){modal(`<h2>🚜 Bereket Çiftliği</h2><p>Kendi çiftliğinde
 /* ================= etkileşim ================= */
 function nearSeg(x0,z,l,px,pz){return segDist(px,pz,x0-l/2,z,x0+l/2,z)}
 function findAction(){
+  if(PL.drive)return {i:'🚪',l:'Traktörden in',run:exitTractor};
   const px=PL.x,pz=PL.z,fx=Math.cos(PL.h),fz=Math.sin(PL.h);let best=null,bs=1e9;
   const C=(dist,range,o,pen=0)=>{if(dist>range)return;const s=dist+pen+(o.dis?.6:0);if(s<bs){bs=s;best=o}};
   const car=S.carry;
@@ -1248,7 +1263,7 @@ function findAction(){
     if(!car)C(dA(s),1.6,S.feed[k]>0?{i:F.e,l:`${F.ad} al (${f1(Math.min(F.tasi,S.feed[k]))} kg ${F.birim})`,dur:.7,pose:'pick',run:()=>{const t=Math.min(F.tasi,S.feed[k]);S.feed[k]=Math.round((S.feed[k]-t)*100)/100;S.carry={k,kg:t}}}:{i:F.e,l:`Ambarda ${F.ad.toLocaleLowerCase('tr')} yok · pazardan al`,dis:1});
     else if(car.k===k)C(dA(s),1.6,{i:'↩️',l:'Geri koy',run:()=>{S.feed[k]+=car.kg;S.carry=null}})}
   C(dA(SPOT.market),2,{i:'🏪',l:'Pazarcıyla konuş',run:()=>openSheet('market')});
-  extraActions(C,px,pz,car);
+  extraActions(C,px,pz,car);tractorActions(C,px,pz);
   const sleepy=hour()>=19||hour()<5;C(dA(SPOT.bed),1.8,{i:'🛏️',l:sleepy?'Uyu (sabaha kadar)':'Henüz uyku vakti değil',dis:!sleepy,run:sleep});
   return best;
 }
@@ -1294,6 +1309,7 @@ cv.addEventListener('wheel',e=>{cam.dist=clamp(cam.dist*(1+e.deltaY*.0012),2.5,1
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 
 function updatePlayer(dt,t){
+  if(PL.drive)return driveUpdate(dt,t);
   let ix=joy.x,iy=joy.y;
   if(keys.KeyW||keys.ArrowUp)iy+=1;if(keys.KeyS||keys.ArrowDown)iy-=1;if(keys.KeyA||keys.ArrowLeft)ix-=1;if(keys.KeyD||keys.ArrowRight)ix+=1;
   let m=Math.hypot(ix,iy);if(m>1){ix/=m;iy/=m;m=1}
@@ -1543,6 +1559,84 @@ function farmVisit(n){const f=fr(n.id).f;if(Math.hypot(PL.x,PL.z)<70)toast(`${n.
   if(n.id==='ayse'&&f>=60&&!S.dog&&!S.gotDog){S.gotDog=1;giveDog();toast('🐕 Ayşe Teyze: "Bizim kangalın yavrusu oldu, bu da senin olsun evladım!"')}}
 
 /* ---------- sohbet ---------- */
+
+/* ---------- karşılıklı sohbet (diyalog ağaçları) ---------- */
+// her düğüm: {q:'köylünün sözü', a:[[senin cevabın, dostluk etkisi, köylünün yanıtı, (devam düğümü)]]}
+const DLG={
+ ayse:[
+  {q:'Evladım, sen evlendin mi daha? Bizim köyde ne güzel kızlar var...',a:[['Daha erken teyze, önce çiftliği büyüteyim.',3,'Akıllı çocuk! Önce ekmek, sonra yemek derler.'],['Sen bir aracı ol bakalım teyze! 😄',4,'Hah! Görürsün, en güzel gelini ben bulurum!'],['Bu konular beni ilgilendirmez.',-3,'Peh... Gençler hep böyle, neyse.']]},
+  {q:'Dün gece yine kurt sesleri geldi. Senin hayvanlar iyi mi?',a:[['İyiler teyze, gözüm üstlerinde.',3,'Maşallah. Ama bir kangal edin, yoksa gece uyuyamazsın.'],['Bir kangal almayı düşünüyorum.',4,'İşte bu! Kangalı olmayan çoban, çoban değildir.'],['Kurt mu? Masal bunlar teyze.',-2,'Masal mı? Git Hacı Dede\'nin koyunlarını sor sen!']]},
+  {q:'Benim rahmetli kocam da çiftçiydi. Her sabah horozlarla kalkardı.',a:[['Allah rahmet eylesin teyze.',5,'Amin evladım, sağ ol. Sen onu bana biraz hatırlatıyorsun.'],['O zamanlar çiftçilik nasıldı?',4,'Zordu ama bereketliydi. Traktör yoktu, her şey el emeğiydi.',
+     {q:'Sen traktör almayı düşünüyor musun?',a:[['Evet, tarlayı sürmek için lazım.',3,'Al tabii, zamane böyle. Ama hayvanlarını ihmal etme!'],['Yok teyze, el emeği daha güzel.',2,'Hah, sen de benim gibi eski kafalısın!']]}]]},
+  {q:'Tarhana yaptım, kurutuyorum. Sen hiç tarhana çorbası içtin mi?',a:[['En sevdiğim çorbadır teyze!',4,'Kış gelince bir kavanoz ayırırım sana.'],['Annem yapardı, çok özledim.',5,'Ah evladım... Gel, benim evim senin de evin.'],['Pek sevmem açıkçası.',-1,'Benimkini içmedin ki ondan! Neyse.']]}],
+ hasan:[
+  {q:'Söyle bakalım delikanlı, tavla mı daha zor, çiftçilik mi?',a:[['Çiftçilik tabii, tavla oyun.',2,'Hah! Sen hiç benimle tavla oynamadın belli.'],['Tavla! Sizi kimse yenemiyor.',5,'İşte doğru cevap! Gel bir çay iç benimle.'],['İkisi de kolay amca.',-1,'Kolay mı? Bir gün benimle oynarsın da görürüz.']]},
+  {q:'Gençken üç yüz koyunluk sürüm vardı. Yaylada kırk gün kalırdık.',a:[['Kırk gün mü? Orada neler yerdiniz?',4,'Ayran, yufka, peynir... Bayramlarda bir de kuzu çevirme.'],['Ben de sürümü yaylaya çıkaracağım.',4,'Aferin! Ama kangalını yanından ayırma, kurt orada daha cesur.'],['Şimdi hiç koyunun kalmadı mı?',1,'Kalmadı evlat, dizler tutmuyor artık. Hayvanı sevene emanet etmek lazım.']]},
+  {q:'Muhtar yine yolu yaptıracağım diyor. Üç yıldır aynı söz!',a:[['Haklısın amca, yollar berbat.',2,'Değil mi? Traktörün olsa anlarsın!'],['Muhtar elinden geleni yapıyordur.',1,'Sen de onun tarafını tut bakalım, hah!'],['Dedikodu yapmayalım amca.',0,'Dedikodu değil bu, düpedüz gerçek!']]},
+  {q:'Senin yaşındayken askerden yeni dönmüştüm. Köye dönmek en güzeliydi.',a:[['Nerede yaptınız askerliği?',4,'Erzurum\'da! Kış eksi otuz, nöbette bıyıklarım donardı.',
+     {q:'Sen hiç o soğuğu gördün mü?',a:[['Görmedim amca, siz anlatın.',3,'Bir gece kurtlar karakolun etrafını sardı... Uzun hikâye, çayını iç.'],['Ben sıcağı severim.',1,'Hah! Yazın yaylada serinlersin o zaman.']]}],['Köy hayatı gibisi yok.',3,'Öyle! Şehirde nefes alamazdım ben.'],['Ben şehri de severim.',0,'Herkesin gönlü başka, olsun.']]}],
+ riza:[
+  {q:'Köyümüze yeni aileler gelsin istiyorum. Sence köyde ne eksik?',a:[['Bir fırın olsa çok iyi olurdu.',3,'Fırın! Not ettim, bir sonraki toplantıda konuşacağım.'],['Gençler için bir spor sahası.',3,'Güzel fikir. Okulun yanına yaparız belki.'],['Bence her şey tamam muhtarım.',2,'Sağ ol ama her zaman daha iyisi var.']]},
+  {q:'Bu yıl panayıra komşu köyler de gelecek. Sen de yarışacak mısın?',a:[['Tabii, en güzel ineği ben getireceğim!',4,'İşte böyle iddialı insan severim! Fırçalamayı unutma.'],['At yarışına katılmak istiyorum.',3,'At yarışı panayırın en heyecanlı yeridir. Atını iyi besle.'],['Benim hayvanlar yarışacak kadar güzel değil.',1,'Öyle deme! Sevgiyle bakılan hayvan her zaman güzeldir.']]},
+  {q:'Muhtarlığa bir dilekçe geldi: biri gece tavuklarını tilkiye kaptırmış.',a:[['Benim kümese de dadanıyor, ne yapsak?',3,'Kangal al, geceleri bir de kendin kontrol et. Çitin sağlam olsun.'],['Köy olarak bir önlem alalım.',2,'Haklısın, akşam kahvede konuşalım bunu.'],['Benim sorunum değil.',-3,'Köyde herkesin sorunu herkesin sorunudur evlat.']]},
+  {q:'Biliyor musun, senin çiftlik köyün en çok konuşulan yeri oldu.',a:[['Sağ olun, elimden geleni yapıyorum.',4,'Belli belli. Böyle devam, köy seninle gurur duyuyor.'],['İyi mi kötü mü konuşuyorlar? 😄',3,'İyi tabii! Ayşe Teyze bile seni övüyor, o kimseyi övmez.'],['Beni ilgilendirmez.',-2,'Köyde yaşıyorsun ama, ilgilendirir!']]}],
+ cemal:[
+  {q:'Abi çay mı, kahve mi? Bizde kahve de var ama herkes çay içer.',a:[['Çay, tavşan kanı olsun.',3,'Tavşan kanı geliyor! Ustalık işte.'],['Türk kahvesi, orta şekerli.',3,'Vay, kahve tiryakisi! Köpüğü bol olsun.'],['Hiçbiri, sadece su.',0,'Su mu? Kahvede su içilmez ki abi! Şaka şaka.']]},
+  {q:'Dün akşam maçı izledin mi? Kahve yıkıldı resmen!',a:[['İzledim, ne goldü ama!',4,'Değil mi?! Hasan Amca az kalsın sandalyeden düşüyordu.'],['Kaçırdım, çiftlikte işim vardı.',2,'Yazık! Bir dahaki maça gel, en ön masa senin.'],['Futbolla aram yok.',0,'Olsun, gel çayını iç, sohbet edelim.']]},
+  {q:'Kahveyi babamdan devraldım. Otuz yıldır bu semaver yanıyor.',a:[['Otuz yıl mı? Maşallah, emeğine sağlık.',4,'Sağ ol abi. Bu kahve köyün kalbi gibidir.'],['Senin yerinde ben de kahve açardım.',2,'Açma abi, uğraşması zor. Sen hayvanlarına bak!'],['Biraz yenilemek lazım burayı.',-1,'Yenilemek mi? Eski hali güzel, ruhu var.']]}],
+ zeynep:[
+  {q:'Öğrencilerimi çiftliğine getirebilir miyim? Hayvanları görmek istiyorlar.',a:[['Tabii, kapım her zaman açık!',5,'Çok sevinecekler! Kuzuları sevmeye bayılırlar.'],['Hayvanlara dikkat ederlerse olur.',3,'Merak etme, ben başlarında olacağım.'],['Pek uygun değil şu an.',-2,'Anlıyorum... Belki başka zaman.']]},
+  {q:'Şu sıralar köyün tarihini yazıyorum. Senin aile buralı mı?',a:[['Dedem bu köydenmiş, ben geri döndüm.',4,'Ne güzel! Köklerine dönmek cesaret ister.'],['Şehirden geldim, toprağı özlemiştim.',3,'Toprak insanı çağırır derler, doğruymuş.'],['Bilmem, hiç merak etmedim.',0,'Bir gün merak edersin, ben yardım ederim.']]},
+  {q:'Ali derslerde hep senin çiftliği anlatıyor. Seni çok seviyor.',a:[['Ali harika bir çocuk.',4,'Öyle, sadece biraz yaramaz. Büyüyünce çiftçi olacakmış!'],['Bir gün ona tavuk bakmayı öğretirim.',5,'Bayılır! Fatma Abla da çok sevinir.'],['Çocuklarla aram yok.',-2,'Hmm... Ama o seni gerçekten çok seviyor.']]},
+  {q:'Hangi kitabı okuyorum biliyor musun? Toprak Ana! Okudun mu?',a:[['Okudum, çok etkilenmiştim.',4,'Değil mi? Toprağa emek verenin hikâyesi.'],['Okumadım, ödünç verir misin?',5,'Tabii! Bitirince sohbet ederiz, çok seveceksin.'],['Kitap okumaya vaktim yok.',-1,'Akşamları on sayfa bile yeter, dene bence.']]}],
+ ali:[
+  {q:'Abi abi! Senin en sevdiğin hayvan hangisi?',a:[['Atlar! Çok güçlü ve güzeller.',3,'Benim de! Büyüyünce at binicisi olacağım!'],['Kangal köpekleri tabii.',3,'Kangallar kahraman! Kurtları kovalıyorlar!'],['Tavuklar, yumurta veriyorlar.',2,'Tavuklar komik yürüyor ama, hahaha!']]},
+  {q:'Abi bana salıncakta iter misin? Çok yükseğe çıkmak istiyorum!',a:[['Tabii, sıkı tutun!',5,'Yaşasın! Uçuyorum abiii!'],['Annen kızmasın sonra?',2,'Kızmaz! Sadece söyleme, hihi.'],['Şimdi işim var Ali.',-1,'Peki... Sonra ama, söz mü?']]},
+  {q:'Abi, tilkiler neden tavuk yiyor? Tavuklar çok tatlı ama...',a:[['Tilkiler de karnını doyurmalı ama biz tavukları korumalıyız.',4,'Anladım! O zaman kangal tilkiyi sadece korkutsun, olur mu?'],['Çünkü tilkiler kötü!',1,'Ama tilkiler de tatlı, kuyrukları çok güzel!'],['Büyüyünce anlarsın.',0,'Hep böyle diyorsunuz!']]},
+  {q:'Abi senin traktörün var mı? Bir kere binebilir miyim?',a:[['Olunca seni de gezdiririm!',5,'Sözünü unutma! Arkadaşlara söyleyeceğim!'],['Traktör tehlikeli, büyüyünce.',1,'Ama ben artık büyüdüm ki!'],['Yok Ali, param yok.',1,'Ben kumbaramdaki parayı veririm sana!']]}],
+ fatma:[
+  {q:'Annemden kalma bir dokuma tezgâhım vardı, kimse kullanmıyor.',a:[['Bana öğretir misin abla?',5,'Tabii! Desenleri ezberlemek önemli, gerisi sabır.'],['Benim mandırada da tezgâh var.',3,'Duydum! Yününden kilim dokursan çok para eder.'],['Kilimin modası geçti artık.',-3,'Hiç de değil! Şehirde kilime servet ödüyorlar.']]},
+  {q:'Ali bugün yine okuldan kaçmış. Ne yapacağım bu çocukla?',a:[['Çocuk işte, büyüyünce akıllanır.',3,'İnşallah... Senin gibi çalışkan olsun.'],['Bana yollasın, çiftlikte iş öğretirim.',4,'Ah sahi mi? Belki biraz sorumluluk alır.'],['Biraz sıkı olmak lazım.',1,'Haklısın ama ben kıyamıyorum.']]},
+  {q:'Pazarda bu hafta yumurta fiyatı neydi biliyor musun?',a:[['Her gün değişiyor, telefondan bakıyorum.',2,'Teknoloji! Benim aklım ermiyor.'],['Pahalı abla ama emek var.',3,'Doğru, tavuğa bakmak kolay değil.'],['Sana ucuza veririm abla.',5,'Sen ne iyi insansın! Unutmam bunu.']]}],
+ dede:[
+  {q:'Evladım, sence insan neden yaşlanır?',a:[['Hikmet biriktirmek için dede.',5,'Maşallah, genç yaşta güzel söz. Doğru söyledin.'],['Bilmem dede, siz söyleyin.',3,'Zaman insanı yontar, iyi olan kalır evladım.'],['Herkes yaşlanır işte.',0,'Öyle ama nasıl yaşlandığın önemli.']]},
+  {q:'Benim gençliğimde kurtlar köye kadar inerdi. Şimdi azaldılar ama hâlâ varlar.',a:[['Nasıl korunurdunuz dede?',4,'Kangal, ateş ve uyanık bir çoban. Üçü bir arada olacak.'],['Ben de kangal yetiştiriyorum.',4,'Aferin, iyi eğit onu. Kangal sadık olur, sahibi için canını verir.'],['Kurtlar da doğanın parçası.',3,'Haklısın evladım, onların da yaşam hakkı var. Sen sadece sürünü koru.']]},
+  {q:'Yayla, yayla... Bir daha çıkabilsem keşke.',a:[['Sürümü çıkarınca seni de götürürüm dede!',6,'Sahi mi evladım?! Allah razı olsun, gözlerim doldu.'],['Yaylada neler yapardınız?',3,'Sabah sağım, öğlen gölgede uyku, akşam ateş başında türkü...',
+     {q:'Sen türkü bilir misin evladım?',a:[['Biraz bilirim, söyleyeyim mi?',5,'Söyle tabii! ...Maşallah, sesin de güzelmiş!'],['Bilmem dede, siz söyleyin.',3,'"Yaylalar yaylalar, ne güzel olur yazın..." Ah gençlik!']]}],['Çok yorulursun dede.',1,'Yorulurum ama yayla havası iyileştirir.']]}],
+};
+function genericDlg(n){const L=[
+  {q:'Bugün hava ne güzel değil mi?',a:[['Çok güzel, hayvanlar da mutlu.',2,'Öyle! Hayvan mutlu olunca süt de bol olur.'],['Biraz sıcak bence.',1,'Gölgede bir çay iyi gider o zaman.'],['Fark etmedim, çok yoğunum.',0,'Arada bir başını kaldır gökyüzüne bak, iyi gelir.']]},
+  {q:'Akşam kahveye gelecek misin? Herkes orada olacak.',a:[['Gelirim, çaylar benden!',4,'Söz verdin bak! Herkese söyleyeceğim.'],['Bakarım, işler biterse.',1,'İşler hiç bitmez, sen gel.'],['Gelmem, erken yatıyorum.',0,'Çiftçi erken yatar tabii, haklısın.']]}];
+  if(S.animals.length>=4)L.push({q:`Çiftliğin büyüyor maşallah! Kaç hayvanın oldu şimdi?`,a:[[`${S.animals.length} tane, hepsine isim verdim.`,3,'Ne güzel! İsmiyle seslenince hayvan da sana alışır.'],['Saymayı bıraktım artık!',2,'Hah! Nazar değmesin, maşallah.'],['Daha az, büyüteceğim.',2,'Azar azar, sağlam adımlarla. Böylesi iyi.']]});
+  if(S.dog)L.push({q:`${S.dog.n} ne kadar akıllı bir köpek! Nasıl eğitiyorsun?`,a:[['Her gün biraz çalışıyoruz.',3,'Sabır ve sevgi, köpek eğitiminin sırrı budur.'],['Kendisi zaten akıllı.',2,'Kangal kanı, ne de olsa!'],['Pek uğraşmıyorum.',-1,'Uğraşmazsan kurdu kovalamaz ama, bak!']]});
+  if(S.tractor&&S.tractor.own)L.push({q:'Traktör almışsın! Tarlayı ne zaman biçeceksin?',a:[['Buğday sararınca hemen!',3,'Ambarın dolar taşar, hayırlı olsun.'],['Önce sürüp tohum ekeceğim.',3,'Toprağı iyi sür, bereketi ondan gelir.'],['Bilmem, ara sıra.',0,'Toprağı boş bırakma ama, yazık olur.']]});
+  return L}
+const GOS={ayse:'her sabah çeşmeye gidiyor; köyde kim evleniyor, kim küsüyor, hepsini ondan duyarsın',hasan:'kahvede tavlada yine kimseyi yenmeden bırakmıyor',riza:'yeni yol için yine imza topluyor',cemal:'semaveri hiç söndürmüyor, babasından kalma',zeynep:'köyün tarihini yazıyormuş, herkesi dinliyor',ali:'yine salıncaktan inmiyor, annesi arıyor',fatma:'Ali\'yi arıyor, yine kaybolmuş',dede:'yaylayı özlüyor, anlatırken gözleri doluyor'};
+function npcWhere(n){if(n.hidden)return 'Evinde';const k=n.key||'';if(k.startsWith('farm'))return 'Senin çiftliğinde';if(k==='counter'||/^k\d/.test(k))return 'Köy kahvesinde';if(/^g\d/.test(k))return 'Kahvenin bahçesinde';if(/^p\d/.test(k)||k==='swing')return 'Parkta';if(k.startsWith('fountain')||/^m\d/.test(k))return 'Köy meydanında';if(k==='muhtar')return 'Muhtarlıkta';if(k==='market')return 'Köy pazarında';if(k.startsWith('fair'))return 'Panayırda';return 'Köyde'}
+function tipFor(){const T=[];
+  if(!S.dog)T.push('Pazardan bir kangal yavrusu al. Büyütüp eğitirsen geceleri sürünü korur.');
+  for(const id of PEN_IDS){const p=S.pens[id];if(p.un&&penCount(id)&&p.feed<PENS[id].feedCap*.2)T.push(`${PENS[id].ad} yemliği neredeyse boş! Ambardan yem taşı.`)}
+  if(!S.mandira&&(S.prod.inekSut+S.prod.keciSut+S.prod.koyunSut)>10)T.push('Sütü çiğ satma, mandıra al. Yoğurt, peynir çok daha pahalıya gider.');
+  if(!(S.tractor&&S.tractor.own)&&S.money>6000)T.push('Bir traktör al. Tarlayı biçersen ambar yemle dolar, yem parası vermezsin.');
+  if(S.tractor&&S.tractor.own)T.push('Tarlayı hasat ettikten sonra sür, sonra tohum ekip bekle. Her hasat yüzlerce kilo yem demek.');
+  if(S.animals.some(a=>(a.bond||0)<20))T.push('Hayvanlarını sev, fırçala. Bağ arttıkça daha verimli olurlar.');
+  if((S.day+1)%7===0)T.push('Yarın panayır var! Hayvanını bugün fırçala, yarışmada puan getirir.');
+  if(S.pens.agil.un&&!S.animals.some(a=>a.loc==='yayla'))T.push('Sürüyü yaylaya çıkar, orada yem istemeden otlarlar.');
+  const pm=Object.keys(PR).sort((a,b)=>S.pm[b]-S.pm[a])[0];if(S.pm[pm]>1.12)T.push(`Bugün ${PR[pm].ad.toLocaleLowerCase('tr')} fiyatı yüksek, elinde varsa sat!`);
+  T.push('Siparişleri kaçırma; köylüler pazardan iyi para verir.','Gece geç olunca evine git, uyu. Sabah dinç başlarsın.');return pick(T)}
+function addF(id,v){const F=fr(id);if(v>0){if(F.gd!==S.day){F.gd=S.day;F.gn=0}const g=Math.max(0,Math.min(v,20-F.gn));F.gn+=g;F.f=Math.min(100,F.f+g);return g}F.f=Math.max(0,F.f+v);return v}
+let CONV=null,FDELTA=null;
+function startConv(n){const F=fr(n.id);if(F.sd!==S.day){F.sd=S.day;F.seen=[]}const pool=[...(DLG[n.id]||[]).map((d,i)=>({d,k:'n'+i})),...genericDlg(n).map((d,i)=>({d,k:'g'+i}))];
+  let c=pool.filter(p=>!F.seen.includes(p.k));if(!c.length){n.lastLine=pick(['Bugün epey konuştuk, yarın yine gel!','Hep ben konuştum, biraz da sen anlat bakalım!','Sohbetin tadına doyum olmaz ama işler bekliyor.']);CHATMODE='after';renderChat();return}
+  const p=pick(c);F.seen.push(p.k);CONV=p.d;n.lastLine=CONV.q;CHATMODE='conv';FDELTA=null;renderChat()}
+function askAnswer(n,q){const F=fr(n.id);const f=F.f;
+  if(q==='nasil')return f<15?'İdare eder... Senin işler nasıl?':f<40?'İyiyim, sağ ol. Sen nasılsın?':f<70?'Seni görünce daha iyi oldum!':'Bomba gibiyim! Sen gelince köy şenleniyor.';
+  if(q==='tavsiye')return tipFor();
+  if(q==='dedikodu'){const m=pick(NP.filter(x=>x!==n));return `${m.ad} şu an ${npcWhere(m).toLocaleLowerCase('tr')}. Duydum ki ${GOS[m.id]}.`}
+  if(q==='sever')return `En çok ${n.fav.map(k=>PR[k].ad.toLocaleLowerCase('tr')).join(', ')} severim. Bir gün getirirsen çok sevinirim!`;
+  if(q==='ben')return f<15?'Seni daha yeni tanıyorum ama çalışkan birine benziyorsun.':f<40?'İyi bir komşusun, sözünün eri birisin.':f<70?'Sen artık bu köyün bir parçasısın.':'Sen benim için aileden birisin, bunu bil.';
+  return ''}
+
 let CHAT=null,CHATMODE='';
 const REASONS=['Misafirlerim gelecek,','Kızımın düğünü var,','Bayram yaklaşıyor,','Komşulara dağıtacağım,','Torunlarım gelecek,','Kış için hazırlık yapıyorum,'];
 function hearts(f){const n=Math.floor(f/20);return '❤️'.repeat(n)+'🤍'.repeat(5-n)}
@@ -1554,13 +1648,17 @@ function npcLine(n){const h=hour();const g=h<11?'Günaydın':h<17?'Hayırlı gü
   if(S.animals.some(a=>a.loc==='yayla'))ctx.push('Sürün yaylada mı? Aferin, eski usul en iyisi.');
   return `${g} ${n.call}! ${pick([...n.lines,...n.lines,...ctx])}`}
 function inKahve(x,z){return inB(KAHVE,x,z)}
-function openChat(n,line){CHAT=n;CHATMODE='';n.lastLine=line||npcLine(n);S.stats.chats++;renderChat()}
+function openChat(n,line){CHAT=n;CHATMODE='';FDELTA=null;n.lastLine=line||npcLine(n);S.stats.chats++;renderChat()}
 function renderChat(){const n=CHAT;if(!n)return;const F=fr(n.id);const o=S.orders.find(o=>o.npc===n.id);
   let h=`<div class="ch"><span class="ce">${n.e}</span><div><b>${n.ad}</b><small>${hearts(F.f)}</small></div><button class="x" data-act="chat-bye">✕</button></div><p class="say">“${esc(n.lastLine)}”</p>`;
-  if(CHATMODE==='gift'){const ks=Object.keys(PR).filter(k=>S.prod[k]>=1);h+=`<div class="sec">Ne hediye edeceksin?</div>`+(ks.length?`<div class="btns">${ks.map(k=>`<button class="btn alt" data-act="chat-give" data-k="${k}">${PR[k].e} 1 ${PR[k].b} ${PR[k].ad}${n.fav.includes(k)?' ⭐':''}</button>`).join('')}</div>`:'<p>Depoda hediye edecek ürün yok.</p>')+`<div class="btns"><button class="btn alt" data-act="chat-back">Geri</button></div>`}
+  if(FDELTA)h+=`<div class="fd ${FDELTA>0?'up':'down'}">${FDELTA>0?'❤️ +'+FDELTA+' dostluk':'💔 '+FDELTA+' dostluk'}</div>`;
+  if(CHATMODE==='conv'&&CONV)h+=`<div class="opts">${CONV.a.map((a,i)=>`<button class="opt" data-act="chat-reply" data-i="${i}">💬 ${esc(a[0])}</button>`).join('')}</div>`;
+  else if(CHATMODE==='after')h+=`<div class="btns"><button class="btn" data-act="chat-talk">💬 Başka konu aç</button><button class="btn alt" data-act="chat-ask">❓ Bir şey sor</button><button class="btn alt" data-act="chat-back">↩️ Diğer</button><button class="btn alt" data-act="chat-bye">👋 Hoşça kal</button></div>`;
+  else if(CHATMODE==='ask')h+=`<div class="opts">${[['nasil','Nasılsın?'],['tavsiye','Bana bir tavsiye ver'],['dedikodu','Köyde ne var ne yok?'],['sever','En çok neyi seversin?'],['ben','Benim hakkımda ne düşünüyorsun?']].map(([k,t])=>`<button class="opt" data-act="chat-q" data-q="${k}">❓ ${t}</button>`).join('')}<button class="opt" data-act="chat-back">↩️ Geri</button></div>`;
+  else if(CHATMODE==='gift'){const ks=Object.keys(PR).filter(k=>S.prod[k]>=1);h+=`<div class="sec">Ne hediye edeceksin?</div>`+(ks.length?`<div class="btns">${ks.map(k=>`<button class="btn alt" data-act="chat-give" data-k="${k}">${PR[k].e} 1 ${PR[k].b} ${PR[k].ad}${n.fav.includes(k)?' ⭐':''}</button>`).join('')}</div>`:'<p>Depoda hediye edecek ürün yok.</p>')+`<div class="btns"><button class="btn alt" data-act="chat-back">Geri</button></div>`}
   else if(CHATMODE==='offer'&&n.offer){const O=n.offer;h+=`<div class="item" style="display:block"><b>📋 ${O.q} ${PR[O.k].b} ${PR[O.k].ad}</b><small style="display:block;color:var(--muted)">3 gün içinde teslim · Ödül ${tl(O.r)} ve gönül</small></div><div class="btns"><button class="btn" data-act="chat-accept">Tamam, getiririm</button><button class="btn alt" data-act="chat-back">Şimdi olmaz</button></div>`}
   else{h+=`<div class="btns">`;
-    h+=`<button class="btn" data-act="chat-talk">💬 Sohbet et</button>`;
+    h+=`<button class="btn" data-act="chat-talk">💬 Sohbet et</button><button class="btn alt" data-act="chat-ask">❓ Bir şey sor</button>`;
     if(inKahve(PL.x,PL.z)&&inKahve(n.x,n.z)&&n.id!=='cemal')h+=`<button class="btn gold" data-act="chat-tea" ${F.tea===S.day?'disabled':''}>☕ Çay ısmarla (10₺)</button>`;
     if(n.id==='hasan'&&inKahve(n.x,n.z))h+=`<button class="btn gold" data-act="chat-tavla">🎲 Tavla at (20₺)</button>`;
     h+=`<button class="btn alt" data-act="chat-gift" ${F.gift===S.day?'disabled':''}>🎁 Hediye ver</button>`;
@@ -1579,16 +1677,20 @@ function tavla(){if(!canPay(20))return;S.money-=20;let me=0,him=0;const rolls=[]
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const D=b.dataset;const n=CHAT;
   switch(D.act){
     case'chat-bye':closeModal();CHAT=null;break;
-    case'chat-back':CHATMODE='';renderChat();break;
-    case'chat-talk':{const F=fr(n.id);if(F.talk!==S.day){F.talk=S.day;F.f=Math.min(100,F.f+5)}n.lastLine=npcLine(n);renderChat();break}
-    case'chat-tea':{const F=fr(n.id);const free=fr('cemal').f>=40;if(!free&&!canPay(10))break;if(!free)S.money-=10;F.tea=S.day;F.f=Math.min(100,F.f+8);S.stats.tea++;n.lastLine=pick(['Eksik olma, çay da tam kıvamında!','Sağ ol, sohbetin de çay kadar güzel.','Çay ısmarlayan adam iyi adamdır derler.']);renderChat();break}
+    case'chat-back':CHATMODE='';FDELTA=null;renderChat();break;
+    case'chat-talk':startConv(n);break;
+    case'chat-reply':{if(!CONV)break;const a=CONV.a[+D.i];FDELTA=addF(n.id,a[1]);if(a[1]>0&&!FDELTA)FDELTA=null;
+      if(a[3]){CONV=a[3];n.lastLine=a[2]+' '+CONV.q;CHATMODE='conv'}else{CONV=null;n.lastLine=a[2];CHATMODE='after'}renderChat();break}
+    case'chat-ask':CHATMODE='ask';FDELTA=null;renderChat();break;
+    case'chat-q':{const F=fr(n.id);n.lastLine=askAnswer(n,D.q);FDELTA=null;if(D.q==='nasil'&&F.ask!==S.day){F.ask=S.day;FDELTA=addF(n.id,2)||null}renderChat();break}
+    case'chat-tea':{const F=fr(n.id);const free=fr('cemal').f>=40;if(!free&&!canPay(10))break;if(!free)S.money-=10;F.tea=S.day;FDELTA=addF(n.id,8)||null;S.stats.tea++;n.lastLine=pick(['Eksik olma, çay da tam kıvamında!','Sağ ol, sohbetin de çay kadar güzel.','Çay ısmarlayan adam iyi adamdır derler.']);renderChat();break}
     case'chat-tavla':tavla();break;
     case'chat-gift':CHATMODE='gift';renderChat();break;
-    case'chat-give':{const k=D.k,F=fr(n.id);if(S.prod[k]<1)break;S.prod[k]=Math.round((S.prod[k]-1)*10)/10;const fav=n.fav.includes(k);F.f=Math.min(100,F.f+(fav?15:6));F.gift=S.day;S.stats.gifts++;CHATMODE='';
+    case'chat-give':{const k=D.k,F=fr(n.id);if(S.prod[k]<1)break;S.prod[k]=Math.round((S.prod[k]-1)*10)/10;const fav=n.fav.includes(k);F.f=Math.min(100,F.f+(fav?15:6));FDELTA=fav?15:6;F.gift=S.day;S.stats.gifts++;CHATMODE='';
       n.lastLine=fav?`Aaa, ${PR[k].ad.toLocaleLowerCase('tr')}! En sevdiğimdir, Allah razı olsun!`:'Eline sağlık, çok naziksin.';renderChat();refresh();break}
     case'chat-job':n.offer=makeOrder(n);n.lastLine=`${pick(REASONS)} bana ${n.offer.q} ${PR[n.offer.k].b} ${PR[n.offer.k].ad.toLocaleLowerCase('tr')} lazım. Getirebilir misin?`;CHATMODE='offer';renderChat();break;
     case'chat-accept':S.orders.push(n.offer);n.offer=null;CHATMODE='';n.lastLine='Çok sevindim! Gözüm yolda olacak.';toast('📋 Yeni sipariş: telefonundan takip edebilirsin.');renderChat();break;
-    case'chat-deliver':{const o=S.orders.find(o=>o.npc===n.id);if(!o||S.prod[o.k]<o.q)break;S.prod[o.k]=Math.round((S.prod[o.k]-o.q)*10)/10;S.money+=o.r;const F=fr(n.id);F.f=Math.min(100,F.f+12);S.orders=S.orders.filter(x=>x!==o);S.stats.orders++;
+    case'chat-deliver':{const o=S.orders.find(o=>o.npc===n.id);if(!o||S.prod[o.k]<o.q)break;S.prod[o.k]=Math.round((S.prod[o.k]-o.q)*10)/10;S.money+=o.r;const F=fr(n.id);F.f=Math.min(100,F.f+12);FDELTA=12;S.orders=S.orders.filter(x=>x!==o);S.stats.orders++;
       n.lastLine=`Maşallah, tam zamanında! Al bakalım, ${tl(o.r)} senin hakkın.`;toast(`📦 Sipariş teslim edildi: +${tl(o.r)}`);renderChat();refresh();break}
     case'buykangal':if(S.dog)break;if(!canPay(KANGAL_FIYAT))break;S.money-=KANGAL_FIYAT;giveDog();toast('🐕 Kangal yavrun seni bekliyor! Adı: Karabaş');refresh();break;
     case'beauty':enterBeauty(+D.id);break;
@@ -1768,6 +1870,103 @@ const NEWQ=[
   {t:'Panayırda bir yarışmaya katıl',c:()=>S.stats.contests>=1,r:800,w:[20.4,70]},
   {t:'Sürüyü yaylaya çıkar',c:()=>S.stats.yayla>=1,r:1000,w:[-14,-10.4]}];
 Q.splice(14,0,...NEWQ);
+
+/* ================= TRAKTÖR & TARLA ================= */
+const TRACTOR_FIYAT=8000,SEED_FIYAT=400;
+S.tractor=S.tractor||{own:0,x:-12,z:9.6,h:.15};S.seed=S.seed||0;for(const k of['harvest','plowed','sown'])if(S.stats[k]===undefined)S.stats[k]=0;
+const FC={nx:13,nz:10,cs:2};
+if(!S.field||S.field.length!==FC.nx*FC.nz)S.field=Array.from({length:FC.nx*FC.nz},()=>({s:3,g:1}));
+const FSTATE=['Anız','Sürülmüş','Ekili','Olgun'];
+// tarla zemini (hücre durumuna göre boyanan doku)
+const fCan=document.createElement('canvas');fCan.width=FC.nx*24;fCan.height=FC.nz*24;const fCtx=fCan.getContext('2d');
+const fTex=new THREE.CanvasTexture(fCan);fTex.colorSpace=THREE.SRGBColorSpace;fTex.anisotropy=MAXANI;
+const fPlane=new THREE.Mesh(new THREE.PlaneGeometry(FC.nx*FC.cs,FC.nz*FC.cs),new THREE.MeshStandardMaterial({map:fTex,roughness:1}));
+fPlane.rotation.x=-Math.PI/2;fPlane.position.set(FIELD.x0+FC.nx*FC.cs/2,.035,FIELD.z0+FC.nz*FC.cs/2);fPlane.receiveShadow=true;scene.add(fPlane);
+function paintCell(i){const c=S.field[i],cx=(i%FC.nx)*24,cy=Math.floor(i/FC.nx)*24,x=fCtx;
+  x.fillStyle=['#b49c60','#5a3d26','#5e4029','#7c6038'][c.s];x.fillRect(cx,cy,24,24);
+  if(c.s===0){for(let k=0;k<26;k++){x.fillStyle=Math.random()<.5?'#d4bd7a':'#8f7a44';x.fillRect(cx+rand(24),cy+rand(24),1.2,rand(2,4))}}
+  else{for(let r=0;r<6;r++){x.fillStyle='rgba(30,18,8,.35)';x.fillRect(cx,cy+r*4+1,24,1.5);x.fillStyle='rgba(140,100,60,.25)';x.fillRect(cx,cy+r*4+2.5,24,1)}
+    if(c.s===2){x.fillStyle='#6fa83a';for(let k=0;k<6+c.g*30;k++)x.fillRect(cx+rand(24),cy+Math.floor(rand(6))*4+1,1.5,1.5)}}}
+for(let i=0;i<S.field.length;i++)paintCell(i);fTex.needsUpdate=true;
+// buğday başakları
+const WK_N=HQ?(MOBILE?26:40):16;const wheat=new THREE.InstancedMesh(bladeGeo(6,1.05,.03),windMat(),FC.nx*FC.nz*WK_N);wheat.receiveShadow=false;wheat.frustumCulled=false;scene.add(wheat);
+const WOFF=[];for(let i=0;i<FC.nx*FC.nz;i++)for(let k=0;k<WK_N;k++)WOFF.push([rand(.1,1.9),rand(.1,1.9),rand(6.3),rand(.85,1.15)]);
+const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_s=new THREE.Vector3(),_p=new THREE.Vector3(),_c=new THREE.Color();
+function wheatCell(i){const c=S.field[i];const sc=c.s===3?1:c.s===2?lerp(.12,.95,c.g):0;const gx=FIELD.x0+(i%FC.nx)*FC.cs,gz=FIELD.z0+Math.floor(i/FC.nx)*FC.cs;
+  if(c.s===3)_c.setHSL(.12,.62,.55);else _c.setHSL(lerp(.27,.16,c.g),.55,lerp(.32,.45,c.g));
+  for(let k=0;k<WK_N;k++){const o=WOFF[i*WK_N+k];_p.set(gx+o[0],.02,gz+o[1]);_e.set(0,o[2],0);_q.setFromEuler(_e);const v=Math.max(.0001,sc*o[3]);_s.set(v,v,v);_m.compose(_p,_q,_s);wheat.setMatrixAt(i*WK_N+k,_m);wheat.setColorAt(i*WK_N+k,_c)}}
+for(let i=0;i<S.field.length;i++)wheatCell(i);wheat.instanceMatrix.needsUpdate=true;wheat.instanceColor.needsUpdate=true;
+const dirtyCells=new Set();
+function flushField(){if(!dirtyCells.size)return;for(const i of dirtyCells){paintCell(i);wheatCell(i)}dirtyCells.clear();fTex.needsUpdate=true;wheat.instanceMatrix.needsUpdate=true;wheat.instanceColor.needsUpdate=true}
+function fieldCounts(){const n=[0,0,0,0];for(const c of S.field)n[c.s]++;return n}
+let growT=0;
+function fieldSim(dt,live){let ch=false;for(let i=0;i<S.field.length;i++){const c=S.field[i];if(c.s!==2)continue;c.g+=dt/(DAY*1.1);if(c.g>=1){c.s=3;c.g=1;dirtyCells.add(i);ch=true}}
+  if(live){growT+=dt;if(growT>4){growT=0;S.field.forEach((c,i)=>{if(c.s===2)dirtyCells.add(i)})}}}
+
+/* --- traktör modeli --- */
+const TR={g:new THREE.Group(),v:0,steer:0,spin:0,front:[],rear:[],sign:null,puff:0};
+{const g=TR.g,gr=M('#2f7d32',.42,{metalness:.35}),gd=M('#25642a',.5,{metalness:.3}),bk=M('#1d1d1d',.85),yl=M('#e8c21c',.45,{metalness:.35}),ch=M('#bfbfbf',.3,{metalness:.85}),
+  gl=new THREE.MeshStandardMaterial({color:'#a9cbe0',roughness:.05,metalness:.2,transparent:true,opacity:.35});
+ part(G.box,gr,1.9,.75,.95,.65,1.1,0,g);part(G.box,gr,1.5,.45,.86,.55,1.62,0,g);part(G.box,ch,.06,.55,.72,1.62,1.12,0,g);for(let i=0;i<5;i++)part(G.box,M('#333',.6),.02,.06,.7,1.64,.92+i*.1,0,g);
+ part(G.box,gd,1.3,.35,1.5,-.62,1.05,0,g);part(G.box,M('#e8e3d6',.6),.1,.12,.1,1.62,1.45,.32,g);part(G.box,M('#e8e3d6',.6),.1,.12,.1,1.62,1.45,-.32,g);
+ const cab=new THREE.Group();cab.position.set(-.6,1.22,0);g.add(cab);for(const [x,z] of[[.6,.62],[.6,-.62],[-.6,.62],[-.6,-.62]])part(G.box,bk,.06,1.45,.06,x,.72,z,cab);
+ part(G.box,gr,1.36,.08,1.42,0,1.45,0,cab);part(G.box,gl,1.15,1.25,1.2,0,.72,0,cab);part(G.box,M('#3a3a3a',.6),.45,.08,.45,-.15,.32,0,cab);part(G.cyl,M('#222',.5),.18,.03,.18,.32,.62,0,cab,0,0,1.1);
+ part(G.cyl,ch,.045,1,.045,1.1,2.1,.3,g);part(G.cyl,M('#555',.4,{metalness:.7}),.06,.12,.06,1.1,2.62,.3,g);
+ // arka ekipman (pulluk/ekici)
+ const tool=new THREE.Group();tool.position.set(-1.95,0,0);g.add(tool);part(G.box,M('#b03a2e',.5,{metalness:.3}),.35,.25,2.2,0,.6,0,tool);for(let i=-2;i<=2;i++)part(G.cyl,ch,.22,.04,.22,-.1,.3,i*.45,tool,Math.PI/2);part(G.box,M('#b03a2e',.5),.9,.08,.12,.4,.62,0,tool);
+ const tyre=new THREE.CylinderGeometry(1,1,1,24);
+ const wheel=(x,z,r,w,front)=>{const st=new THREE.Group();st.position.set(x,r,z);g.add(st);const sp=new THREE.Group();st.add(sp);const t=new THREE.Mesh(tyre,bk);t.scale.set(r,w,r);t.rotation.x=Math.PI/2;sp.add(t);
+   const h=new THREE.Mesh(tyre,yl);h.scale.set(r*.55,w+.02,r*.55);h.rotation.x=Math.PI/2;sp.add(h);for(let k=0;k<8;k++){const lug=new THREE.Mesh(G.box,bk);lug.scale.set(.08,w+.04,.16);const a=k/8*Math.PI*2;lug.position.set(Math.cos(a)*r*.98,Math.sin(a)*r*.98,0);lug.rotation.z=a;lug.rotation.x=0;sp.add(lug)}
+   (front?TR.front:TR.rear).push({st,sp,r})};
+ wheel(-.72,.8,.8,.44,0);wheel(-.72,-.8,.8,.44,0);wheel(1.08,.64,.46,.3,1);wheel(1.08,-.64,.46,.3,1);
+ g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});g.userData.dyn=1;scene.add(g);
+ const sg=new THREE.Mesh(new THREE.PlaneGeometry(1.6,.55),new THREE.MeshStandardMaterial({map:signTex(['SATILIK 8.000₺'],'#f6e9b8',1,'#7b2d26'),side:THREE.DoubleSide}));sg.position.set(-.6,3.05,0);sg.rotation.y=Math.PI/2;g.add(sg);TR.sign=sg;}
+function placeTractor(){TR.g.position.set(S.tractor.x,getH(S.tractor.x,S.tractor.z),S.tractor.z);TR.g.rotation.y=-S.tractor.h;TR.sign.visible=!S.tractor.own}
+placeTractor();
+// tarla çiti çarpışmaları (doğuda geniş kapı)
+addCol(FIELD.x0-.1,FIELD.z0-.1,FIELD.x1+.1,FIELD.z0+.1,1.1,'fence');addCol(FIELD.x0-.1,FIELD.z1-.1,FIELD.x1+.1,FIELD.z1+.1,1.1,'fence');addCol(FIELD.x0-.1,FIELD.z0,FIELD.x0+.1,FIELD.z1,1.1,'fence');
+addCol(FIELD.x1-.1,FIELD.z0,FIELD.x1+.1,33,1.1,'fence');addCol(FIELD.x1-.1,41,FIELD.x1+.1,FIELD.z1,1.1,'fence');
+const trCol=()=>{const x=S.tractor.x,z=S.tractor.z;return {x0:x-1.2,x1:x+1.2,z0:z-1.2,z1:z+1.2,h:2.5,tag:'tractor'}};
+let TRC=trCol();COL.push(TRC);
+function syncTrCol(){const n=trCol();Object.assign(TRC,n)}
+function enterTractor(){PL.drive=true;PL.act=null;TRC.x0=TRC.x1=TRC.z0=TRC.z1=-999;cam.saveDist=cam.dist;cam.dist=Math.max(cam.dist,9.5);toast('🚜 Traktöre bindin! İleri/geri ile sür, sağa sola çevir. Tarlada geçtiğin yer biçilir, sürülür ya da ekilir.')}
+function exitTractor(){PL.drive=false;TR.v=0;const h=S.tractor.h;let x=S.tractor.x+Math.sin(h)*1.9,z=S.tractor.z-Math.cos(h)*1.9;syncTrCol();[x,z]=collide(x,z,.35,COL);PL.x=x;PL.z=z;PL.h=h;cam.dist=cam.saveDist||7;$('trHud').classList.add('hidden');save()}
+const worked=new Map();let seedWarn=0,ambarWarn=0;
+function cellAt(x,z){const cx=Math.floor((x-FIELD.x0)/FC.cs),cz=Math.floor((z-FIELD.z0)/FC.cs);if(cx<0||cz<0||cx>=FC.nx||cz>=FC.nz)return -1;return cz*FC.nx+cx}
+function workCell(i){const now=performance.now();if(now-(worked.get(i)||0)<6000)return;const c=S.field[i];
+  if(c.s===3){c.s=0;c.g=0;const t0=S.feed.tahil,s0=S.feed.saman;S.feed.tahil=Math.min(FEED.tahil.cap,S.feed.tahil+3);S.feed.saman=Math.min(FEED.saman.cap,S.feed.saman+4.5);S.stats.harvest++;
+    if(S.feed.tahil===t0&&S.feed.saman===s0&&!ambarWarn){ambarWarn=1;toast('🏚️ Ambar dolu! Hasat boşa gidiyor.')}else if(Math.random()<.18)floatWorld(new THREE.Vector3(S.tractor.x,2.6,S.tractor.z),'+🌾 +🌿')}
+  else if(c.s===0){c.s=1;S.stats.plowed++}
+  else if(c.s===1){if(S.seed>0){S.seed--;c.s=2;c.g=0;S.stats.sown++}else{if(!seedWarn){seedWarn=1;toast('🌱 Tohumun yok! Köy pazarından buğday tohumu al.')}return}}
+  else return;worked.set(i,now);dirtyCells.add(i)}
+function driveUpdate(dt,t){
+  let ix=joy.x,iy=joy.y;if(keys.KeyW||keys.ArrowUp)iy+=1;if(keys.KeyS||keys.ArrowDown)iy-=1;if(keys.KeyA||keys.ArrowLeft)ix-=1;if(keys.KeyD||keys.ArrowRight)ix+=1;
+  ix=clamp(ix,-1,1);iy=clamp(iy,-1,1);if(UI.p||!$('modal').classList.contains('hidden')){ix=0;iy=0}
+  const T=S.tractor;const tv=iy>0?iy*7.5:iy*3.2;const acc=Math.sign(tv-TR.v)===Math.sign(TR.v)||TR.v===0?3:6;TR.v+=clamp(tv-TR.v,-acc*dt,acc*dt);if(Math.abs(iy)<.05)TR.v*=Math.pow(.25,dt);
+  TR.steer=lerp(TR.steer,ix*.55,Math.min(1,dt*5));T.h+=TR.v/2.1*Math.tan(TR.steer)*dt;
+  let nx=T.x+Math.cos(T.h)*TR.v*dt,nz=T.z+Math.sin(T.h)*TR.v*dt;const [cx,cz]=collide(nx,nz,1.2,COL);const fx=cx+Math.cos(T.h)*1.3,fz=cz+Math.sin(T.h)*1.3;const [fx2,fz2]=collide(fx,fz,.9,COL);
+  let ax=cx+(fx2-fx),az=cz+(fz2-fz);const bx=ax-Math.cos(T.h)*1.6,bz=az-Math.sin(T.h)*1.6;const [bx2,bz2]=collide(bx,bz,.9,COL);ax+=bx2-bx;az+=bz2-bz;
+  if(Math.hypot(ax-nx,az-nz)>.02)TR.v*=.6;const L=Math.hypot(ax,az-10);if(L>125){ax*=125/L}T.x=ax;T.z=az;
+  TR.spin+=TR.v*dt;for(const w of TR.rear)w.sp.rotation.z=-TR.spin/w.r;for(const w of TR.front){w.sp.rotation.z=-TR.spin/w.r;w.st.rotation.y=-TR.steer}
+  TR.g.position.set(T.x,getH(T.x,T.z),T.z);TR.g.rotation.y=-T.h;TR.g.children[0].position.y=1.1+Math.sin(t*40)*.006*(Math.abs(TR.v)>.1?2:1);
+  if(Math.abs(TR.v)>.4){const lx=-Math.sin(T.h),lz=Math.cos(T.h);for(const lat of[-.9,0,.9]){const i=cellAt(T.x-Math.cos(T.h)*2+lx*lat,T.z-Math.sin(T.h)*2+lz*lat);if(i>=0)workCell(i)}}
+  PL.x=T.x;PL.z=T.z;PL.h=T.h;const sx=T.x-Math.cos(T.h)*.62,sz=T.z-Math.sin(T.h)*.62;PL.R.g.position.set(sx,getH(T.x,T.z)+.85,sz);PL.R.g.rotation.y=-T.h;animPerson(PL.R,dt,0,'drive',t);
+  carryVis.tahil.visible=false;carryVis.saman.visible=false;
+  if(performance.now()-cam.lastLook>1500){const behind=Math.atan2(-Math.cos(T.h),-Math.sin(T.h));cam.yaw=angLerp(cam.yaw,behind,Math.min(1,dt*(1+Math.abs(TR.v)*.4)))}
+  const inF=cellAt(T.x,T.z)>=0||cellAt(T.x-Math.cos(T.h)*2,T.z-Math.sin(T.h)*2)>=0;const n=fieldCounts();
+  const hud=`🚜 ${Math.round(Math.abs(TR.v)*3.6)} km/s${TR.v<-.1?' (geri)':''}${inF?` · 🌾 ${n[3]} olgun · ${n[0]} anız · ${n[1]} sürülmüş · ${n[2]} ekili · 🌱 ${S.seed}`:''}`;
+  const el=$('trHud');el.classList.remove('hidden');if(el._h!==hud){el._h=hud;el.textContent=hud}
+}
+function tractorActions(C,px,pz){const d=Math.hypot(px-S.tractor.x,pz-S.tractor.z);
+  if(!S.tractor.own)C(d,3,{i:'🚜',l:`Satın al: Traktör · ${tl(TRACTOR_FIYAT)}`,dis:S.money<TRACTOR_FIYAT,run:()=>{if(!canPay(TRACTOR_FIYAT))return;S.money-=TRACTOR_FIYAT;S.tractor.own=1;TR.sign.visible=false;toast('🚜 Hayırlı olsun! Traktör artık senin. Yanına gidip bin.');refresh()}},-.2);
+  else C(d,3,{i:'🚜',l:'Traktöre bin',run:enterTractor},-.2);
+  const fd=Math.hypot(px-(FIELD.x1+1.2),pz-37);const n=fieldCounts();C(fd,3,{i:'🌾',l:`Tarla: ${n[3]} olgun · ${n[0]} anız · ${n[1]} sürülmüş · ${n[2]} ekili`,dis:1})}
+function tractorSheet(p,tab,body){
+  if(p==='market'&&tab==='feed'&&!UI.boost)return `<div class="sec">🌱 Tarla</div><div class="item"><div class="ie">🌱</div><div class="ib"><b>Buğday tohumu · tüm tarlaya yeter</b><small>Traktörle sürülmüş tarlaya ekilir, ~13 dakikada olgunlaşır. Elinde: ${S.seed} parsellik</small></div><button class="btn" data-act="buyseed" ${S.money<SEED_FIYAT||S.seed>=260?'disabled':''}>${tl(SEED_FIYAT)}</button></div>`+body;
+  if(p==='market'&&tab==='animals'&&!S.tractor.own)return `<div class="item"><div class="ie">🚜</div><div class="ib"><b>Traktör · ${tl(TRACTOR_FIYAT)}</b><small>Yem ambarının yanındaki satılık traktöre git, oradan satın al. Tarlayı biçer, sürer, eker.</small></div></div>`+body;
+  return body}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act="buyseed"]');if(!b||b.disabled)return;if(!canPay(SEED_FIYAT))return;S.money-=SEED_FIYAT;S.seed=Math.min(260,S.seed+130);seedWarn=0;toast('🌱 Tohum alındı: 130 parsellik. Sürülmüş tarlaya traktörle ek.');refresh()});
+Q.splice(24,0,{t:'Traktörü satın al',c:()=>!!S.tractor.own,r:800,w:()=>[S.tractor.x,S.tractor.z]},{t:'Traktörle tarlayı hasat et (50 parsel)',c:()=>S.stats.harvest>=50,r:1000,w:[-31,37]},{t:'Tarlayı sür ve tohum ek (30 parsel)',c:()=>S.stats.sown>=30,r:800,w:[-31,37]});
 /* ================= döngü ================= */
 let last=performance.now(),hudT=0,saveT=0,sepT=0,miniT=0,actT=0,fpsT=0,fpsN=0,slow=0;
 function frame(now){
@@ -1777,7 +1976,7 @@ function frame(now){
   updatePlayer(dt,t);
   const night=isNight();for(const a of S.animals)updateAnimalVis(a,dt,night);
   sepT+=dt;if(sepT>.05){sepT=0;separate()}
-  updateHumans(dt,t);updateLife(dt,t);
+  updateHumans(dt,t);updateLife(dt,t);flushField();
   for(const id of PEN_IDS){const o=penObj[id],p=S.pens[id],P=PENS[id];const fl=clamp(p.feed/P.feedCap,0,1),wl=clamp(p.water/P.waterCap,0,1);
     o.food.scale.y=Math.max(.001,.3*fl);o.food.position.y=.48+.15*fl;o.food.visible=fl>.01;o.water.scale.y=Math.max(.001,.3*wl);o.water.position.y=.36+.15*wl;o.water.visible=wl>.01;
     if(o.eggs){const n=Math.min(p.eggs,25),g=Math.min(p.geggs,5);let ni=0,gi=0;o.eggs.forEach((e,i)=>{if(i%6===5)e.visible=gi++<g;else e.visible=ni++<n})}}
