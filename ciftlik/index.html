@@ -1516,7 +1516,7 @@ const Q=[
 function questTarget(){const q=Q[S.q];if(!q||!q.w)return null;return typeof q.w==='function'?q.w():q.w}
 function checkQuest(){while(S.q<Q.length&&Q[S.q].c()){const q=Q[S.q];S.money+=q.r;S.q++;toast(`🎯 Görev tamam: ${q.t} · Ödül +${tl(q.r)}`)}
   const el=$('hQuest');if(S.q>=Q.length){setHTML(el,'🏆 Tüm görevler tamam! Çiftliğin harika.');return}const q=Q[S.q];const w=questTarget();const dist=w?Math.round(Math.hypot(w[0]-PL.x,w[1]-PL.z)):0;
-  setHTML(el,`🎯 ${esc(q.t)}${q.p?` <small>(${q.p()})</small>`:''}${w&&dist>4?` <small>· 📍${dist} m</small>`:''}`)}
+  setHTML(el,`🎯 ${esc(q.t)}${q.p?` <small>(${q.p()})</small>`:''}${w&&dist>4?` <small>· 📍${dist} m</small>`:''}${typeof QHINT!=='undefined'&&S.q<QHINT.length?`<small class="hint">💡 ${QHINT[S.q]}</small>`:''}`)}
 
 /* ================= arayüz ================= */
 let SEL=null,UI={p:null,tab:null},pdown=false;
@@ -1594,8 +1594,10 @@ function renderCard(){
 function modal(html){$('modal').innerHTML=`<div class="mbox">${html}</div>`;$('modal').classList.remove('hidden')}
 function closeModal(){$('modal').classList.add('hidden')}
 const isTouch=matchMedia('(pointer:coarse)').matches;
-function welcome(){modal(`<h2>⛰️ Bizim Yayla</h2><p>Kendi çiftliğindesin! Elinde <b>600₺</b>, bir kümes ve ambarda bir çuval tahıl var.</p>
-<ul><li>🏪 Yoldan güneye yürü, <b>Köy Pazarı</b>'ndan tavuk al</li><li>🌾 <b>Yem ambarı</b>ndan çuvalı sırtla, yemliğe kendin dök</li><li>💧 Suluğun musluğunu aç</li><li>🥚 Kümesin içine gir, folluklardan yumurta topla</li><li>🥛 İnek, koyun ve keçiyi yanına gidip sağ</li><li>💰 Ürünleri pazarda sat, çiftliğini büyüt</li><li>☕ Yoldan güneye in: köyde kahve, park, meydan var. Köylülerle sohbet et, sipariş al</li><li>🧀 Mandıra al, sütü yoğurda, peynire, tereyağına çevir</li><li>🐕 Kangal al, geceleri tilki ve kurtları kovalasın</li><li>🎪 Her 7. gün panayır var, ⛰️ sürünü yaylaya çıkarabilirsin</li></ul>
+function welcome(){modal(`<h2>⛰️ Bizim Yayla'ya hoş geldin!</h2><p>Kendi çiftliğindesin. Cebinde <b>${tl(S.money)}</b>, bir kümes ve ambarda bir çuval tahıl var.</p>
+<div class="item" style="display:block;background:#fff6d8"><b>🎯 İlk görevin ekranın üstünde yazar.</b><small style="display:block">Gideceğin yerde <b>sarı ok ve ışık sütunu</b> belirir, ekranın dışındaysa kenarda yön oku çıkar. Altındaki 💡 ipucu ne yapacağını söyler.</small></div>
+<div style="display:flex;justify-content:space-between;text-align:center;margin:10px 0;font-size:13px;font-weight:700"><div>🐔<br>Pazardan<br>tavuk al</div><div>➜</div><div>🌾<br>Yemliğe<br>yem dök</div><div>➜</div><div>🥚<br>Yumurta<br>topla</div><div>➜</div><div>💰<br>Pazarda<br>sat</div></div>
+<p style="font-size:13px">Sonra koyunlar, inekler, köy düğünleri, yayla, şehir, arabalar ve çok daha fazlası seni bekliyor.</p>
 <p style="color:var(--muted);font-size:13px">${isTouch?'Sol tarafta parmağını sürükleyerek yürü (sonuna kadar itersen koşarsın). Sağ tarafı sürükleyerek etrafına bak, iki parmakla yaklaş. Sağ alttaki büyük düğme etkileşim düğmen.':'WASD ya da ok tuşlarıyla yürü, Shift ile koş, E ya da Boşluk ile etkileşim, fareyle sürükleyip etrafına bak, tekerlekle yaklaş.'} Sağ üstteki harita görevin yerini gösterir. Akşam evine gidip uyuyabilirsin.</p>
 <button class="btn" style="width:100%;padding:13px;margin-top:8px" data-act="startgame">Hadi başlayalım!</button>`)}
 
@@ -3375,6 +3377,37 @@ document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const t=e.targ
 let nameT=0;function updateNames(dt){nameT+=dt;if(nameT<1)return;nameT=0;if(!$('modal').classList.contains('hidden')||PL.carD&&Math.abs(CARV.v)>2)return;
   if(!S.villAsked&&S.welcomed&&Math.hypot(PL.x-VC.x,PL.z-VC.z)<12){S.villAsked=1;nameModal('village')}
   else if(!S.cityAsked&&inTown(PL.x,PL.z)&&PL.z>TWN.z0+4){S.cityAsked=1;nameModal('city')}}
+
+/* =====================================================================
+   BAŞLANGIÇ REHBERİ: görev hedefinde parlayan ok, ekran kenarında yön oku, ilk görevlere ipucu
+   ===================================================================== */
+const QHINT=['Pazar tezgâhına yaklaş, sağ alttaki büyük düğmeye bas, Hayvan sekmesinden tavuk al.',
+  'Yem ambarına git, "Çuval al"a bas. Sonra kümesteki yemliğin yanına götür.',
+  'Kümesin içine gir, arka duvardaki folluklara yaklaş.',
+  'Pazara dön, "Ürün sat" sekmesinden yumurtaları sat.',
+  'Pazarın Hayvan sekmesinden bir kaz al.',
+  'Ağılın önündeki tabelaya yaklaş, "Satın al"a bas.',
+  'Ağıldaki bir koyun ya da keçinin yanına git, "Sağ"a bas.',
+  'Sağ üstteki 📱 Telefon → 🧑‍🌾 Eleman sekmesinden birini işe al.'];
+const BEACON=(()=>{const g=new THREE.Group();g.userData.dyn=1;const gold=new THREE.MeshBasicMaterial({color:'#ffcf3a'});
+  const ar=new THREE.Mesh(new THREE.ConeGeometry(.42,.9,4),gold);ar.rotation.x=Math.PI;ar.position.y=3.1;g.add(ar);const st=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.6,8),gold);st.position.y=3.85;g.add(st);
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,14,16,1,true),new THREE.MeshBasicMaterial({color:'#ffd65a',transparent:true,opacity:.16,depthWrite:false,side:THREE.DoubleSide}));beam.position.y=7;g.add(beam);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.7,.95,32),new THREE.MeshBasicMaterial({color:'#ffcf3a',transparent:true,opacity:.8,depthWrite:false,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.06;g.add(ring);
+  g.visible=false;scene.add(g);g.userData.ar=ar;g.userData.st=st;g.userData.ring=ring;return g})();
+{const d=document.createElement('div');d.id='qarrow';d.innerHTML='<b>➤</b><span></span>';document.body.appendChild(d);
+ const st=document.createElement('style');st.textContent=`#qarrow{position:fixed;z-index:7;width:64px;height:64px;margin:-32px 0 0 -32px;pointer-events:none;display:none;text-align:center;font-family:system-ui,sans-serif}
+  #qarrow b{display:block;font-size:34px;line-height:46px;color:#ffcf3a;text-shadow:0 0 8px rgba(0,0,0,.7),0 2px 2px #000}#qarrow span{display:block;font-size:12px;font-weight:800;color:#fff;text-shadow:0 1px 3px #000;margin-top:-6px}
+  #hQuest .hint{display:block;margin-top:3px;font-size:11.5px;color:#7a5a1e;font-weight:600;line-height:1.3}`;document.head.appendChild(st)}
+const _qv=new THREE.Vector3();
+function updateGuide(dt,t){if(window.__noGuide){BEACON.visible=false;$('qarrow').style.display='none';return}
+  const w=S.q<Q.length?questTarget():null;const el=$('qarrow');
+  if(!w||UI.p||!$('modal').classList.contains('hidden')){BEACON.visible=false;el.style.display='none';return}
+  const d=Math.hypot(w[0]-PL.x,w[1]-PL.z);BEACON.visible=d>2.2;const gy=getH(w[0],w[1]);BEACON.position.set(w[0],gy,w[1]);
+  const u=BEACON.userData;u.ar.position.y=3.1+Math.sin(t*3)*.25;u.st.position.y=u.ar.position.y+.75;u.ar.rotation.y+=dt*2;const k=(t*1.2)%1;u.ring.scale.setScalar(.6+k*1.2);u.ring.material.opacity=.85*(1-k);
+  _qv.set(w[0],gy+2,w[1]).project(camera);let x=_qv.x,y=_qv.y;const behind=_qv.z>1;if(behind){x=-x;y=-y}
+  const off=behind||Math.abs(x)>.88||Math.abs(y)>.82;if(!off||d<6){el.style.display='none';return}
+  const a=Math.atan2(y,x),m=Math.max(Math.abs(Math.cos(a))/.8,Math.abs(Math.sin(a))/(Math.sin(a)>0?.5:.62));const sx=Math.cos(a)/m,sy=Math.sin(a)/m;
+  el.style.display='block';el.style.left=((sx+1)/2*innerWidth)+'px';el.style.top=((1-sy)/2*innerHeight)+'px';el.querySelector('b').style.transform=`rotate(${-a}rad)`;el.querySelector('span').textContent=Math.round(d)+' m'}
 /* ================= döngü ================= */
 let shT=0,last=performance.now(),hudT=0,saveT=0,sepT=0,miniT=0,actT=0,fpsT=0,fpsN=0,slow=0;
 function frame(now){
@@ -3390,7 +3423,7 @@ function frame(now){
     if(o.eggs){const n=Math.min(p.eggs,25),g=Math.min(p.geggs,5);let ni=0,gi=0;o.eggs.forEach((e,i)=>{if(i%6===5)e.visible=gi++<g;else e.visible=ni++<n})}}
   const ns=Math.min(24,Math.ceil(S.feed.tahil/25)),nb=Math.min(24,Math.ceil(S.feed.saman/40));ambarVis.sacks.forEach((s,i)=>s.visible=i<ns);ambarVis.bales.forEach((s,i)=>s.visible=i<nb);
   const sa=S.animals.find(a=>a.id===SEL);if(sa&&sa._v){ring.position.set(sa.x,.04,sa.z);ring.scale.setScalar(AT[sa.t].r*1.4);ring.material.opacity=.6+Math.sin(now/200)*.25}
-  updateCamera(dt);cullGrass(PL.x,PL.z);updateSky(t);updateExtras(dt,t);updateMore(dt,t);updateTown(dt,t);updateCars(dt,t);updateFuel(dt,t);updateMeat(dt,t);updateNames(dt);updateIcons();
+  updateCamera(dt);cullGrass(PL.x,PL.z);updateSky(t);updateExtras(dt,t);updateMore(dt,t);updateTown(dt,t);updateCars(dt,t);updateFuel(dt,t);updateMeat(dt,t);updateNames(dt);updateGuide(dt,t);updateIcons();
   actT+=dt;if(actT>.1){actT=0;curAct=findAction()}updateActionUI();
   miniT+=dt;if(miniT>.1){miniT=0;drawMini(t)}
   hudT+=dt;if(hudT>.5){hudT=0;updateHUD();checkQuest();if(!pdown&&!(document.activeElement&&document.activeElement.tagName==='INPUT')){if(UI.p)renderSheet();if(SEL)renderCard()}}
