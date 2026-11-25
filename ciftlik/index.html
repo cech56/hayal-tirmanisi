@@ -365,7 +365,7 @@ const POND={x:8,z:-41,r:6};
 const TWN={AV:-10.5,CZ:109+TOFF,x0:-69,x1:59,z0:84+TOFF,z1:151+TOFF};const STOPS=[[-5.6,26],[-10.5+4.6,93+TOFF]];
 const inTown=(x,z,p=0)=>x>TWN.x0-p&&x<TWN.x1+p&&z>TWN.z0+2-p&&z<TWN.z1+p;
 function townD(x,z){const dx=Math.max(TWN.x0-x,0,x-TWN.x1),dz=Math.max(TWN.z0-z,0,z-TWN.z1);return Math.hypot(dx,dz)}
-function wild(x,z){return townD(x,z)>6&&Math.hypot(x-POND.x,z-POND.z)>POND.r+3&&Math.hypot(x-VC.x,z-VC.z)>40&&!(x>14&&x<38&&z>38&&z<60)&&Math.hypot(x-YC.x,z-YC.z)>32&&yRoad(x,z)[0]>5}
+function wild(x,z){return !(x>0&&x<26&&z>88&&z<110)&&townD(x,z)>6&&Math.hypot(x-POND.x,z-POND.z)>POND.r+3&&Math.hypot(x-VC.x,z-VC.z)>40&&!(x>14&&x<38&&z>38&&z<60)&&Math.hypot(x-YC.x,z-YC.z)>32&&yRoad(x,z)[0]>5}
 {
   const SZ=560,SEG=140,geo=new THREE.PlaneGeometry(SZ,SZ,SEG,SEG);geo.rotateX(-Math.PI/2);
   const pos=geo.attributes.position,col=[];const c=new THREE.Color(),g1=new THREE.Color('#5f9238'),g2=new THREE.Color('#86b04c'),g3=new THREE.Color('#4a7a2e'),dirt=new THREE.Color('#8a6a45'),dirt2=new THREE.Color('#a88a60'),dry=new THREE.Color('#a3ac58'),soil=new THREE.Color('#6e5136');
@@ -738,7 +738,7 @@ function bladeGeo(n,hgt,wd){const v=[],c=[];for(let k=0;k<n;k++){const a=k*Math.
   const N=[5000,12000,20000][GFX];const gGeo=bladeGeo(GFX===2?5:4,.42,.05),gMat=windMat();GRASSMAT=gMat;const cells=new Map();const CS=16;
   const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),s=new THREE.Vector3(),p=new THREE.Vector3(),c=new THREE.Color();let n=0,tries=0;
   while(n<N&&tries<N*6){tries++;const u=Math.random();let cx=0,cz=6,R0=85;if(u<.16){cx=VC.x;cz=VC.z;R0=40}else if(u<.28){cx=YC.x;cz=YC.z;R0=30}const r=Math.sqrt(Math.random())*R0,a=rand(Math.PI*2),x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
-    if(inTown(x,z,1)||Math.hypot(x-VC.x,z-VC.z)<10||Math.hypot(x-POND.x,z-POND.z)<POND.r+.3)continue;
+    if(inTown(x,z,1)||(x>2&&x<24&&z>90&&z<109)||Math.hypot(x-VC.x,z-VC.z)<10||Math.hypot(x-POND.x,z-POND.z)<POND.r+.3)continue;
     if(pathD(x,z)<2.4)continue;const pid=inPen(x,z,.4);if(pid&&PENS[pid].floor==='dirt')continue;if(inBld(x,z,.3)||inField(x,z,.5))continue;
     const big=fbm(x*.1,z*.1)>.47;const sc=rand(.7,1.5)*(big?1.35:1);p.set(x,getH(x,z),z);e.set(0,rand(6.3),0);q.setFromEuler(e);s.set(sc,sc*rand(.8,1.4),sc);
     m4.compose(p,q,s);const ck=Math.floor(x/CS)+','+Math.floor(z/CS);if(!cells.has(ck))cells.set(ck,[]);c.setHSL(rand(.2,.28),rand(.45,.65),rand(.28,.42));cells.get(ck).push([m4.clone(),c.clone()]);n++}
@@ -928,7 +928,7 @@ function bigSign(lines,bg,fg,w,h,opt={}){const c=document.createElement('canvas'
  // yol kenarı: reflektörlü babalar ve ağaç sırası
  const post=M('#f4f4f0',.6),blk=M('#1a1a1a',.6),rf=new THREE.MeshBasicMaterial({color:'#ff8a1f'});
  for(const [ax,az,bx,bz] of[[-8,12,-8.6,26],[-8.6,26,-9,40]]){const L=Math.hypot(bx-ax,bz-az);for(let d=3;d<L;d+=7){const f=d/L,x=lerp(ax,bx,f),z=lerp(az,bz,f);for(const s of[-1,1]){const px=x+s*3.3,pz=z;part(G.box,post,.12,.9,.12,px,getH(px,pz)+.45,pz,g);part(G.box,blk,.13,.12,.13,px,getH(px,pz)+.75,pz,g);part(G.box,rf,.135,.08,.135,px,getH(px,pz)+.62,pz,g)}}}
- for(let z=30;z<40;z+=4)for(const s of[-1,1]){const x=-8.8+s*5.2;part(G.cyl,M('#5b4030'),.1,1.6,.1,x,getH(x,z)+.8,z,g);part(new THREE.IcosahedronGeometry(1,1),M('#5f9a35',.9,{flatShading:true}),.8,1,.8,x,getH(x,z)+2.1,z,g)}
+ for(let z=30;z<40;z+=4)for(const s of[]){const x=-8.8+s*5.2;part(G.cyl,M('#5b4030'),.1,1.6,.1,x,getH(x,z)+.8,z,g);part(new THREE.IcosahedronGeometry(1,1),M('#5f9a35',.9,{flatShading:true}),.8,1,.8,x,getH(x,z)+2.1,z,g)}
  // yön tabelası: çiftlik kavşağı
  const pole=M('#8a8d92',.4,{metalness:.6});const sgn=(mat,w,h,x,y,z,ry)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.position.set(x,y,z);m.rotation.y=ry;g.add(m);part(G.box,M('#c9ccd1',.5),w+.08,h+.08,.04,x-Math.sin(ry)*.025,y,z-Math.cos(ry)*.025,g,0,ry,0);return m};
  {const x=-4.4,z=14.2;part(G.cyl,pole,.06,3.4,.06,x,1.7,z,g);sgn(bigSign([`${CITY} ➜`,'1 km'],'#1d4fa3','#ffffff',2.2,.8,{border:'#ffffff'}),2.2,.8,x,2.9,z+.05,0);sgn(bigSign(['BİZİM YAYLA KÖYÜ ➜'],'#1d4fa3','#ffffff',2.2,.45,{border:'#ffffff'}),2.2,.45,x,2.2,z+.05,0);sgn(bigSign(['⬅ YAYLA'],'#7a4a1e','#ffffff',1.4,.45,{border:'#ffffff'}),1.4,.45,x,1.6,z+.05,0)}
@@ -1035,6 +1035,23 @@ const APTS2=[{id:'cinar2',ad:'Kardelen Apartmanı',x0:-52,x1:-40,z0:170.5,z1:179
  for(let x=-74;x<64;x+=9){const z=184+Math.sin(x)*1.5;part(G.cyl,M('#5b4030'),.12,2,.12,x,getH(x,z)+1,z,g);part(new THREE.IcosahedronGeometry(1,1),M('#4f8a2e',.9,{flatShading:true}),1.3,1.4,1.3,x,getH(x,z)+2.9,z,g)}
 }
 APTS.push(...APTS2);
+/* ---- oto yıkama yeri (benzinlikte) ve süt fabrikası ---- */
+const WASH={x0:39.3,x1:44.7,z0:118.6,z1:125.2,cx:42,cz:121.9};
+const FACT={x0:6,x1:22,z0:93,z1:107,bay:[4.2,104]};
+{const g=new THREE.Group();scene.add(g);const fr=M('#2e86de',.4,{metalness:.4}),wh=M('#f4f4f0',.5);
+ for(const x of[WASH.x0,WASH.x1]){part(G.box,fr,.25,3.6,WASH.z1-WASH.z0,x,1.8,WASH.cz,g);addCol(x-.15,WASH.z0,x+.15,WASH.z1,3.6)}part(G.box,wh,WASH.x1-WASH.x0+.4,.3,WASH.z1-WASH.z0,WASH.cx,3.75,WASH.cz,g);
+ part(G.box,newMat({color:'#6a7a86',roughness:.3}),WASH.x1-WASH.x0-.3,.04,WASH.z1-WASH.z0,WASH.cx,.06,WASH.cz,g);
+ const sg=new THREE.Mesh(new THREE.PlaneGeometry(4.6,.7),bigSign(['🚿 OTO YIKAMA'],'#2e86de','#ffffff',4.6,.7,{glow:1}));sg.position.set(WASH.cx,4.3,WASH.z1+.02);g.add(sg);winMats.push(sg.material);
+ // süt fabrikası
+ const o=FACT,cx=(o.x0+o.x1)/2,cz=(o.z0+o.z1)/2;TOWNB.push({x0:o.x0,x1:o.x1,z0:o.z0,z1:o.z1});BLD.push([o.x0,o.x1,o.z0,o.z1]);addCol(o.x0,o.z0+4,o.x1,o.z1,7);
+ part(G.box,newMat({color:'#e9edf0',roughness:.7}),o.x1-o.x0,6,o.z1-o.z0-4,cx,3,cz+2,g);part(G.box,M('#2e6fb5',.5),o.x1-o.x0+.4,.5,o.z1-o.z0-3.6,cx,6.2,cz+2,g);
+ for(let i=0;i<3;i++){const x=o.x0+3+i*4.5,z=o.z0+1.8;part(G.cyl,M('#d9dde2',.25,{metalness:.8}),1.6,9,1.6,x,4.5,z,g);part(G.cone,M('#c9ccd1',.25,{metalness:.8}),1.6,1,1.6,x,9.5,z,g);addCol(x-1.6,z-1.6,x+1.6,z+1.6,10)}
+ part(G.box,M('#5a5d62',.6),3.6,3.2,.1,o.x0+.05,1.6,o.bay[1],g,0,Math.PI/2,0);part(G.box,M('#f2c014',.6),.2,.15,3.6,o.x0-.1,3.3,o.bay[1],g);
+ const s2=new THREE.Mesh(new THREE.PlaneGeometry(9,1.2),bigSign(['ÖZDEMİR SÜT FABRİKASI'],'#2e6fb5','#ffffff',9,1.2,{glow:1}));s2.position.set(o.x0-.08,4.8,cz+2);s2.rotation.y=-Math.PI/2;g.add(s2);winMats.push(s2.material);
+ const s3=new THREE.Mesh(new THREE.PlaneGeometry(2.4,.6),bigSign(['🥛 SÜT KABUL'],'#f2c014','#1a1a1a',2.4,.6));s3.position.set(o.x0-.08,3.9,o.bay[1]);s3.rotation.y=-Math.PI/2;g.add(s3);
+ // bağlantı yolu ve tabela
+ ribbon([[-7.4,100],[o.x0-1.5,100],[o.x0-1.5,o.bay[1]]],5,newMat({map:roadTex('asf'),roughness:.95}),.07,6);
+ const b=new THREE.Mesh(new THREE.PlaneGeometry(2.6,.8),bigSign(['SÜT FABRİKASI ➜',['Süt kabul · Tanker girişi',.5]],'#1d4fa3','#ffffff',2.6,.8,{border:'#ffffff'}));b.position.set(-6.4,2.5,97.5);b.rotation.y=Math.PI;g.add(b);part(G.cyl,M('#8a8d92',.4,{metalness:.6}),.06,2.5,.06,-6.4,1.25,97.6,g)}
 /* ================= statik birleştirme (performans) ================= */
 {
   const groups=new Map(),kill=[];const wp=new THREE.Vector3();
@@ -1713,7 +1730,7 @@ function drawMiniBg(){const x=miniBg.getContext('2d');x.fillStyle='#6f9c47';x.fi
   x.fillStyle='#7a3a2a';for(const b of BUILDINGS){if(b.porch)continue;const B=b.B;x.fillRect(mx(B.x0),mz(B.z0),(B.x1-B.x0)*MK,(B.z1-B.z0)*MK)}
   x.fillStyle='#55585e';x.fillRect(mx(TWN.AV-3),mz(80),6*MK,(TWN.z1-80)*MK);x.fillRect(mx(TWN.x0),mz(TWN.CZ-3),(TWN.x1-TWN.x0)*MK,6*MK);x.strokeStyle='#55585e';x.lineWidth=7*MK;x.beginPath();RING.forEach(([px,pz],i)=>i?x.lineTo(mx(px),mz(pz)):x.moveTo(mx(px),mz(pz)));x.stroke();x.fillStyle='#9a8f84';for(const o of TOWNB)x.fillRect(mx(o.x0),mz(o.z0),(o.x1-o.x0)*MK,(o.z1-o.z0)*MK);
   x.font='22px system-ui';x.textAlign='center';x.textBaseline='middle';
-  for(const [e,px,pz] of [['☕',-19,48],['🏛️',5,50.5],['🌳',5,69],['⛲',-1.4,57.4],['🎪',26,50],['🧀',12.5,3.5],['⛺',-86,-70],['⛰️',-74,-56],['🏪',2,41],['🏠',-25,18],['🌾',-12,4],['🐔',-24,-6],['🐑',-2,-15],['🐄',20,-10],['🐎',6,13],['🛒',16,123+TOFF],['🕌',-54,152.5],['🏫',-54.5,122],['⛽',45,128],['🌳',45.5,153],['🚗',32,121+TOFF],['🅿️',-14.8,22],['🕰️',-2,117.5+TOFF],['🚌',STOPS[0][0],STOPS[0][1]],['🎣',POND.x,POND.z],['🧀',-28,33]])x.fillText(e,mx(px),mz(pz));
+  for(const [e,px,pz] of [['☕',-19,48],['🏛️',5,50.5],['🌳',5,69],['⛲',-1.4,57.4],['🎪',26,50],['🧀',12.5,3.5],['⛺',-86,-70],['⛰️',-74,-56],['🏪',2,41],['🏠',-25,18],['🌾',-12,4],['🐔',-24,-6],['🐑',-2,-15],['🐄',20,-10],['🐎',6,13],['🛒',16,123+TOFF],['🏭',14,100],['🚛',TRUCK_SPOT[0],TRUCK_SPOT[1]],['🕌',-54,152.5],['🏫',-54.5,122],['⛽',45,128],['🌳',45.5,153],['🚗',32,121+TOFF],['🅿️',-14.8,22],['🕰️',-2,117.5+TOFF],['🚌',STOPS[0][0],STOPS[0][1]],['🎣',POND.x,POND.z],['🧀',-28,33]])x.fillText(e,mx(px),mz(pz));
   miniBg._k=PEN_IDS.map(i=>S.pens[i].un).join()}
 function drawMini(t){const c=$('mini'),x=c.getContext('2d');if(miniBg._k!==PEN_IDS.map(i=>S.pens[i].un).join())drawMiniBg();
   x.save();x.clearRect(0,0,224,224);x.beginPath();x.arc(112,112,112,0,7);x.clip();
@@ -3053,8 +3070,8 @@ const CARDEF={
     body:[[-2.2,.24],[2.25,.24],[2.38,.36],[2.25,.5],[.85,.68],[-1.35,.74],[-2.2,.66],[-2.3,.4]],cab:[[.8,.68],[0,1.04],[-.8,1.04],[-1.5,.74]],cw:.8},
   altin:{ad:'Altın Lüks Sedan',e:'🚘',f:3000000,iap:'araba_altin',vmax:28,acc:7.5,col:'#d4af37',cols:['#d4af37'],W:1.86,wr:.36,wx:[1.55,-1.55],lux:1,metal:.7,
     body:[[-2.55,.34],[2.5,.34],[2.62,.58],[2.5,.8],[1.15,.9],[-1.75,.92],[-2.55,.9],[-2.63,.6]],cab:[[1.1,.9],[.3,1.4],[-1.1,1.42],[-1.85,.92]],cw:.86}};
-function mkCar(k,col){const D=CARDEF[k];const g=new THREE.Group();const inner=new THREE.Group();g.add(inner);col=col||D.col;
-  const bm=M(col,D.super?.25:.35,{metalness:D.metal||(D.super?.55:.4)}),gl=newMat({color:'#1b252d',roughness:.08,metalness:.6}),bk=M('#181818',.85),rim=M(D.lux?'#d4af37':'#c9ccd1',.25,{metalness:.85}),trim=M('#111',.5);
+function mkCar(k,col){const D=CARDEF[k];if(D.truck)return mkTruck(col||D.col);const g=new THREE.Group();const inner=new THREE.Group();g.add(inner);col=col||D.col;
+  const bm=newMat({color:col,roughness:D.super?.25:.35,metalness:D.metal||(D.super?.55:.4)}),gl=newMat({color:'#1b252d',roughness:.08,metalness:.6}),bk=M('#181818',.85),rim=M(D.lux?'#d4af37':'#c9ccd1',.25,{metalness:.85}),trim=M('#111',.5);
   const ext=(pts,depth,mat,bev)=>{const s=new THREE.Shape();pts.forEach(([x,y],i)=>i?s.lineTo(x,y):s.moveTo(x,y));const geo=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:!!bev,bevelThickness:bev||0,bevelSize:bev||0,bevelSegments:2,curveSegments:2});geo.translate(0,0,-depth/2);const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;inner.add(m);return m};
   ext(D.body,D.W-.12,bm,.06);ext(D.cab,D.W*D.cw,gl,.03);
   // tavan şeridi (gövde rengi)
@@ -3069,7 +3086,7 @@ function mkCar(k,col){const D=CARDEF[k];const g=new THREE.Group();const inner=ne
   part(G.box,trim,.06,.14,D.W*.5,hx+.01,hy-.08,0,inner);
   if(D.super){part(G.box,bm,.35,.05,D.W*.9,-2.15,1.0,0,inner);for(const s of[-1,1]){part(G.box,trim,.06,.3,.06,-2.1,.85,s*.6,inner);part(G.box,trim,.9,.2,.04,.3,.42,s*(D.W/2-.03),inner)}for(const s of[-.25,-.1,.1,.25])part(G.cyl,M('#888',.3,{metalness:.8}),.05,.12,.05,-2.33,.34,s*D.W,inner,0,0,Math.PI/2)}
   if(D.lux){part(G.box,M('#d4af37',.2,{metalness:.9}),.05,.25,.6,hx+.03,hy-.05,0,inner)}
-  mergeByMat(inner,o=>o.parent===inner);for(const w of g.userData.wh)mergeByMat(w.w,()=>true);g.userData.k=k;g.userData.dyn=1;return g}
+  g.userData.bm=bm;g.userData.base=new THREE.Color(col);mergeByMat(inner,o=>o.parent===inner);for(const w of g.userData.wh)mergeByMat(w.w,()=>true);g.userData.k=k;g.userData.dyn=1;return g}
 function mergeByMat(grp,ok){grp.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(grp.matrixWorld).invert();const by=new Map(),kill=[];
   grp.traverse(o=>{if(!o.isMesh||!ok(o))return;let gg=o.geometry.clone();gg.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv,o.matrixWorld));if(gg.index)gg=gg.toNonIndexed();for(const a of Object.keys(gg.attributes))if(a!=='position'&&a!=='normal')gg.deleteAttribute(a);
     if(!gg.attributes.normal)gg.computeVertexNormals();(by.get(o.material)||by.set(o.material,[]).get(o.material)).push(gg);kill.push(o)});
@@ -3077,11 +3094,12 @@ function mergeByMat(grp,ok){grp.updateMatrixWorld(true);const inv=new THREE.Matr
 
 /* --- sahip olunan arabalar --- */
 if(!S.cars)S.cars=[];if(S.carId===undefined)S.carId=1;const CARM=new Map();const CARV={v:0,steer:0,car:null};
-function carCol(c){const m=CARM.get(c.id);if(m.col){const i=COL.indexOf(m.col);if(i>=0)COL.splice(i,1);m.col=null}if(PL.carD===c)return;const r=1.3;m.col=addCol(c.x-r,c.z-r,c.x+r,c.z+r,1.4)}
+function carCol(c){const m=CARM.get(c.id);for(const k of['col','col2'])if(m[k]){const i=COL.indexOf(m[k]);if(i>=0)COL.splice(i,1);m[k]=null}if(CARDEF[c.k].truck)truckFollow(c,m,true);if(PL.carD===c)return;const r=1.3;m.col=addCol(c.x-r,c.z-r,c.x+r,c.z+r,1.4);
+  if(CARDEF[c.k].truck){const tx=c.tx+Math.cos(c.th)*3.6,tz=c.tz+Math.sin(c.th)*3.6;m.col2=addCol(tx-1.6,tz-1.6,tx+1.6,tz+1.6,3.4)}}
 function placeCar(c){let m=CARM.get(c.id);if(!m){m={g:mkCar(c.k,c.col)};scene.add(m.g);CARM.set(c.id,m)}m.g.position.set(c.x,getH(c.x,c.z),c.z);m.g.rotation.y=-c.h;carCol(c)}
-function freeSpot(){for(const [x,z] of PARK)if(!S.cars.some(c=>Math.hypot(c.x-x,c.z-z)<1.5))return [x,z,0];return [GALERI.x0-3,113.2+TOFF,Math.PI]}
-function giveCar(k,col){const [x,z,h]=freeSpot();const c={id:S.carId++,k,col:col||CARDEF[k].col,x,z,h};S.cars.push(c);placeCar(c);return c}
-for(const c of S.cars)placeCar(c);
+function freeSpot(k){if(k&&CARDEF[k].truck)return [...TRUCK_SPOT];for(const [x,z] of PARK)if(!S.cars.some(c=>Math.hypot(c.x-x,c.z-z)<1.5))return [x,z,0];return [GALERI.x0-3,113.2+TOFF,Math.PI]}
+function giveCar(k,col){const [x,z,h]=freeSpot(k);const c={id:S.carId++,k,col:col||CARDEF[k].col,x,z,h};S.cars.push(c);placeCar(c);return c}
+for(const c of S.cars)if(CARDEF[c.k])placeCar(c);
 function enterCar(c){if(PL.drive||PL.ride||S.carry)return;PL.carD=c;PL.act=null;CARV.v=0;CARV.steer=0;carCol(c);PL.R.g.visible=false;cam.saveDist=cam.dist;cam.dist=Math.max(cam.dist,8.5);$('toolBtn').textContent='📯 Korna';$('toolBtn').classList.remove('hidden');
   toast(`${CARDEF[c.k].e} ${CARDEF[c.k].ad}: ileri/geri ile sür, sağa sola çevir. İyi yolculuklar!`);play('click')}
 function exitCar(){const c=PL.carD;if(!c)return;if(Math.abs(CARV.v)>3)return toast('Önce yavaşla!');PL.carD=null;CARV.v=0;const lx=-Math.sin(c.h),lz=Math.cos(c.h);let [x,z]=collide(c.x-lx*1.6,c.z-lz*1.6,.35,COL);PL.x=x;PL.z=z;PL.h=c.h;PL.R.g.visible=true;
@@ -3090,7 +3108,7 @@ function honk(){if(!AU.ctx)return;osc('square',415,410,.45,.07,{lp:1800});osc('s
 const _cycleTool0=cycleTool;cycleTool=function(){if(PL.carD)return honk();return _cycleTool0()};
 function carDrive(dt,t){const c=PL.carD,D=CARDEF[c.k],m=CARM.get(c.id);let ix=joy.x,iy=joy.y;if(keys.KeyW||keys.ArrowUp)iy+=1;if(keys.KeyS||keys.ArrowDown)iy-=1;if(keys.KeyA||keys.ArrowLeft)ix-=1;if(keys.KeyD||keys.ArrowRight)ix+=1;
   ix=clamp(ix,-1,1);iy=clamp(iy,-1,1);if(UI.p||!$('modal').classList.contains('hidden')){ix=0;iy=0}
-  const off=!(inTown(c.x,c.z,2)||pathD(c.x,c.z)<1.5);const vmax=D.vmax*(off?.55:1);
+  const off=!(inTown(c.x,c.z,2)||pathD(c.x,c.z)<1.5);const vmax=D.vmax*(off?.55:1)*((c.fuel??100)<=0?.08:1);
   const tv=iy>0?iy*vmax:iy*6;const brake=Math.sign(tv-CARV.v)!==Math.sign(CARV.v)&&CARV.v!==0;CARV.v+=clamp(tv-CARV.v,-(brake?14:D.acc)*dt,(brake?14:D.acc)*dt);if(Math.abs(iy)<.05)CARV.v*=Math.pow(.55,dt);
   CARV.steer=lerp(CARV.steer,ix*.6/(1+Math.abs(CARV.v)/14),Math.min(1,dt*6));
   const steps=Math.max(1,Math.ceil(Math.abs(CARV.v*dt)/.35));let hit=false;
@@ -3104,14 +3122,14 @@ function carDrive(dt,t){const c=PL.carD,D=CARDEF[c.k],m=CARM.get(c.id);let ix=jo
   for(const w of m.g.userData.wh){w.w.children.forEach(o=>{});w.w.rotation.z-=CARV.v*dt/D.wr;if(w.x>0)w.w.rotation.y=-CARV.steer}
   PL.x=c.x;PL.z=c.z;PL.h=c.h;PL.R.g.position.set(c.x,gy,c.z);carryVis.tahil.visible=false;carryVis.saman.visible=false;
   if(performance.now()-cam.lastLook>1300){const behind=Math.atan2(-Math.cos(c.h),-Math.sin(c.h));cam.yaw=angLerp(cam.yaw,behind,Math.min(1,dt*(1.5+Math.abs(CARV.v)*.15)))}
-  const kmh=Math.round(Math.abs(CARV.v)*3.6*1.4);const hud=`${D.e} ${kmh} km/s${CARV.v<-.2?' (geri)':''}${off?' · 🌾 toprak yol':''}`;const el=$('trHud');el.classList.remove('hidden');if(el._h!==hud){el._h=hud;el.textContent=hud}}
+  fuelTick(c,D,dt,off,m);const kmh=Math.round(Math.abs(CARV.v)*3.6*1.4);const hud=`${D.e} ${kmh} km/s${CARV.v<-.2?' (geri)':''} · ⛽ %${Math.round(c.fuel??100)}${(c.dirt||0)>.45?' · 🟫 kirli':''}${D.truck?` · 🥛 ${Math.round(c.milk||0)}/${TANK_L} L`:''}${off?' · 🌾':''}`;const el=$('trHud');el.classList.remove('hidden');if(el._h!==hud){el._h=hud;el.textContent=hud}}
 const _updatePlayer0=updatePlayer;updatePlayer=function(dt,t){if(PL.carD)return carDrive(dt,t);return _updatePlayer0(dt,t)};
 
 /* --- galeri --- */
 const SHOW=[];{for(const [k,x,z,h] of[['simsek',30.5,121+TOFF,.6],['suv',34,123.5+TOFF,-.4]]){const g=mkCar(k);g.position.set(x,.2,z);g.rotation.y=h;scene.add(g);SHOW.push(g)}}
 let galCol={};
 function galeriModal(){const own=k=>S.cars.some(c=>c.k===k);
-  let h=`<h2>🚗 ${CITY} Oto Galeri</h2><p class="say">"Hoş geldin ağam! Sıfır kilometre, garantili. Aldığın araba çiftliğinin otoparkına teslim edilir."</p>`;
+  let h=`<h2>🚗 ${CITY} Oto Galeri</h2><p class="say">"Hoş geldin ağam! Sıfır kilometre, garantili. Aldığın araba çiftliğinin otoparkına, süt tankeri de çiftlik yolundaki tanker yerine teslim edilir."</p>`;
   for(const k of Object.keys(CARDEF)){const D=CARDEF[k];const cc=galCol[k]||D.col;
     h+=`<div class="item" style="display:block;${D.super?'background:linear-gradient(135deg,#2a0d0f,#5b1215);color:#fff':''}"><div style="display:flex;gap:10px;align-items:center"><div class="ie" style="font-size:30px">${D.e}</div><div class="ib"><b>${D.ad}${own(k)?' · ✅ Sende var':''}</b>
       <small style="${D.super?'color:#f3d0d0':''}">Hız ${'▮'.repeat(Math.round(D.vmax/34*8))}${'▯'.repeat(8-Math.round(D.vmax/34*8))} · Hızlanma ${'▮'.repeat(Math.round(D.acc/11*8))}${'▯'.repeat(8-Math.round(D.acc/11*8))}</small></div></div>
@@ -3154,12 +3172,80 @@ shopHTML=function(){const cat=UI.shopCat||'hepsi';const cats=[['hepsi','✨ Heps
 function carActions(C,px,pz){
   for(const c of S.cars){if(PL.carD)break;const d=Math.hypot(c.x-px,c.z-pz);if(d<3)C(d,3,{i:CARDEF[c.k].e,l:`Arabaya bin: ${CARDEF[c.k].ad}`,run:()=>enterCar(c)},-.25)}
   {const o=GALERI,x=(o.x0+o.x1)/2,z=o.z0-1.6;const d=Math.hypot(px-x,pz-z);if(d<4)C(d,4,{i:'🚗',l:`${CITY} Oto Galeri`,run:galeriModal},-.3)}}
-const _findAction0=findAction;findAction=function(){if(PL.carD)return {i:'🚪',l:`Arabadan in`,run:exitCar};return _findAction0()};
+const _findAction0=findAction;findAction=function(){if(PL.carD)return carSpecial(PL.carD)||{i:'🚪',l:`Arabadan in`,run:exitCar};return _findAction0()};
 function updateCars(dt,t){for(const g of SHOW)g.rotation.y+=dt*.25;if(PL.carD){PL.R.g.visible=false;const D=CARDEF[PL.carD.k];if(AU.amb&&AU.amb.eng){const T=AU.ctx.currentTime;AU.amb.eng.g.gain.setTargetAtTime(.05+Math.abs(CARV.v)/D.vmax*.06,T,.1);AU.amb.eng.o.frequency.setTargetAtTime((D.super?70:50)+Math.abs(CARV.v)/D.vmax*(D.super?260:140),T,.1)}}}
 // şehir trafiği de gerçek modellerle
 for(const [i,c] of CARS.entries()){scene.remove(c.g);const k=['sedan','suv','pikap','coupe'][i%4];c.g=mkCar(k,pick(CARDEF[k].cols));scene.add(c.g)}
 ACH.push(['araba','🚗','Direksiyon başında','İlk arabanı al',()=>S.cars.length>=1],['super','🏎️','Hız tutkunu','Bir süper spor arabaya sahip ol',()=>S.cars.some(c=>CARDEF[c.k].super)]);
 Q.push({t:`${CITY} Oto Galeri'den ilk arabanı al`,c:()=>S.cars.length>=1,r:1500,w:[(GALERI.x0+GALERI.x1)/2,GALERI.z0-2]});
+
+/* =====================================================================
+   YAKIT, KİRLENME, OTO YIKAMA, SÜT TANKERİ (dorseli) ve SÜT FABRİKASI
+   ===================================================================== */
+const FUEL_TL=42.9,WASH_TL=60,TANK_L=1500,FACT_M=1.45;const PUMPS=[[42,129],[47,129]];const TRUCK_SPOT=[-12.8,39,Math.PI/2];
+for(const k of['wash','fuelL','tankL'])if(S.stats[k]===undefined)S.stats[k]=0;
+CARDEF.tanker={ad:'Süt Tankeri (dorseli)',e:'🚛',f:350000,vmax:15,acc:3.2,col:'#f4f4f0',cols:['#f4f4f0','#c0392b','#1d4fa3','#2f6f3a','#f2c014'],W:2.4,wr:.5,wx:[2.4,-1.4],truck:1,tank:300};
+const tankLOf=c=>CARDEF[c.k].tank||(CARDEF[c.k].super?90:c.k==='suv'||c.k==='pikap'?70:50);
+function mkTruck(col){const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const bm=newMat({color:col,roughness:.35,metalness:.4}),ch=M('#c9ccd1',.25,{metalness:.85}),bk=M('#181818',.85),gl=newMat({color:'#1b252d',roughness:.08,metalness:.6}),dk=M('#2c2f33',.6);
+  part(G.box,dk,5.6,.35,1.1,0,.75,0,inner);part(G.box,bm,2.2,2.3,2.4,2.25,2.05,0,inner);part(G.box,bm,2.0,.5,2.42,2.35,3.3,0,inner);part(G.box,gl,.06,1.0,2.2,3.36,2.5,0,inner);for(const s of[-1,1])part(G.box,gl,1.2,.8,.04,2.6,2.55,s*1.21,inner);
+  part(G.box,ch,.1,1.0,1.8,3.38,1.35,0,inner);part(G.box,dk,.3,.35,2.4,3.45,.7,0,inner);for(const s of[-1,1]){const h=new THREE.Mesh(G.box,winMat());h.scale.set(.05,.2,.35);h.position.set(3.46,1.05,s*.85);inner.add(h);part(G.cyl,ch,.09,1.8,.09,1.05,3.6,s*1.05,inner);part(G.cyl,ch,.3,.9,.3,.6,1.15,s*1.05,inner,0,0,Math.PI/2)}
+  part(G.cyl,dk,.55,.08,.55,-1.9,1.0,0,inner);const wh=[];for(const [x,s] of[[2.4,1],[2.4,-1],[-.9,1],[-.9,-1],[-2.0,1],[-2.0,-1]]){const w=new THREE.Group();w.position.set(x,.5,s*1.0);inner.add(w);const t=new THREE.Mesh(G.cyl,bk);t.scale.set(.5,.38,.5);t.rotation.x=Math.PI/2;t.castShadow=true;w.add(t);const r=new THREE.Mesh(G.cyl,ch);r.scale.set(.28,.39,.28);r.rotation.x=Math.PI/2;w.add(r);wh.push({w,x})}
+  g.userData.wh=wh;g.userData.bm=bm;g.userData.base=new THREE.Color(col);
+  // dorse (tank)
+  const T=new THREE.Group(),ti=new THREE.Group();T.add(ti);const tk=M('#d9dde2',.22,{metalness:.85});
+  part(G.box,dk,9.6,.3,1.0,-4.8,1.0,0,ti);const cy=new THREE.Mesh(G.cyl,tk);cy.scale.set(1.15,8.2,1.15);cy.rotation.z=Math.PI/2;cy.position.set(-5,2.2,0);cy.castShadow=true;ti.add(cy);
+  for(const x of[-.9,-9.1]){const e=new THREE.Mesh(G.sph,tk);e.scale.set(.35,1.15,1.15);e.position.set(x,2.2,0);ti.add(e)}for(const x of[-2.6,-5,-7.4])part(G.cyl,ch,1.2,.12,1.2,x,2.2,0,ti,0,0,Math.PI/2);
+  part(G.box,dk,7.5,.06,.6,-5,3.38,0,ti);part(G.box,dk,.06,1.4,.4,-9.3,2.4,.7,ti);for(const s of[-1,1]){const m=new THREE.Mesh(new THREE.PlaneGeometry(4.6,.75),bigSign(['ÖZDEMİR SÜT',['Taze köy sütü',.5]],'#1d4fa3','#ffffff',4.6,.75));m.position.set(-5,2.2,s*1.17);m.rotation.y=s>0?0:Math.PI;ti.add(m)}
+  for(const s of[-1,1]){part(G.box,dk,.12,.9,.12,-1.8,.45,s*.8,ti);const tl=new THREE.Mesh(G.box,new THREE.MeshBasicMaterial({color:'#c4161c'}));tl.scale.set(.05,.15,.3);tl.position.set(-9.5,1.0,s*.9);ti.add(tl)}
+  for(const [x,s] of[[-7.6,1],[-7.6,-1],[-8.7,1],[-8.7,-1]]){const w=new THREE.Group();w.position.set(x,.5,s*1.0);ti.add(w);const t=new THREE.Mesh(G.cyl,bk);t.scale.set(.5,.38,.5);t.rotation.x=Math.PI/2;t.castShadow=true;w.add(t);const r=new THREE.Mesh(G.cyl,ch);r.scale.set(.28,.39,.28);r.rotation.x=Math.PI/2;w.add(r)}
+  T.traverse(o=>{if(o.isMesh)o.castShadow=true});T.userData.dyn=1;scene.add(T);g.userData.trailer=T;g.userData.dyn=1;mergeByMat(inner,o=>o.parent===inner);mergeByMat(ti,()=>true);return g}
+function truckFollow(c,m,init){const hx=c.x-Math.cos(c.h)*1.9,hz=c.z-Math.sin(c.h)*1.9;
+  if(init||c.tx===undefined||Math.hypot(c.tx-hx,c.tz-hz)>9){const th=init&&c.th!==undefined&&Math.hypot(c.tx-hx,c.tz-hz)<8?c.th:c.h;c.th=th;c.tx=hx-Math.cos(th)*7.2;c.tz=hz-Math.sin(th)*7.2}
+  else{const dx=hx-c.tx,dz=hz-c.tz,L=Math.hypot(dx,dz)||1;c.tx=hx-dx/L*7.2;c.tz=hz-dz/L*7.2;c.th=Math.atan2(dz,dx)}
+  const T=m.g.userData.trailer;if(T){T.position.set(hx,getH(hx,hz),hz);T.rotation.y=-c.th}}
+const MUD=new THREE.Color('#6b5236');
+function tint(c,m){const u=m.g.userData;if(u.bm&&u.base)u.bm.color.copy(u.base).lerp(MUD,(c.dirt||0)*.6)}
+for(const c of S.cars)if(!CARM.get(c.id)&&CARDEF[c.k])placeCar(c);
+for(const c of S.cars){const m=CARM.get(c.id);if(m)tint(c,m)}
+function fuelTick(c,D,dt,off,m){const dist=Math.abs(CARV.v)*dt;if(c.fuel===undefined)c.fuel=100;
+  const rate=100/4200*(D.super?1.7:D.truck?1.5+(c.milk||0)/TANK_L*.6:1);c.fuel=Math.max(0,c.fuel-dist*rate);
+  if(c.fuel<15&&!c.fw){c.fw=1;toast('⛽ Yakıt azaldı! Özdemir Petrol çevre yolunun doğusunda.')}if(c.fuel<=0&&c.fw!==2){c.fw=2;toast('⛽ Yakıt bitti! Araba ancak sürünerek gidiyor. Benzinliğe git.')}if(c.fuel>20)c.fw=0;
+  const d0=c.dirt||0;c.dirt=Math.min(1,d0+dist*(off?.0035:.0004)*(S.weather==='yagmur'||S.weather==='kar'?3:1));if(Math.abs(c.dirt-d0)>0)tint(c,m);
+  if(D.truck)truckFollow(c,m)}
+/* --- oto yıkama --- */
+const WB={on:0,t:0,c:null,br:[]};
+{const bm=M('#2e86de',.8),f=M('#7fb8ea',.9);for(const x of[WASH.x0+1,WASH.x1-1]){const g=new THREE.Group();g.position.set(x,0,WASH.cz);const b=new THREE.Mesh(G.cyl,f);b.scale.set(.45,2.4,.45);b.position.y=1.4;g.add(b);
+   for(let i=0;i<8;i++){const s=new THREE.Mesh(G.box,bm);s.scale.set(.05,2.3,.9);s.position.y=1.4;s.rotation.y=i*Math.PI/8;g.add(s)}g.userData.dyn=1;scene.add(g);WB.br.push(g)}
+ const top=new THREE.Group();top.position.set(WASH.cx,2.6,WASH.cz);const tb=new THREE.Mesh(G.cyl,f);tb.scale.set(.4,4.6,.4);tb.rotation.z=Math.PI/2;top.add(tb);top.userData.dyn=1;scene.add(top);WB.br.push(top);
+ const n=60,im=new THREE.InstancedMesh(new THREE.BoxGeometry(.03,.25,.03),new THREE.MeshBasicMaterial({color:'#bfe3ff',transparent:true,opacity:.7}),n);im.visible=false;im.frustumCulled=false;scene.add(im);WB.drops=im;WB.P=Array.from({length:n},()=>[rand(-2,2),rand(3),rand(-2.6,2.6)])}
+function startWash(){const c=PL.carD;if(!c||!canPay(WASH_TL))return;S.money-=WASH_TL;WB.on=1;WB.t=0;WB.c=c;CARV.v=0;toast('🚿 Yıkama başladı...');refresh()}
+const _m4=new THREE.Matrix4();
+function washTick(dt,t){const sp=WB.on?14:.0;WB.br[0].rotation.y+=dt*sp;WB.br[1].rotation.y-=dt*sp;WB.br[2].rotation.x+=dt*sp*.8;WB.drops.visible=!!WB.on;if(!WB.on)return;
+  WB.t+=dt;const k=WB.t/4;WB.br[2].position.z=WASH.cz+Math.sin(k*Math.PI*2)*2;WB.br[0].position.x=WASH.x0+1+Math.sin(k*Math.PI*4)*.25;WB.br[1].position.x=WASH.x1-1-Math.sin(k*Math.PI*4)*.25;
+  for(let i=0;i<WB.P.length;i++){const p=WB.P[i];p[1]-=dt*6;if(p[1]<0)p[1]=3;_m4.makeTranslation(WASH.cx+p[0],p[1],WASH.cz+p[2]);WB.drops.setMatrixAt(i,_m4)}WB.drops.instanceMatrix.needsUpdate=true;
+  if(Math.random()<dt*4&&AU.ctx)nz(.3,.06,{f:1800,type:'bandpass',q:.5});
+  const c=WB.c,m=CARM.get(c.id);c.dirt=Math.max(0,(c.dirt||0)*(1-dt*.8));tint(c,m);
+  if(WB.t>=4){WB.on=0;c.dirt=0;tint(c,m);S.stats.wash++;toast('✨ Araban pırıl pırıl oldu!');play('coin')}}
+const _updatePlayer1=updatePlayer;updatePlayer=function(dt,t){if(WB.on){CARV.v=0;const el=$('trHud');const h='🚿 Yıkanıyor... %'+Math.round(Math.min(1,WB.t/4)*100);if(el._h!==h){el._h=h;el.textContent=h}return}return _updatePlayer1(dt,t)};
+/* --- tanker: yükleme ve fabrikaya boşaltma --- */
+const MILKS=['inekSut','keciSut','koyunSut'];
+function loadTanker(c){let room=TANK_L-(c.milk||0),got=0;c.mk=c.mk||{};for(const k of MILKS){const n=Math.min(room,Math.floor(S.prod[k]||0));if(n<=0)continue;S.prod[k]-=n;c.mk[k]=(c.mk[k]||0)+n;room-=n;got+=n}
+  c.milk=(c.milk||0)+got;S.stats.tankL+=got;toast(got?`🥛 Tankere ${got} L süt yüklendi (${Math.round(c.milk)}/${TANK_L} L). Şimdi Süt Fabrikası'na götür!`:'Depoda yüklenecek süt yok.');refresh()}
+function unloadTanker(c){let pay=0;for(const k in c.mk||{}){pay+=c.mk[k]*PR[k].f*S.pm[k]*FACT_M*(S.usta?1.2:1)}pay=Math.round(pay);const L=Math.round(c.milk||0);c.mk={};c.milk=0;S.money+=pay;S.stats.sold+=pay;S.stats.factory=(S.stats.factory||0)+1;
+  toast(`🏭 Fabrika ${L} L sütü aldı: +${tl(pay)} (pazarın %${Math.round((FACT_M-1)*100)} fazlası)`);play('coin');refresh()}
+function carSpecial(c){if(Math.abs(CARV.v)>1.2||WB.on)return null;const D=CARDEF[c.k];
+  for(const [x,z] of PUMPS)if(Math.hypot(c.x-x,c.z-z)<3.6&&(c.fuel??100)<99){const L=Math.ceil((100-(c.fuel??100))/100*tankLOf(c)),cost=Math.round(L*FUEL_TL);
+    return {i:'⛽',l:`Depoyu doldur: ${L} L · ${tl(cost)}`,dis:S.money<Math.min(cost,FUEL_TL),run:()=>{let l=L;if(S.money<cost)l=Math.floor(S.money/FUEL_TL);if(l<=0)return;S.money-=Math.round(l*FUEL_TL);c.fuel=Math.min(100,(c.fuel??100)+l/tankLOf(c)*100);S.stats.fuelL+=l;
+      toast(`⛽ ${l} L yakıt alındı · Depo %${Math.round(c.fuel)}`);play('pour');refresh()}}}
+  if(!D.truck&&c.x>WASH.x0-.3&&c.x<WASH.x1+.3&&c.z>WASH.z0-.5&&c.z<WASH.z1+.5&&(c.dirt||0)>.03)return {i:'🚿',l:`Arabayı yıka · ${tl(WASH_TL)}`,dis:S.money<WASH_TL,run:startWash};
+  if(D.truck){if(Math.hypot(c.x-TRUCK_SPOT[0],c.z-TRUCK_SPOT[1])<14){const have=MILKS.reduce((s,k)=>s+Math.floor(S.prod[k]||0),0);if(have>0&&(c.milk||0)<TANK_L)return {i:'🥛',l:`Depodaki sütü yükle: ${Math.min(have,TANK_L-(c.milk||0))} L`,run:()=>loadTanker(c)}}
+    if(Math.hypot(c.x-FACT.bay[0],c.z-FACT.bay[1])<9&&(c.milk||0)>0)return {i:'🏭',l:`Fabrikaya boşalt: ${Math.round(c.milk)} L`,run:()=>unloadTanker(c)}}
+  return null}
+/* --- döngü, görevler --- */
+function updateFuel(dt,t){washTick(dt,t);for(const c of S.cars)if(CARDEF[c.k]&&CARDEF[c.k].truck&&PL.carD!==c){const m=CARM.get(c.id);if(m&&m.g.userData.trailer&&!m.g.userData.trailer.parent)scene.add(m.g.userData.trailer)}}
+ACH.push(['yakit','⛽','Depo full','Benzinlikte depoyu doldur',()=>S.stats.fuelL>0],['yikama','🚿','Pırıl pırıl','Arabanı yıkat',()=>S.stats.wash>=1],['tanker','🚛','Sütçü kamyoncu','Tankerle 1.000 L süt taşı',()=>S.stats.tankL>=1000]);
+Q.push({t:'Özdemir Petrol\'de arabanın deposunu doldur',c:()=>S.stats.fuelL>0,r:300,w:PUMPS[0]},{t:'Oto yıkamada arabanı yıkat',c:()=>S.stats.wash>=1,r:300,w:[WASH.cx,WASH.cz]},
+  {t:'Galeriden süt tankeri al, sütü fabrikaya götür',c:()=>(S.stats.factory||0)>=1,r:2000,w:FACT.bay});
 /* ================= döngü ================= */
 let shT=0,last=performance.now(),hudT=0,saveT=0,sepT=0,miniT=0,actT=0,fpsT=0,fpsN=0,slow=0;
 function frame(now){
@@ -3175,7 +3261,7 @@ function frame(now){
     if(o.eggs){const n=Math.min(p.eggs,25),g=Math.min(p.geggs,5);let ni=0,gi=0;o.eggs.forEach((e,i)=>{if(i%6===5)e.visible=gi++<g;else e.visible=ni++<n})}}
   const ns=Math.min(24,Math.ceil(S.feed.tahil/25)),nb=Math.min(24,Math.ceil(S.feed.saman/40));ambarVis.sacks.forEach((s,i)=>s.visible=i<ns);ambarVis.bales.forEach((s,i)=>s.visible=i<nb);
   const sa=S.animals.find(a=>a.id===SEL);if(sa&&sa._v){ring.position.set(sa.x,.04,sa.z);ring.scale.setScalar(AT[sa.t].r*1.4);ring.material.opacity=.6+Math.sin(now/200)*.25}
-  updateCamera(dt);cullGrass(PL.x,PL.z);updateSky(t);updateExtras(dt,t);updateMore(dt,t);updateTown(dt,t);updateCars(dt,t);updateIcons();
+  updateCamera(dt);cullGrass(PL.x,PL.z);updateSky(t);updateExtras(dt,t);updateMore(dt,t);updateTown(dt,t);updateCars(dt,t);updateFuel(dt,t);updateIcons();
   actT+=dt;if(actT>.1){actT=0;curAct=findAction()}updateActionUI();
   miniT+=dt;if(miniT>.1){miniT=0;drawMini(t)}
   hudT+=dt;if(hudT>.5){hudT=0;updateHUD();checkQuest();if(!pdown&&!(document.activeElement&&document.activeElement.tagName==='INPUT')){if(UI.p)renderSheet();if(SEL)renderCard()}}
