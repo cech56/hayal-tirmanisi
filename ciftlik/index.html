@@ -901,7 +901,9 @@ for(const o of[...SHOPS,...APTS]){o.z0+=TOFF;o.z1+=TOFF;if(o.door)o.door[1]+=TOF
 {const g0=new THREE.Group();scene.add(g0);TWN.stopShelter(g0,STOPS[0][0],STOPS[0][1],0)}
 
 /* ================= YOLLAR, TABELALAR, ŞEHİR KAPISI, OTO GALERİ, OTOPARK ================= */
-const CITY='ÖZDEMİR';
+const cityT=()=>(S.cityName||'Özdemir'),villT=()=>(S.villName||'Bizim Yayla');let CITY=cityT().toLocaleUpperCase('tr'),VILL=villT().toLocaleUpperCase('tr');
+const NAMED=[];function nameSign(f){const m=bigSign(...f());NAMED.push({m,f});return m}
+function refreshNames(){CITY=cityT().toLocaleUpperCase('tr');VILL=villT().toLocaleUpperCase('tr');for(const N of NAMED){const t=bigSign(...N.f());const sc=typeof snowCache!=='undefined'?snowCache.get(N.m.uuid):null;if(N.m.map)N.m.map.dispose();for(const o of[N.m,sc])if(o){o.map=t.map;if(o.emissiveMap)o.emissiveMap=t.map;o.needsUpdate=true}}}
 const GALERI={x0:27.5,x1:36.5,z0:115.5+TOFF,z1:127+TOFF,face:'n',col:'#eef0f2',fl:0};
 const PARK=[[-14.8,17.6],[-14.8,20.6],[-14.8,23.6],[-14.8,26.6]];
 function roadTex(kind){const c=document.createElement('canvas');c.width=256;c.height=256;const x=c.getContext('2d');
@@ -931,18 +933,18 @@ function bigSign(lines,bg,fg,w,h,opt={}){const c=document.createElement('canvas'
  for(let z=30;z<40;z+=4)for(const s of[]){const x=-8.8+s*5.2;part(G.cyl,M('#5b4030'),.1,1.6,.1,x,getH(x,z)+.8,z,g);part(new THREE.IcosahedronGeometry(1,1),M('#5f9a35',.9,{flatShading:true}),.8,1,.8,x,getH(x,z)+2.1,z,g)}
  // yön tabelası: çiftlik kavşağı
  const pole=M('#8a8d92',.4,{metalness:.6});const sgn=(mat,w,h,x,y,z,ry)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.position.set(x,y,z);m.rotation.y=ry;g.add(m);part(G.box,M('#c9ccd1',.5),w+.08,h+.08,.04,x-Math.sin(ry)*.025,y,z-Math.cos(ry)*.025,g,0,ry,0);return m};
- {const x=-4.4,z=14.2;part(G.cyl,pole,.06,3.4,.06,x,1.7,z,g);sgn(bigSign([`${CITY} ➜`,'1 km'],'#1d4fa3','#ffffff',2.2,.8,{border:'#ffffff'}),2.2,.8,x,2.9,z+.05,0);sgn(bigSign(['BİZİM YAYLA KÖYÜ ➜'],'#1d4fa3','#ffffff',2.2,.45,{border:'#ffffff'}),2.2,.45,x,2.2,z+.05,0);sgn(bigSign(['⬅ YAYLA'],'#7a4a1e','#ffffff',1.4,.45,{border:'#ffffff'}),1.4,.45,x,1.6,z+.05,0)}
+ {const x=-4.4,z=14.2;part(G.cyl,pole,.06,3.4,.06,x,1.7,z,g);sgn(nameSign(()=>[[`${CITY} ➜`,'1 km'],'#1d4fa3','#ffffff',2.2,.8,{border:'#ffffff'}]),2.2,.8,x,2.9,z+.05,0);sgn(nameSign(()=>[[VILL+' KÖYÜ ➜'],'#1d4fa3','#ffffff',2.2,.45,{border:'#ffffff'}]),2.2,.45,x,2.2,z+.05,0);sgn(bigSign(['⬅ YAYLA'],'#7a4a1e','#ffffff',1.4,.45,{border:'#ffffff'}),1.4,.45,x,1.6,z+.05,0)}
  // köy giriş tabelası
- {const x=-5.6,z=40.5;for(const dx of[-.8,.8])part(G.cyl,pole,.05,2.4,.05,x+dx,1.2,z,g);sgn(bigSign(['BİZİM YAYLA','KÖYÜ'],'#ffffff','#111111',2,.9,{border:'#111111'}),2,.9,x,2.2,z-.03,Math.PI)}
+ {const x=-5.6,z=40.5;for(const dx of[-.8,.8])part(G.cyl,pole,.05,2.4,.05,x+dx,1.2,z,g);sgn(nameSign(()=>[[VILL,'KÖYÜ'],'#ffffff','#111111',2,.9,{border:'#111111'}]),2,.9,x,2.2,z-.03,Math.PI)}
  // şehir öncesi yön tabelası
- {const x=-6.4,z=76;part(G.cyl,pole,.06,3,.06,x,1.5,z,g);sgn(bigSign([`⬆ ${CITY} 1 km`,['Merkez · Çarşı · Oto Galeri',.5]],'#1d4fa3','#ffffff',2.2,.9,{border:'#ffffff'}),2.2,.9,x,2.6,z-.03,Math.PI)}
+ {const x=-6.4,z=76;part(G.cyl,pole,.06,3,.06,x,1.5,z,g);sgn(nameSign(()=>[[`⬆ ${CITY} 1 km`,['Merkez · Çarşı · Oto Galeri',.5]],'#1d4fa3','#ffffff',2.2,.9,{border:'#ffffff'}]),2.2,.9,x,2.6,z-.03,Math.PI)}
  // şehir giriş kapısı
  {const z=86.5+TOFF,x1=TWN.AV-5.8,x2=TWN.AV+5.8,st=newMat({map:TEX.plaster||null,color:'#d9c9a8',roughness:.9});
   for(const x of[x1,x2]){part(G.box,M('#bfae8c',.95),1.6,.6,1.6,x,.3,z,g);part(G.box,st,1.2,6.6,1.2,x,3.6,z,g);part(G.box,M('#bfae8c',.95),1.5,.5,1.5,x,7,z,g);part(G.cone,M('#8f3a28',.8),1.1,.9,1.1,x,7.7,z,g,0,Math.PI/4,0);addCol(x-.7,z-.7,x+.7,z+.7,7.5);
     part(G.cyl,M('#3a6a2a',.9),1.1,.5,1.1,x+(x<TWN.AV?-1.6:1.6),.25,z,g);for(let i=0;i<9;i++)part(G.sph,M(pick(['#e63946','#f4a261','#ffffff','#e9c46a']),.7),.12,.12,.12,x+(x<TWN.AV?-1.6:1.6)+rand(-.8,.8),.55,z+rand(-.8,.8),g)}
   part(G.box,M('#7a2e22',.6),x2-x1+1.6,.35,.5,TWN.AV,6.15,z,g);const W=x2-x1-.6;
-  const f=new THREE.Mesh(new THREE.PlaneGeometry(W,1.5),bigSign([`${CITY} ŞEHRİNE`,['HOŞ GELDİNİZ',.85]],'#7a2e22','#ffe8a3',W,1.5,{glow:1}));f.position.set(TWN.AV,5.2,z-.27);f.rotation.y=Math.PI;g.add(f);winMats.push(f.material);
-  const b=new THREE.Mesh(new THREE.PlaneGeometry(W,1.5),bigSign(['İYİ YOLCULUKLAR',['Yine bekleriz · '+CITY+' Belediyesi',.55]],'#7a2e22','#ffe8a3',W,1.5,{glow:1}));b.position.set(TWN.AV,5.2,z+.27);g.add(b);winMats.push(b.material);
+  const f=new THREE.Mesh(new THREE.PlaneGeometry(W,1.5),nameSign(()=>[[`${CITY} ŞEHRİNE`,['HOŞ GELDİNİZ',.85]],'#7a2e22','#ffe8a3',W,1.5,{glow:1}]));f.position.set(TWN.AV,5.2,z-.27);f.rotation.y=Math.PI;g.add(f);winMats.push(f.material);
+  const b=new THREE.Mesh(new THREE.PlaneGeometry(W,1.5),nameSign(()=>[['İYİ YOLCULUKLAR',['Yine bekleriz · '+CITY+' Belediyesi',.55]],'#7a2e22','#ffe8a3',W,1.5,{glow:1}]));b.position.set(TWN.AV,5.2,z+.27);g.add(b);winMats.push(b.material);
   part(G.box,M('#7a2e22',.6),W+.4,1.7,.4,TWN.AV,5.2,z,g);
   // bayraklar
   const fl=(()=>{const c=document.createElement('canvas');c.width=192;c.height=128;const x=c.getContext('2d');x.fillStyle='#e30a17';x.fillRect(0,0,192,128);x.fillStyle='#fff';x.beginPath();x.arc(70,64,32,0,7);x.fill();x.fillStyle='#e30a17';x.beginPath();x.arc(78,64,26,0,7);x.fill();
@@ -950,17 +952,17 @@ function bigSign(lines,bg,fg,w,h,opt={}){const c=document.createElement('canvas'
   for(const x of[x1-3.2,x2+3.2]){part(G.cyl,M('#d0d3d8',.3,{metalness:.7}),.05,8,.05,x,4,z,g);const m=new THREE.Mesh(new THREE.PlaneGeometry(1.8,1.2),fl);m.position.set(x+(x<TWN.AV?-.92:.92),7.3,z);g.add(m);addCol(x-.1,z-.1,x+.1,z+.1,8)}}
  // büyük karşılama panosu (yol kenarı, geceleri ışıklı)
  {const x=-19.5,z=96,ry=Math.PI*.82;for(const dx of[-2,2])part(G.box,M('#5a5d62',.5,{metalness:.5}),.25,4,.25,x+Math.cos(ry)*dx,2,z-Math.sin(ry)*dx,g);
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(6,2.6),bigSign([CITY,['Şehrine hoş geldiniz',.42],['Çarşı · Market · Oto Galeri · Apartmanlar',.32]],'#10457c','#ffffff',6,2.6,{border:'#f2d22a',glow:1}));m.position.set(x,4.8,z);m.rotation.y=ry;g.add(m);winMats.push(m.material);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(6,2.6),nameSign(()=>[[CITY,['Şehrine hoş geldiniz',.42],['Çarşı · Market · Oto Galeri · Apartmanlar',.32]],'#10457c','#ffffff',6,2.6,{border:'#f2d22a',glow:1}]));m.position.set(x,4.8,z);m.rotation.y=ry;g.add(m);winMats.push(m.material);
   part(G.box,M('#2c2f33',.5),6.2,2.8,.15,x-Math.sin(ry)*.09,4.8,z-Math.cos(ry)*.09,g,0,ry,0);addCol(x-2.5,z-1,x+2.5,z+1,6)}
  // şehir isim tabelası (çıkış tarafı kırmızı çizgili)
- {const x=TWN.AV+7.4,z=84+TOFF;for(const dx of[-.8,.8])part(G.cyl,pole,.05,2.4,.05,x+dx,1.2,z,g);sgn(bigSign([CITY],'#ffffff','#111111',2,.7,{border:'#111111'}),2,.7,x,2.1,z-.03,Math.PI);
-  const ex=sgn(bigSign([CITY],'#ffffff','#111111',2,.7,{border:'#111111'}),2,.7,x,2.1,z+.05,0);part(G.box,new THREE.MeshBasicMaterial({color:'#d01818'}),2.1,.1,.02,x,2.1,z+.08,g,0,0,-.33)}
+ {const x=TWN.AV+7.4,z=84+TOFF;for(const dx of[-.8,.8])part(G.cyl,pole,.05,2.4,.05,x+dx,1.2,z,g);sgn(nameSign(()=>[[CITY],'#ffffff','#111111',2,.7,{border:'#111111'}]),2,.7,x,2.1,z-.03,Math.PI);
+  const ex=sgn(nameSign(()=>[[CITY],'#ffffff','#111111',2,.7,{border:'#111111'}]),2,.7,x,2.1,z+.05,0);part(G.box,new THREE.MeshBasicMaterial({color:'#d01818'}),2.1,.1,.02,x,2.1,z+.08,g,0,0,-.33)}
  // oto galeri (cam vitrinli)
  {const o=GALERI;TOWNB.push(o);BLD.push([o.x0,o.x1,o.z0,o.z1]);const glass=newMat({color:'#a8c8dc',roughness:.05,metalness:.4,transparent:true,opacity:.35});const fr=M('#2c2f33',.4,{metalness:.6});
   part(G.box,M('#d9dde2',.6),o.x1-o.x0,.2,o.z1-o.z0,(o.x0+o.x1)/2,.1,(o.z0+o.z1)/2,g);part(G.box,M('#e7e9ec',.6),o.x1-o.x0+.6,.5,o.z1-o.z0+.6,(o.x0+o.x1)/2,5.25,(o.z0+o.z1)/2,g);
   part(G.box,M('#e7e9ec',.6),o.x1-o.x0,5,.3,(o.x0+o.x1)/2,2.5,o.z1-.15,g);part(G.box,glass,.06,5,o.z1-o.z0,o.x0,2.5,(o.z0+o.z1)/2,g);part(G.box,glass,.06,5,o.z1-o.z0,o.x1,2.5,(o.z0+o.z1)/2,g);part(G.box,glass,o.x1-o.x0,5,.06,(o.x0+o.x1)/2,2.5,o.z0,g);
   for(let i=0;i<=4;i++){const x=lerp(o.x0,o.x1,i/4);part(G.box,fr,.12,5,.12,x,2.5,o.z0,g)}for(const x of[o.x0,o.x1])for(let i=1;i<4;i++)part(G.box,fr,.12,5,.12,x,2.5,lerp(o.z0,o.z1,i/4),g);
-  const sg=new THREE.Mesh(new THREE.PlaneGeometry(8,1.1),bigSign([`${CITY} OTO GALERİ`],'#111418','#f2d22a',8,1.1,{glow:1}));sg.position.set((o.x0+o.x1)/2,4.55,o.z0-.08);sg.rotation.y=Math.PI;g.add(sg);winMats.push(sg.material);
+  const sg=new THREE.Mesh(new THREE.PlaneGeometry(8,1.1),nameSign(()=>[[`${CITY} OTO GALERİ`],'#111418','#f2d22a',8,1.1,{glow:1}]));sg.position.set((o.x0+o.x1)/2,4.55,o.z0-.08);sg.rotation.y=Math.PI;g.add(sg);winMats.push(sg.material);
   for(let i=0;i<3;i++){const x=o.x0-1+i*2.2;part(G.cyl,M('#d0d3d8',.3,{metalness:.7}),.04,4.5,.04,x+8.8,2.25,o.z0-1.4,g);part(G.box,M(['#e63946','#f2d22a','#1d4fa3'][i],.7),.03,1.6,.6,x+8.8,3.7,o.z0-1.1,g)}
   addCol(o.x0,o.z0,o.x1,o.z1,5.6)}
  // çiftlik otoparkı
@@ -997,12 +999,12 @@ const APTS2=[{id:'cinar2',ad:'Kardelen Apartmanı',x0:-52,x1:-40,z0:170.5,z1:179
   part(G.cone,lead,.8,3.4,.8,mx,22.7,mz,g);part(G.cyl,gold,.05,1,.05,mx,24.8,mz,g);part(G.sph,gold,.16,.16,.16,mx,25.4,mz,g);addCol(cx-6,cz-7.2,cx+7.6,cz+5.5,8);
   // avlu ve şadırvan
   for(const [a,b,c,d] of[[-61,-47,145.6,145.9],[-61,-60.7,145.6,151]])part(G.box,st,b-a,1.2,d-c,(a+b)/2,.6,(c+d)/2,g);part(G.cyl,st,1.3,.7,1.3,cx-3,.35,cz-8.5+1.5,g);part(G.cone,lead,1.6,1,1.6,cx-3,2.6,cz-7,g);for(let i=0;i<6;i++){const a=i/6*Math.PI*2;part(G.cyl,st,.08,1.9,.08,cx-3+Math.cos(a)*1.3,1.1,cz-7+Math.sin(a)*1.3,g)}
-  const sg=new THREE.Mesh(new THREE.PlaneGeometry(3,.6),bigSign(['ÖZDEMİR MERKEZ CAMİİ'],'#2b5d3a','#f4e9c8',3,.6));sg.position.set(cx,5.3,cz-5.58);sg.rotation.y=Math.PI;g.add(sg)}
+  const sg=new THREE.Mesh(new THREE.PlaneGeometry(3,.6),nameSign(()=>[[CITY+' MERKEZ CAMİİ'],'#2b5d3a','#f4e9c8',3,.6]));sg.position.set(cx,5.3,cz-5.58);sg.rotation.y=Math.PI;g.add(sg)}
  // --- İLKOKUL ---
  {const o={x0:-62,x1:-47,z0:118.5,z1:126,face:'s',col:'#f2c49b'};TOWNB.push(o);BLD.push([o.x0,o.x1,o.z0,o.z1]);addCol(o.x0,o.z0,o.x1,o.z1,10);
   const m=new THREE.Mesh(boxUV(o.x1-o.x0,9,o.z1-o.z0,12),facOf(o.col,0));m.position.set((o.x0+o.x1)/2,4.5,(o.z0+o.z1)/2);m.castShadow=m.receiveShadow=true;g.add(m);cornices(o,0,3,g);hipRoof(o,9,g);
   frontPart(o,G.box,M('#5b4030',.6),2,2.5,.12,0,1.25,.05,g);frontPart(o,G.box,M('#e9e5dc',.7),3.2,.18,1.6,0,2.8,.8,g);
-  const sg=new THREE.Mesh(new THREE.PlaneGeometry(5,.7),bigSign(['ÖZDEMİR İLKOKULU'],'#7a2e22','#ffffff',5,.7));sg.position.set((o.x0+o.x1)/2,3.5,o.z1+.08);g.add(sg);
+  const sg=new THREE.Mesh(new THREE.PlaneGeometry(5,.7),nameSign(()=>[[CITY+' İLKOKULU'],'#7a2e22','#ffffff',5,.7]));sg.position.set((o.x0+o.x1)/2,3.5,o.z1+.08);g.add(sg);
   // okul bahçesi: basket sahası ve bayrak
   part(G.box,newMat({color:'#a54b3a',roughness:.95}),13,.05,6.5,-54.5,.05,130,g);for(const x of[-60.5,-48.5]){part(G.cyl,M('#ddd'),.06,3,.06,x,1.5,130,g);part(G.box,M('#f4f4f0'),.05,.9,1.2,x+(x<-54?.1:-.1),3,130,g);part(G.cyl,M('#e67e22'),.24,.03,.24,x+(x<-54?.4:-.4),2.7,130,g)}
   const fl=(()=>{const c=document.createElement('canvas');c.width=192;c.height=128;const x=c.getContext('2d');x.fillStyle='#e30a17';x.fillRect(0,0,192,128);x.fillStyle='#fff';x.beginPath();x.arc(70,64,32,0,7);x.fill();x.fillStyle='#e30a17';x.beginPath();x.arc(78,64,26,0,7);x.fill();
@@ -1014,7 +1016,7 @@ const APTS2=[{id:'cinar2',ad:'Kardelen Apartmanı',x0:-52,x1:-40,z0:170.5,z1:179
   for(const [x,z] of[[40.5,126.5],[48.5,126.5],[40.5,131.5],[48.5,131.5]]){part(G.box,can,.4,4.3,.4,x,2.15,z,g);addCol(x-.25,z-.25,x+.25,z+.25,4)}
   for(const x of[42,47]){part(G.box,M('#bfc3c8',.6),2.6,.25,1,x,.13,129,g);for(const s of[-.7,.7]){part(G.box,red,.6,1.5,.45,x+s,.95,129,g);part(G.box,M('#111'),.45,.3,.02,x+s,1.35,128.76,g)}addCol(x-1.3,128.5,x+1.3,129.5,1.6)}
   part(G.box,M('#e9e5dc',.7),7,3.4,5.5,48.5,1.7,121.3,g);const w=new THREE.Mesh(G.box,winMat());w.scale.set(5,1.8,.05);w.position.set(48.5,1.8,124.08);g.add(w);addCol(45,118.5,52,124,3.6);
-  part(G.box,M('#2c2f33',.5),.5,7,.5,51,3.5,132.3,g);const sg=new THREE.Mesh(new THREE.PlaneGeometry(2.2,3),bigSign(['ÖZDEMİR',['PETROL',.8],['Benzin 42,90',.45],['Motorin 44,10',.45]],'#d0101a','#ffffff',2.2,3,{glow:1}));sg.position.set(51,5.6,132.6);g.add(sg);winMats.push(sg.material);addCol(50.7,132,51.3,132.6,7)}
+  part(G.box,M('#2c2f33',.5),.5,7,.5,51,3.5,132.3,g);const sg=new THREE.Mesh(new THREE.PlaneGeometry(2.2,3),nameSign(()=>[[CITY,['PETROL',.8],['Benzin 42,90',.45],['Motorin 44,10',.45]],'#d0101a','#ffffff',2.2,3,{glow:1}]));sg.position.set(51,5.6,132.6);g.add(sg);winMats.push(sg.material);addCol(50.7,132,51.3,132.6,7)}
  // --- PARK ---
  {const cx=45.5,cz=153;TOWNB.push({x0:38.5,x1:52.5,z0:145.5,z1:160.5});const path=newMat({color:'#cdbf9f',roughness:.95});
   part(G.box,path,13,.05,1.6,cx,.05,cz,g);part(G.box,path,1.6,.05,14,cx,.05,cz,g);part(G.cyl,M('#bdb4a2',.9),2.2,.5,2.2,cx,.25,cz,g);part(G.cyl,newMat({color:'#4a8db0',roughness:.05,metalness:.2}),1.9,.05,1.9,cx,.5,cz,g);part(G.cyl,M('#bdb4a2',.9),.25,1.4,.25,cx,.9,cz,g);addCol(cx-2.2,cz-2.2,cx+2.2,cz+2.2,.6);
@@ -1023,7 +1025,7 @@ const APTS2=[{id:'cinar2',ad:'Kardelen Apartmanı',x0:-52,x1:-40,z0:170.5,z1:179
   // oyun parkı: kaydırak ve salıncak
   part(G.box,M('#e63946',.6),.9,.08,3,48.5,1.1,157,g,.45,0,0);part(G.box,M('#2e86de',.6),1,2,1,48.5,1,155.2,g);for(const x of[41,43.4]){part(G.cyl,M('#f2c014',.5),.06,2.4,.06,x,1.2,149,g)}part(G.cyl,M('#f2c014',.5),.06,2.6,.06,42.2,2.4,149,g,0,0,Math.PI/2);
   for(const x of[41.7,42.7]){part(G.cyl,M('#555'),.015,1.6,.015,x,1.6,149,g);part(G.box,M('#e63946'),.45,.05,.25,x,.75,149,g)}
-  const sg=new THREE.Mesh(new THREE.PlaneGeometry(2.6,.6),bigSign(['ÖZDEMİR PARKI'],'#2b5d3a','#f4e9c8',2.6,.6));sg.position.set(cx,1.6,145.2);sg.rotation.y=Math.PI;g.add(sg);part(G.box,M('#5b4030'),.1,1.4,.1,cx-1.1,.7,145.25,g);part(G.box,M('#5b4030'),.1,1.4,.1,cx+1.1,.7,145.25,g)}
+  const sg=new THREE.Mesh(new THREE.PlaneGeometry(2.6,.6),nameSign(()=>[[CITY+' PARKI'],'#2b5d3a','#f4e9c8',2.6,.6]));sg.position.set(cx,1.6,145.2);sg.rotation.y=Math.PI;g.add(sg);part(G.box,M('#5b4030'),.1,1.4,.1,cx-1.1,.7,145.25,g);part(G.box,M('#5b4030'),.1,1.4,.1,cx+1.1,.7,145.25,g)}
  // --- çevre yolu boyunca yeni apartmanlar ---
  for(const o of APTS2){const top=o.fl*3+.4;TOWNB.push(o);BLD.push([o.x0,o.x1,o.z0,o.z1]);addCol(o.x0,o.z0,o.x1,o.z1,top+1);part(G.box,M('#8f877a',.95),o.x1-o.x0+.2,.4,o.z1-o.z0+.2,(o.x0+o.x1)/2,.2,(o.z0+o.z1)/2,g);
    const m=new THREE.Mesh(boxUV(o.x1-o.x0,o.fl*3,o.z1-o.z0,12),facOf(o.col,1));m.position.set((o.x0+o.x1)/2,.4+o.fl*1.5,(o.z0+o.z1)/2);m.castShadow=m.receiveShadow=true;g.add(m);
@@ -1047,7 +1049,7 @@ const FACT={x0:6,x1:22,z0:93,z1:107,bay:[4.2,104]};
  part(G.box,newMat({color:'#e9edf0',roughness:.7}),o.x1-o.x0,6,o.z1-o.z0-4,cx,3,cz+2,g);part(G.box,M('#2e6fb5',.5),o.x1-o.x0+.4,.5,o.z1-o.z0-3.6,cx,6.2,cz+2,g);
  for(let i=0;i<3;i++){const x=o.x0+3+i*4.5,z=o.z0+1.8;part(G.cyl,M('#d9dde2',.25,{metalness:.8}),1.6,9,1.6,x,4.5,z,g);part(G.cone,M('#c9ccd1',.25,{metalness:.8}),1.6,1,1.6,x,9.5,z,g);addCol(x-1.6,z-1.6,x+1.6,z+1.6,10)}
  part(G.box,M('#5a5d62',.6),3.6,3.2,.1,o.x0+.05,1.6,o.bay[1],g,0,Math.PI/2,0);part(G.box,M('#f2c014',.6),.2,.15,3.6,o.x0-.1,3.3,o.bay[1],g);
- const s2=new THREE.Mesh(new THREE.PlaneGeometry(9,1.2),bigSign(['ÖZDEMİR SÜT FABRİKASI'],'#2e6fb5','#ffffff',9,1.2,{glow:1}));s2.position.set(o.x0-.08,4.8,cz+2);s2.rotation.y=-Math.PI/2;g.add(s2);winMats.push(s2.material);
+ const s2=new THREE.Mesh(new THREE.PlaneGeometry(9,1.2),nameSign(()=>[[CITY+' SÜT FABRİKASI'],'#2e6fb5','#ffffff',9,1.2,{glow:1}]));s2.position.set(o.x0-.08,4.8,cz+2);s2.rotation.y=-Math.PI/2;g.add(s2);winMats.push(s2.material);
  const s3=new THREE.Mesh(new THREE.PlaneGeometry(2.4,.6),bigSign(['🥛 SÜT KABUL'],'#f2c014','#1a1a1a',2.4,.6));s3.position.set(o.x0-.08,3.9,o.bay[1]);s3.rotation.y=-Math.PI/2;g.add(s3);
  // bağlantı yolu ve tabela
  ribbon([[-7.4,100],[o.x0-1.5,100],[o.x0-1.5,o.bay[1]]],5,newMat({map:roadTex('asf'),roughness:.95}),.07,6);
@@ -1074,7 +1076,7 @@ const HPZ={x0:-16,x1:6,z0:171,z1:180,gate:-5};
  for(const x of[P.x0+.3,-9,-2,P.x1-.3])part(G.box,dk,.2,3.4,.2,x,1.7,179.6,g);part(G.box,M('#7d8790',.5,{metalness:.5}),P.x1-P.x0+.6,.08,5,(P.x0+P.x1)/2,3.3,177.4,g,-.12,0,0);
  // giriş kemeri
  for(const s of[-1,1])part(G.box,dk,.35,4.2,.35,P.gate+s*2.2,2.1,P.z0,g);part(G.box,dk,5,.3,.3,P.gate,4.1,P.z0,g);
- const s2=new THREE.Mesh(new THREE.PlaneGeometry(4.6,.9),bigSign(['ÖZDEMİR',['HAYVAN PAZARI',.8]],'#5b3a1e','#f4e9c8',4.6,.9));s2.position.set(P.gate,3.45,P.z0-.2);s2.rotation.y=Math.PI;g.add(s2);
+ const s2=new THREE.Mesh(new THREE.PlaneGeometry(4.6,.9),nameSign(()=>[[CITY,['HAYVAN PAZARI',.8]],'#5b3a1e','#f4e9c8',4.6,.9]));s2.position.set(P.gate,3.45,P.z0-.2);s2.rotation.y=Math.PI;g.add(s2);
  for(const [x,z] of[[-14.5,179],[-13.4,179],[4.4,179]]){const b=new THREE.Mesh(boxUV(1.1,.5,.55,1),TMat('hay',{roughness:1}));b.position.set(x,.25,z);b.castShadow=true;g.add(b)}
  part(G.box,M('#6b6f74',.5,{metalness:.4}),2.2,.5,.6,-5.5,.25,178.8,g);part(G.box,newMat({color:'#4a8db0',roughness:.05}),2,.05,.45,-5.5,.48,178.8,g)}
 /* ================= statik birleştirme (performans) ================= */
@@ -1576,7 +1578,7 @@ function selectAnimal(id){SEL=id;if(UI.p)closeSheet();ring.visible=true;$('card'
 function deselect(){SEL=null;ring.visible=false;$('card').classList.add('hidden')}
 function renderCard(){
   const a=S.animals.find(a=>a.id===SEL);if(!a)return deselect();const d=AT[a.t];const near=Math.hypot(a.x-PL.x,a.z-PL.z)<d.r+2.4;
-  let h=`<div class="ch"><span class="ce">${d.e}</span><div><b>${esc(a.n)}</b><small>${a.sex==='e'?'♂':'♀'} ${aName(a)} · ${ageTxt(a)}${a.sick?' · <span class="down">🤒 Hasta</span>':''}</small></div><button class="x" data-act="desel">✕</button></div>
+  let h=`<div class="ch"><span class="ce">${d.e}</span><div><b>${esc(a.n)} <button data-act="ren" style="border:0;background:none;font-size:15px;padding:0 4px;cursor:pointer">✏️</button></b><small>${a.sex==='e'?'♂':'♀'} ${aName(a)} · ${ageTxt(a)}${a.sick?' · <span class="down">🤒 Hasta</span>':''}</small></div><button class="x" data-act="desel">✕</button></div>
     <div class="bars"><div><label><span>🌾 Tokluk</span><span>${Math.round(a.hu)}%</span></label>${bar(a.hu)}</div><div><label><span>💧 Su</span><span>${Math.round(a.th)}%</span></label>${bar(a.th)}</div>
     <div><label><span>❤️ Sağlık</span><span>${Math.round(a.hp)}%</span></label>${bar(a.hp)}</div>`;
   if(d.urun&&!(a.sex==='e'&&d.sagim))h+=`<div><label><span>${PR[d.urun].e} ${d.sagim?'Süt':'Yumurta'}</span><span>${a.rd?'Hazır!':!dayOk(a,d)&&a.pr>=d.aralik?'Yarın':Math.round(a.pr/d.aralik*100)+'%'}</span></label>${bar(a.rd?1:a.pr,a.rd?1:d.aralik,'#d99a1e')}</div>`;
@@ -2931,7 +2933,7 @@ function moreSheet(p,tab,body){
   if(p==='phone'&&tab==='ach')return achSheet();
   if(p==='phone'&&tab==='decor'){const row=it=>`<div class="item"><div class="ie">${it.e}</div><div class="ib"><b>${it.ad}</b><small>${it.d||(it.ic?'Evinin içine konur':'Çiftliğine güzellik katar')}</small></div><button class="btn" data-act="decor-buy" data-k="${it.k}" ${S.money<it.f?'disabled':''}>${tl(it.f)}</button></div>`;
     return `<small style="display:block;color:var(--muted);margin:0 2px 8px">Aldığın eşya tam önüne konur. Ev eşyası için önce evine gir. Yerleşen eşyanın yanına gidip "Düzenle" ile döndür, taşı ya da kaldır.</small><div class="sec">🌳 Bahçe</div>`+DECOR_SHOP.filter(x=>!x.ic).map(row).join('')+`<div class="sec">🛋️ Ev içi · Konfor ${konfor()}</div>`+DECOR_SHOP.filter(x=>x.ic).map(row).join('')}
-  if(p==='phone'&&tab==='set')return cloudSheet()+body;
+  if(p==='phone'&&tab==='set')return namesSet()+cloudSheet()+body;
   return body}
 function updateMore(dt,t){
   if(crossed(lastHT,6)&&crowDay!==S.day){crowDay=S.day;const r=S.animals.find(a=>a.t==='tavuk'&&a.sex==='e')||S.animals.find(a=>a.t==='tavuk');if(r)play('crow',r.x,r.z)}lastHT=S.t;
@@ -3220,7 +3222,7 @@ function mkTruck(col){const g=new THREE.Group(),inner=new THREE.Group();g.add(in
   const T=new THREE.Group(),ti=new THREE.Group();T.add(ti);const tk=M('#d9dde2',.22,{metalness:.85});
   part(G.box,dk,9.6,.3,1.0,-4.8,1.0,0,ti);const cy=new THREE.Mesh(G.cyl,tk);cy.scale.set(1.15,8.2,1.15);cy.rotation.z=Math.PI/2;cy.position.set(-5,2.2,0);cy.castShadow=true;ti.add(cy);
   for(const x of[-.9,-9.1]){const e=new THREE.Mesh(G.sph,tk);e.scale.set(.35,1.15,1.15);e.position.set(x,2.2,0);ti.add(e)}for(const x of[-2.6,-5,-7.4])part(G.cyl,ch,1.2,.12,1.2,x,2.2,0,ti,0,0,Math.PI/2);
-  part(G.box,dk,7.5,.06,.6,-5,3.38,0,ti);part(G.box,dk,.06,1.4,.4,-9.3,2.4,.7,ti);for(const s of[-1,1]){const m=new THREE.Mesh(new THREE.PlaneGeometry(4.6,.75),bigSign(['ÖZDEMİR SÜT',['Taze köy sütü',.5]],'#1d4fa3','#ffffff',4.6,.75));m.position.set(-5,2.2,s*1.17);m.rotation.y=s>0?0:Math.PI;ti.add(m)}
+  part(G.box,dk,7.5,.06,.6,-5,3.38,0,ti);part(G.box,dk,.06,1.4,.4,-9.3,2.4,.7,ti);for(const s of[-1,1]){const m=new THREE.Mesh(new THREE.PlaneGeometry(4.6,.75),nameSign(()=>[[CITY+' SÜT',['Taze köy sütü',.5]],'#1d4fa3','#ffffff',4.6,.75]));m.position.set(-5,2.2,s*1.17);m.rotation.y=s>0?0:Math.PI;ti.add(m)}
   for(const s of[-1,1]){part(G.box,dk,.12,.9,.12,-1.8,.45,s*.8,ti);const tl=new THREE.Mesh(G.box,new THREE.MeshBasicMaterial({color:'#c4161c'}));tl.scale.set(.05,.15,.3);tl.position.set(-9.5,1.0,s*.9);ti.add(tl)}
   for(const [x,s] of[[-7.6,1],[-7.6,-1],[-8.7,1],[-8.7,-1]]){const w=new THREE.Group();w.position.set(x,.5,s*1.0);ti.add(w);const t=new THREE.Mesh(G.cyl,bk);t.scale.set(.5,.38,.5);t.rotation.x=Math.PI/2;t.castShadow=true;w.add(t);const r=new THREE.Mesh(G.cyl,ch);r.scale.set(.28,.39,.28);r.rotation.x=Math.PI/2;w.add(r)}
   T.traverse(o=>{if(o.isMesh)o.castShadow=true});T.userData.dyn=1;scene.add(T);g.userData.trailer=T;g.userData.dyn=1;mergeByMat(inner,o=>o.parent===inner);mergeByMat(ti,()=>true);return g}
@@ -3234,7 +3236,7 @@ for(const c of S.cars)if(!CARM.get(c.id)&&CARDEF[c.k])placeCar(c);
 for(const c of S.cars){const m=CARM.get(c.id);if(m)tint(c,m)}
 function fuelTick(c,D,dt,off,m){const dist=Math.abs(CARV.v)*dt;if(c.fuel===undefined)c.fuel=100;
   const rate=100/4200*(D.super?1.7:D.truck?1.5+(c.milk||0)/TANK_L*.6:1);c.fuel=Math.max(0,c.fuel-dist*rate);
-  if(c.fuel<15&&!c.fw){c.fw=1;toast('⛽ Yakıt azaldı! Özdemir Petrol çevre yolunun doğusunda.')}if(c.fuel<=0&&c.fw!==2){c.fw=2;toast('⛽ Yakıt bitti! Araba ancak sürünerek gidiyor. Benzinliğe git.')}if(c.fuel>20)c.fw=0;
+  if(c.fuel<15&&!c.fw){c.fw=1;toast(`⛽ Yakıt azaldı! ${cityT()} Petrol çevre yolunun doğusunda.`)}if(c.fuel<=0&&c.fw!==2){c.fw=2;toast('⛽ Yakıt bitti! Araba ancak sürünerek gidiyor. Benzinliğe git.')}if(c.fuel>20)c.fw=0;
   const d0=c.dirt||0;c.dirt=Math.min(1,d0+dist*(off?.0035:.0004)*(S.weather==='yagmur'||S.weather==='kar'?3:1));if(Math.abs(c.dirt-d0)>0)tint(c,m);
   if(D.truck)truckFollow(c,m)}
 /* --- oto yıkama --- */
@@ -3300,7 +3302,7 @@ function hpzOffers(){if(HPZ_OFF&&HPZ_OFF.day===S.day)return HPZ_OFF.l;const ts=[
   for(let i=0;i<5;i++){const t=pick(ts),d=AT[t];const sex=d.erkek&&Math.random()<.35?'e':'d';const disc=rand(.1,.3);l.push({t,sex,disc,p:Math.round(aPrice(t,sex)*(1-disc)/10)*10,trait:pick(TRAIT_KEYS),n:pick(NAMES),done:0})}
   HPZ_OFF={day:S.day,l};return l}
 const hpzVal=a=>Math.round(animalValue(a)*1.15/10)*10;
-function hpzModal(){let h=`<h2>🐄 Özdemir Hayvan Pazarı</h2><p class="say">"Celep Hasan derler bana. Genç hayvanı iyi paraya alırım, sana da bugünün fırsatlarını veririm. Yaşlıyı ise kasap daha iyi alır, haberin olsun."</p>
+function hpzModal(){let h=`<h2>🐄 ${cityT()} Hayvan Pazarı</h2><p class="say">"Celep Hasan derler bana. Genç hayvanı iyi paraya alırım, sana da bugünün fırsatlarını veririm. Yaşlıyı ise kasap daha iyi alır, haberin olsun."</p>
   <div style="display:flex;gap:6px;margin-bottom:8px"><button class="btn ${HPZ_TAB==='sat'?'':'alt'}" data-act="hpz-tab" data-t="sat">💰 Hayvan sat</button><button class="btn ${HPZ_TAB==='al'?'':'alt'}" data-act="hpz-tab" data-t="al">🛒 Bugünün fırsatları</button></div>`;
   if(HPZ_TAB==='sat'){const L=S.animals.filter(a=>!a.loc).sort((a,b)=>hpzVal(b)-hpzVal(a));h+=L.length?L.slice(0,40).map(a=>`<div class="item"><div class="ie">${AT[a.t].e}</div><div class="ib"><b>${esc(a.n)} · ${aName(a)}</b><small>${ageTxt(a)}${a.sick?' · 🤒':''}</small></div><button class="btn" data-act="hpz-sell" data-id="${a.id}">${tl(hpzVal(a))}</button></div>`).join(''):'<small style="color:var(--muted)">Satılacak hayvanın yok.</small>'}
   else h+=hpzOffers().map((o,i)=>{const d=AT[o.t],pid=d.pen,ok=S.pens[pid].un&&penCount(pid)<penCap(pid);return `<div class="item"><div class="ie">${d.e}</div><div class="ib"><b>${o.n} · ${o.sex==='e'&&d.erkek?d.erkek:(d.disi||d.ad)}</b><small>${TRAITS&&TRAITS[o.trait]?TRAITS[o.trait].ad+' · ':''}<s>${tl(aPrice(o.t,o.sex))}</s> <b style="color:#c0392b">%${Math.round(o.disc*100)} indirim</b>${ok?'':` · <span class="bad">${S.pens[pid].un?PENS[pid].ad+' dolu':PENS[pid].ad+' kilitli'}</span>`}</small></div>${o.done?'<button class="btn alt" disabled>Alındı</button>':`<button class="btn gold" data-act="hpz-buy" data-i="${i}" ${ok&&S.money>=o.p?'':'disabled'}>${tl(o.p)}</button>`}</div>`}).join('');
@@ -3330,9 +3332,43 @@ function meatActions(C,px,pz){
     floatWorld(new THREE.Vector3(DOG.x,1.2,DOG.z),'😋 ❤️');play('bark',DOG.x,DOG.z);S.stats.dogFed=(S.stats.dogFed||0)+1}},-.6)}
   if(townD(px,pz)>40)return;
   {const x=(KASAP.x0+KASAP.x1)/2,z=KASAP.z0-1.8;const d=Math.hypot(px-x,pz-z);if(d<3)C(d,3,{i:'🥩',l:'Kasap Ramazan',run:kasapModal},-.2)}
-  {const d=Math.hypot(px-HPZ.gate,pz-(HPZ.z0+1.2));if(d<3.5)C(d,3.5,{i:'🐄',l:'Özdemir Hayvan Pazarı',run:()=>{HPZ_TAB='sat';hpzModal()}},-.2)}}
+  {const d=Math.hypot(px-HPZ.gate,pz-(HPZ.z0+1.2));if(d<3.5)C(d,3.5,{i:'🐄',l:`${cityT()} Hayvan Pazarı`,run:()=>{HPZ_TAB='sat';hpzModal()}},-.2)}}
 ACH.push(['kasap','🥩','Kangalın dostu','Köpeğini 10 kez besle',()=>(S.stats.dogFed||0)>=10],['celep','🐄','Celep','Hayvan pazarında 5 hayvan al ya da sat',()=>S.stats.hpzSold+S.stats.hpzBuy>=5]);
 Q.push({t:'Şehirdeki kasaptan köpeğine et al ve besle',c:()=>(S.stats.dogFed||0)>=1,r:300,w:[(KASAP.x0+KASAP.x1)/2,KASAP.z0-2]},{t:'Hayvan pazarında bir hayvan al ya da sat',c:()=>S.stats.hpzSold+S.stats.hpzBuy>=1,r:500,w:[HPZ.gate,HPZ.z0-1]});
+
+/* =====================================================================
+   İSİMLER: köyün, şehrin, köpeğin ve hayvanların adını oyuncu koyar
+   ===================================================================== */
+const cleanName=(v,def)=>{v=String(v||'').replace(/[<>"'`\\]/g,'').replace(/\s+/g,' ').trim().slice(0,18);return v||def};
+const tcase=v=>v.split(' ').map(w=>w?w[0].toLocaleUpperCase('tr')+w.slice(1):'').join(' ');
+function namesSet(){return `<div class="sec">🏷️ İsimler</div>
+  <div class="stat"><span>🏘️ Köyün adı</span><input id="nmV" class="inp" maxlength="18" value="${esc(villT())}" style="width:52%"></div>
+  <div class="stat"><span>🏙️ Şehrin adı</span><input id="nmC" class="inp" maxlength="18" value="${esc(cityT())}" style="width:52%"></div>
+  ${S.dog?`<div class="stat"><span>🐕 Köpeğin adı</span><input id="nmD" class="inp" maxlength="18" value="${esc(S.dog.n)}" style="width:52%"></div>`:''}
+  <button class="btn gold" style="width:100%;margin:4px 0 10px" data-act="nm-save">İsimleri kaydet</button>
+  <small style="display:block;color:var(--muted);margin:-4px 2px 10px">Tabelalar, kapı ve panolar yeni isimle yeniden yazılır. Hayvanlarının adını değiştirmek için hayvana dokun, kartındaki ✏️ düğmesine bas.</small>`}
+function applyNames(v,c,d){const ov=villT(),oc=cityT();S.villName=tcase(cleanName(v,'Bizim Yayla'));S.cityName=tcase(cleanName(c,'Özdemir'));if(S.dog&&d!==undefined)S.dog.n=tcase(cleanName(d,S.dog.n));
+  refreshNames();save();refresh();const ch=[];if(ov!==villT())ch.push(`köy: ${villT()}`);if(oc!==cityT())ch.push(`şehir: ${cityT()}`);toast(ch.length?`🏷️ Yeni isimler kaydedildi (${ch.join(', ')}). Tabelalar güncellendi!`:'🏷️ İsimler kaydedildi.')}
+function nameModal(kind){const city=kind==='city';modal(`<h2>${city?'🏙️ Bu şehrin adı ne olsun?':'🏘️ Bu köyün adı ne olsun?'}</h2>
+  <p style="font-size:13px;color:var(--muted)">${city?'Kapıdaki "... ŞEHRİNE HOŞ GELDİNİZ" tabelası, panolar, galeri, okul, cami ve fabrika bu isimle yazılır.':'Köy giriş tabelası ve yol tabelaları bu isimle yazılır.'} İstediğin zaman ⚙️ Ayarlar'dan değiştirebilirsin.</p>
+  <input id="nmOne" class="inp" maxlength="18" value="${esc(city?cityT():villT())}" style="width:100%;font-size:18px;padding:10px">
+  <div class="btns"><button class="btn gold" data-act="nm-one" data-k="${kind}">Kaydet</button><button class="btn alt" data-act="closemodal">${esc(city?cityT():villT())} kalsın</button></div>`);setTimeout(()=>{const i=$('nmOne');if(i){i.focus();i.select()}},50)}
+let RENA=null;
+function renameModal(a){RENA=a;modal(`<h2>✏️ ${AT[a.t].e} Yeni isim</h2><p style="font-size:13px;color:var(--muted)">${esc(a.n)} için yeni bir isim yaz.</p>
+  <input id="renI" class="inp" maxlength="18" value="${esc(a.n)}" style="width:100%;font-size:18px;padding:10px">
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">${['Sarıkız','Benekli','Pamuk','Karakız','Gülizar','Duman','Boncuk','Yıldız'].map(n=>`<button class="btn alt" data-act="ren-pick" data-n="${n}" style="padding:4px 10px">${n}</button>`).join('')}</div>
+  <div class="btns"><button class="btn gold" data-act="ren-ok">Kaydet</button><button class="btn alt" data-act="closemodal">Vazgeç</button></div>`);setTimeout(()=>{const i=$('renI');if(i){i.focus();i.select()}},50)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const D=b.dataset;
+  switch(D.act){case'nm-save':applyNames(($('nmV')||{}).value,($('nmC')||{}).value,$('nmD')?$('nmD').value:undefined);renderSheet();break;
+    case'nm-one':{const v=($('nmOne')||{}).value;if(D.k==='city')applyNames(villT(),v);else applyNames(v,cityT());closeModal();break}
+    case'ren':{const a=S.animals.find(x=>x.id===SEL);if(a)renameModal(a);break}
+    case'ren-pick':{const i=$('renI');if(i)i.value=D.n;break}
+    case'ren-ok':{const a=RENA;if(!a)break;const o=a.n;a.n=tcase(cleanName(($('renI')||{}).value,a.n));closeModal();if(a.n!==o)toast(`✏️ ${o} artık ${a.n}!`);save();if(SEL===a.id)renderCard();break}}});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const t=e.target;if(t.id==='renI')document.querySelector('[data-act="ren-ok"]')?.click();else if(t.id==='nmOne')document.querySelector('[data-act="nm-one"]')?.click()});
+// ilk ziyarette isim sor
+let nameT=0;function updateNames(dt){nameT+=dt;if(nameT<1)return;nameT=0;if(!$('modal').classList.contains('hidden')||PL.carD&&Math.abs(CARV.v)>2)return;
+  if(!S.villAsked&&S.welcomed&&Math.hypot(PL.x-VC.x,PL.z-VC.z)<12){S.villAsked=1;nameModal('village')}
+  else if(!S.cityAsked&&inTown(PL.x,PL.z)&&PL.z>TWN.z0+4){S.cityAsked=1;nameModal('city')}}
 /* ================= döngü ================= */
 let shT=0,last=performance.now(),hudT=0,saveT=0,sepT=0,miniT=0,actT=0,fpsT=0,fpsN=0,slow=0;
 function frame(now){
@@ -3348,7 +3384,7 @@ function frame(now){
     if(o.eggs){const n=Math.min(p.eggs,25),g=Math.min(p.geggs,5);let ni=0,gi=0;o.eggs.forEach((e,i)=>{if(i%6===5)e.visible=gi++<g;else e.visible=ni++<n})}}
   const ns=Math.min(24,Math.ceil(S.feed.tahil/25)),nb=Math.min(24,Math.ceil(S.feed.saman/40));ambarVis.sacks.forEach((s,i)=>s.visible=i<ns);ambarVis.bales.forEach((s,i)=>s.visible=i<nb);
   const sa=S.animals.find(a=>a.id===SEL);if(sa&&sa._v){ring.position.set(sa.x,.04,sa.z);ring.scale.setScalar(AT[sa.t].r*1.4);ring.material.opacity=.6+Math.sin(now/200)*.25}
-  updateCamera(dt);cullGrass(PL.x,PL.z);updateSky(t);updateExtras(dt,t);updateMore(dt,t);updateTown(dt,t);updateCars(dt,t);updateFuel(dt,t);updateMeat(dt,t);updateIcons();
+  updateCamera(dt);cullGrass(PL.x,PL.z);updateSky(t);updateExtras(dt,t);updateMore(dt,t);updateTown(dt,t);updateCars(dt,t);updateFuel(dt,t);updateMeat(dt,t);updateNames(dt);updateIcons();
   actT+=dt;if(actT>.1){actT=0;curAct=findAction()}updateActionUI();
   miniT+=dt;if(miniT>.1){miniT=0;drawMini(t)}
   hudT+=dt;if(hudT>.5){hudT=0;updateHUD();checkQuest();if(!pdown&&!(document.activeElement&&document.activeElement.tagName==='INPUT')){if(UI.p)renderSheet();if(SEL)renderCard()}}
