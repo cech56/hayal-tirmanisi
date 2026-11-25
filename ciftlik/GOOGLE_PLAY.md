@@ -77,9 +77,9 @@ Notlar:
 3. Mağaza girişi:
    - **Kısa açıklama:** "Köyünü kur, hayvanlarına bak, yaylaya çık!"
    - **Uzun açıklama:** oyunun özellikleri (hayvanlar, köy, sohbet, traktör, panayır, mevsimler…).
-   - **Ekran görüntüleri:** en az 2 dikey telefon görüntüsü.
+   - **Ekran görüntüleri:** hazır, `ciftlik/magaza/01_ciftlik.png` … `08_telefon.png` (1080×1920, başlıklı, 8 adet). Sırayla yükle.
    - **Simge:** 512×512 (`icon-512.png`).
-   - **Öne çıkan görsel:** 1024×500.
+   - **Öne çıkan görsel:** hazır, `ciftlik/magaza/one_cikan_1024x500.png`.
 4. **İçerik derecelendirmesi** anketi: şiddet yok, kumar yok. Tavla sadece oyun içi parayla oynanır.
 5. **Gizlilik politikası** adresi gerekiyor (aşağıda örnek var).
 6. **Veri güvenliği formu:** "Veri toplanmıyor". Kayıt sadece cihazda (localStorage) tutuluyor.
