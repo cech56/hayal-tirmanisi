@@ -1568,7 +1568,7 @@ function renderSheet(){
     else{body=`<div class="stat"><span>Grafik</span><span>${[[2,'Yüksek'],[1,'Orta'],[0,'Düşük']].map(([v,l])=>`<button class="btn ${GFX===v?'':'alt'}" data-act="q" data-v="${v}">${l}</button>`).join(' ')}</span></div>
       <p style="font-size:13px;color:var(--muted)">Telefonlarda <b>Orta</b> önerilir. Hâlâ kasarsa <b>Düşük</b> seç (gölgeler kapanır).</p>
       <div class="stat"><span>Toplam hayvan</span><b>${S.animals.length}</b></div><div class="stat"><span>Toplanan yumurta</span><b>${S.stats.eggs}</b></div><div class="stat"><span>Sağılan süt</span><b>${f1(S.stats.milk)} L</b></div><div class="stat"><span>Doğan yavru</span><b>${S.stats.born}</b></div><div class="stat"><span>Toplam satış</span><b>${tl(S.stats.sold)}</b></div>
-      <p style="font-size:12px;color:var(--muted);margin-top:10px">3D hayvan ve karakter modelleri: Quaternius (CC0, poly.pizza)</p><div class="btns" style="margin-top:14px"><button class="btn alt" data-act="help">❓ Nasıl oynanır</button><button class="btn red" data-act="reset" data-c="0">Yeni oyun</button></div>`}}
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">3D hayvan ve karakter modelleri: Quaternius (CC0, poly.pizza) · <a href="gizlilik.html" target="_blank" rel="noopener" style="color:inherit">🔒 Gizlilik politikası</a></p><div class="btns" style="margin-top:14px"><button class="btn alt" data-act="help">❓ Nasıl oynanır</button><button class="btn red" data-act="reset" data-c="0">Yeni oyun</button></div>`}}
   body=townSheet(p,UI.tab,moreSheet(p,UI.tab,extrasSheet(p,UI.tab,lifeSheet(p,UI.tab,tractorSheet(p,UI.tab,sheetHook(p,UI.tab,body))))));
   $('shTitle').textContent=title;setHTML($('shTabs'),tb);$('shTabs').classList.toggle('hidden',!tb);setHTML($('shBody'),body);
 }

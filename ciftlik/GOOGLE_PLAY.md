@@ -107,12 +107,15 @@ Bubblewrap'te Play Billing'i açtıysan ayrıca kod gerekmez.
 
 Ürünleri test etmek için: Play Console → **Ayarlar → Lisans testi** bölümüne kendi Gmail adresini ekle. Test alımları ücretsiz olur.
 
-## 6. Örnek gizlilik politikası
+## 6. Gizlilik politikası
 
-Bunu `ciftlik/gizlilik.html` olarak yayınlayabilirsin:
+Hazır sayfa: `ciftlik/gizlilik.html` (Türkçe ve İngilizce).
 
-> **Bizim Yayla Gizlilik Politikası**
-> Bizim Yayla kişisel veri toplamaz. Oyun kaydı yalnızca cihazınızda saklanır, hiçbir sunucuya gönderilmez. Uygulama içi satın almalar Google Play tarafından işlenir; ödeme bilgilerinize erişimimiz yoktur. Sorularınız için: <iletişim e-postası>
+1. Sayfadaki `[İLETİŞİM E-POSTASI]` ve `[CONTACT E-MAIL]` yerlerine destek e-postanı yaz.
+2. Oyunla birlikte yayınla.
+3. Play Console → *Uygulama içeriği → Gizlilik politikası* alanına şu adresi gir: `https://<kullanıcı-adı>.github.io/hayal-tirmanisi/ciftlik/gizlilik.html`
+
+Oyunun içinde de ⚙️ Ayarlar'ın altında bu sayfaya link var.
 
 ## 7. Güncelleme
 
