@@ -1,12 +1,12 @@
 # Bizim Yayla tanıtım videosu: nerede, nasıl paylaşılır
 
-Video: `bizim_yayla_reklam.mp4`. Dikey 9:16, 1080×1920, 46 saniye, müzikli.
+Video: `bizim_yayla_reklam.mp4`. Dikey 9:16, 1080×1920, 59 saniye, müzikli.
 
 ## Nerelere konur
 
 | Yer | Not |
 |---|---|
-| **Instagram Reels** ve hikâye | Dikey olduğu için tam ekran oynar. Kapak olarak 5. saniyedeki "BİZİM YAYLA" karesini seç. |
+| **Instagram Reels** ve hikâye | Dikey olduğu için tam ekran oynar. Kapak olarak 6. saniyedeki "BİZİM YAYLA" karesini seç. |
 | **TikTok** | Aynı dosya. Popüler bir sesi açmak istersen videonun kendi müziğini %20'ye kıs. |
 | **YouTube Shorts** | 60 saniyeden kısa ve dikey olduğu için otomatik Shorts olur. |
 | **Google Play mağaza sayfası** | Play Console → Mağaza girişi → *Tanıtım videosu* alanına YouTube linki girilir. Videoyu YouTube'a (Shorts da olur) yükleyip linki yapıştır. |
