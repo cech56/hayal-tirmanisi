@@ -1,5 +1,5 @@
 3D modeller: Quaternius — CC0 1.0 (Kamu Malı). Kaynak: poly.pizza
-Dosyalar gltf-transform ile sıkıştırıldı (meshopt).
+Dosyalar gltf-transform ile sıkıştırıldı (meshopt) ve tarayıcıda yüklenmek üzere base64 JSON içine paketlendi.
 
 https://poly.pizza/bundle/Animated-Animal-Pack-ILAPXeUYiS
 Licence per model, as Poly Pizza lists it:

@@ -2099,6 +2099,8 @@ const GLDEF={cow:['Cow',1.45],bull:['Bull',1.55],horse:['Horse',1.75],whorse:['W
 const NPCMODEL={ayse:'wwoman',hasan:'mcasual',riza:'mbusiness',cemal:'mworker',zeynep:'wsuit',ali:'mcasual',fatma:'wworker',dede:'madv'};
 const WKMODEL={bakici:'mworker',sagimci:'wworker',pazarci:'mcasual',veteriner:'wadv'};
 const glLoader=new GLTFLoader();glLoader.setMeshoptDecoder(MeshoptDecoder);
+async function loadModelFile(f){const r=await fetch('models/'+f+'.json');if(!r.ok)throw new Error(r.status);const j=await r.json();const bin=atob(j.glb);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  return await new Promise((res,rej)=>glLoader.parse(u.buffer,'',res,rej))}
 function deint(a){if(!a||!a.isInterleavedBufferAttribute)return a;const n=a.count,s=a.itemSize,D=a.data,arr=new D.array.constructor(n*s);for(let i=0;i<n;i++)for(let k=0;k<s;k++)arr[i*s+k]=D.array[i*D.stride+a.offset+k];return new THREE.BufferAttribute(arr,s,a.normalized)}
 function mergeSkinned(root){root.updateMatrixWorld(true);const list=[];root.traverse(o=>{if(o.isSkinnedMesh)list.push(o)});const by=new Map();
   for(const m of list){const k=m.material.uuid+'|'+m.skeleton.uuid+'|'+m.matrixWorld.elements.map(v=>v.toFixed(4)).join(',');if(!by.has(k))by.set(k,[]);by.get(k).push(m)}
@@ -2107,7 +2109,7 @@ function mergeSkinned(root){root.updateMatrixWorld(true);const list=[];root.trav
       const mg=mergeGeometries(gs);if(!mg)continue;const sm=new THREE.SkinnedMesh(mg,f.material);sm.name=f.name;sm.position.copy(f.position);sm.quaternion.copy(f.quaternion);sm.scale.copy(f.scale);
       f.parent.add(sm);sm.bind(f.skeleton,f.bindMatrix);for(const m of L)m.parent.remove(m)}catch(e){}}}
 async function loadGL(){
-  const jobs=Object.entries(GLDEF).map(async([k,[f,h]])=>{try{const g=await glLoader.loadAsync('models/'+f+'.glb');const root=g.scene;mergeSkinned(root);
+  const jobs=Object.entries(GLDEF).map(async([k,[f,h]])=>{try{const g=await loadModelFile(f);const root=g.scene;mergeSkinned(root);
       root.traverse(o=>{if(o.isMesh&&o.material){o.material.roughness=.85;o.material.metalness=0}});
       root.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(root);const size=box.getSize(new THREE.Vector3());
       GLB[k]={scene:root,clips:g.animations,s:h/size.y,minY:box.min.y,h,ry:Math.PI/2}}catch(e){console.warn('model yüklenemedi',f,e)}});
