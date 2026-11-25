@@ -115,6 +115,30 @@ Bunu `ciftlik/gizlilik.html` olarak yayınlayabilirsin:
 - Önbelleği yenilemek için `sw.js` içindeki `bizim-yayla-v1` sürümünü `v2` yap.
 - Yeni AAB yüklemek sadece simge, ad veya paket ayarı değişince gerekir. O zaman `twa-manifest.json`'da `appVersionCode` değerini artırıp `bubblewrap build` çalıştır.
 
+## 8. Google Drive bulut kaydı (isteğe bağlı)
+
+Oyunda Google Drive'a otomatik kayıt kodu hazır. Bağlanan oyuncunun çiftliği 5 dakikada bir kendi Drive'ının gizli uygulama klasörüne yazılır. Telefon değişince "Buluttan yükle" ile geri gelir.
+
+Açmak için bir **OAuth istemci kimliği** gerekiyor. Kimlik olmadan bu bölüm oyunda hiç görünmez.
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → yeni proje oluştur.
+2. **API'ler ve Hizmetler → Kitaplık** → **Google Drive API**'yi etkinleştir.
+3. **OAuth izin ekranı:**
+   - Tür: Harici.
+   - Uygulama adı: Bizim Yayla.
+   - Kapsam olarak `.../auth/drive.appdata` ekle. Bu kapsam yalnızca oyunun kendi gizli klasörünü görür, kişinin dosyalarını görmez.
+4. **Kimlik bilgileri → OAuth istemci kimliği oluştur:**
+   - Tür: Web uygulaması.
+   - Yetkili JavaScript kaynakları: `https://<kullanıcı-adı>.github.io` (ya da kendi alan adın).
+5. Çıkan kimliği (`...apps.googleusercontent.com`) oyunun kaynağında şu satıra yaz:
+   ```js
+   const GCLIENT='BURAYA_KIMLIK';
+   ```
+   Ardından `index.html`'i yeniden yayınla.
+6. Oyunda **Telefon → ⚙️ → ☁️ Google Drive → Google ile bağlan**.
+
+İzin ekranı "Test" modundayken sadece test kullanıcısı olarak eklediğin Gmail adresleri bağlanabilir. Herkese açmak için Google'a doğrulamaya gönder. `drive.appdata` hassas olmayan bir kapsam olduğu için genelde hızlı onaylanır.
+
 ## Kontrol listesi
 
 - [ ] Oyun HTTPS adreste açılıyor, Lighthouse "Installable" diyor
