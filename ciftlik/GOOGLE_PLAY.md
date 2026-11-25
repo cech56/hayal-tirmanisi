@@ -93,10 +93,15 @@ Play Console → **Para kazanma → Ürünler → Uygulama içi ürünler**. Kim
 
 | Ürün kimliği | Ad | Tür | Önerilen fiyat |
 |---|---|---|---|
-| `kese_kucuk` | Küçük altın kesesi (25.000₺ oyun parası) | Tüketilebilir | 29,99 TL |
-| `kese_buyuk` | Büyük altın kesesi (150.000₺ oyun parası) | Tüketilebilir | 129,99 TL |
+| `baslangic` | Başlangıç paketi (50.000₺ + 1 inek + 10 tavuk + bakıcı) | Tek seferlik | 49,99 TL |
+| `kese_kucuk` | Küçük kese (25.000₺ oyun parası) | Tüketilebilir | 29,99 TL |
+| `kese_buyuk` | Büyük kese (150.000₺ oyun parası) | Tüketilebilir | 129,99 TL |
+| `kese_dev` | Ağa sandığı (1.000.000₺ oyun parası) | Tüketilebilir | 349,99 TL |
 | `usta_paket` | Usta Çiftçi paketi (satışlar kalıcı %20 fazla) | Tek seferlik | 89,99 TL |
 | `altin_traktor` | Altın traktör + 2 tohum paketi | Tek seferlik | 109,99 TL |
+| `araba_simsek` | Kırmızı Şimşek GT (süper spor araba) | Tek seferlik | 199,99 TL |
+| `araba_yildirim` | Sarı Yıldırım (süper spor araba) | Tek seferlik | 179,99 TL |
+| `araba_altin` | Altın Lüks Sedan | Tek seferlik | 149,99 TL |
 
 Bubblewrap'te Play Billing'i açtıysan ayrıca kod gerekmez.
 
@@ -147,5 +152,5 @@ Açmak için bir **OAuth istemci kimliği** gerekiyor. Kimlik olmadan bu bölüm
 - [ ] Mağaza girişi, ekran görüntüleri, simge, öne çıkan görsel
 - [ ] İçerik derecelendirmesi ve veri güvenliği formu dolduruldu
 - [ ] Gizlilik politikası adresi eklendi
-- [ ] 4 uygulama içi ürün aynı kimliklerle oluşturuldu
+- [ ] 9 uygulama içi ürün aynı kimliklerle oluşturuldu
 - [ ] Dahili testte satın alma denendi
