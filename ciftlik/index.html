@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#3f7d2c">
 <title>Bizim Yayla</title>
 <meta name="theme-color" content="#2f4a24">
 <style>
@@ -104,6 +108,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .opt:active{background:var(--accent);color:var(--accent-ink)}
 .fd{display:inline-block;font-weight:800;font-size:13px;padding:3px 10px;border-radius:999px;margin-bottom:6px;background:var(--bar-bg)}
 .fd.up{color:#2e8b2e}.fd.down{color:var(--danger)}
+#toolBtn{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 140px);z-index:6;font-size:14px;padding:8px 14px;border:0;pointer-events:auto}
 #trHud{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 96px);z-index:6;text-align:center;white-space:normal;max-width:min(80vw,340px);font-size:13px;border-radius:14px}
 .inp{flex:1;min-width:0;font:inherit;font-weight:600;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);user-select:text;-webkit-user-select:text}
 .mgbig{text-align:center;font-weight:800;font-size:22px;margin:12px 0}
@@ -135,7 +140,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 <div id="card" class="card hidden"></div>
 <div id="sheet" class="sheet hidden"><div class="sh-head"><span id="shTitle"></span><button class="x" data-act="close" aria-label="Kapat">✕</button></div><div class="tabs" id="shTabs"></div><div class="body" id="shBody"></div></div>
 <div id="modal" class="hidden"></div>
-<div id="fade"></div><div id="trHud" class="chip hidden"></div>
+<div id="fade"></div><div id="trHud" class="chip hidden"></div><button id="toolBtn" class="chip hidden">🔧 Ekipman</button>
 <script>
 setTimeout(function(){if(!window.__farmStarted){var m=document.getElementById('ldmsg');if(m)m.textContent='Yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.'}},25000);
 </script>
@@ -180,7 +185,8 @@ const PENS={
 };
 const PEN_IDS=Object.keys(PENS);
 const AT={
-  tavuk:{ad:'Tavuk',e:'🐔',pen:'kumes',fiyat:180,ogun:.04,su:.1,urun:'yumurta',aralik:33,gunluk:30,miktar:1,hiz:1.1,r:.25,bilgi:'30 saniyede 1 yumurta (günde ~24)'},
+  tavuk:{ad:'Tavuk',erkek:'Horoz',fiyatE:220,e:'🐔',pen:'kumes',fiyat:180,ogun:.04,su:.1,urun:'yumurta',aralik:33,gunluk:30,miktar:1,hiz:1.1,r:.25,bilgi:'30 saniyede 1 yumurta (günde ~24)'},
+  civciv:{ad:'Civciv',e:'🐥',pen:'kumes',fiyat:60,ogun:.02,su:.05,buyur:'tavuk',buyume:DAY*2,hiz:1.3,r:.15,genc:1,bilgi:'2 günde tavuk ya da horoz olur'},
   kaz:{ad:'Kaz',e:'🪿',pen:'kumes',fiyat:600,ogun:.1,su:.2,urun:'kazYumurta',aralik:120,gunluk:6,miktar:1,hiz:.9,r:.32,bilgi:'2 dakikada 1 kaz yumurtası (günde ~6)'},
   koyun:{ad:'Koyun',erkek:'Koç',fiyatE:2800,e:'🐑',pen:'agil',fiyat:2400,ogun:.6,su:1.5,urun:'koyunSut',aralik:DAY*.85,gunluk:1,miktar:1.5,sagim:1,yun:{aralik:DAY*5,miktar:3},yavru:'kuzu',gebelik:4,hiz:.8,r:.5,bilgi:'Günde 1 sağım, 6 günde bir kırkım, 4 günlük gebelik'},
   kuzu:{ad:'Kuzu',e:'🐑',pen:'agil',fiyat:900,ogun:.3,su:.8,buyur:'koyun',buyume:DAY*3,hiz:1,r:.32,genc:1,bilgi:'3 günde büyür'},
@@ -191,7 +197,7 @@ const AT={
   at:{ad:'At',disi:'Kısrak',erkek:'Aygır',fiyatE:27000,e:'🐎',pen:'padok',fiyat:25000,ogun:3,su:10,gelir:{aralik:DAY*.42,miktar:450},gunluk:2,yavru:'tay',gebelik:8,hiz:1.3,r:.95,bilgi:'Günde 2 binicilik turu (450₺), 8 günlük gebelik'},
   tay:{ad:'Tay',e:'🐴',pen:'padok',fiyat:9000,ogun:1.2,su:4,buyur:'at',buyume:DAY*6,hiz:1.4,r:.6,genc:1,bilgi:'6 günde büyür'},
 };
-const SHOP=['tavuk','kaz','koyun','kuzu','keci','oglak','inek','buzagi','at','tay'];
+const SHOP=['tavuk','civciv','kaz','koyun','kuzu','keci','oglak','inek','buzagi','at','tay'];
 const PR={
   yumurta:{ad:'Yumurta',b:'adet',f:9,e:'🥚'},kazYumurta:{ad:'Kaz Yumurtası',b:'adet',f:45,e:'🥚'},
   koyunSut:{ad:'Koyun Sütü',b:'L',f:35,e:'🥛'},keciSut:{ad:'Keçi Sütü',b:'L',f:30,e:'🥛'},
@@ -232,7 +238,7 @@ function load(){
   }catch(e){return d}
 }
 let S=load();
-function save(){
+function save(){if(window.__nosave)return;
   S.savedAt=Date.now();S.px=PL.x;S.pz=PL.z;S.ph=PL.h;
   const o=Object.assign({},S,{animals:S.animals.map(a=>{const c=Object.assign({},a);delete c._v;return c})});
   try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}
@@ -241,7 +247,7 @@ function save(){
 /* ================= three kurulumu ================= */
 const MOBILE=matchMedia('(pointer:coarse)').matches;
 if(S.gfx===undefined)S.gfx=MOBILE?1:(S.quality===0?0:2);
-const GFX=S.gfx,HQ=GFX>0; // 2: yüksek, 1: orta, 0: düşük
+let GROUND=null,GRASSMAT=null;const GFX=S.gfx,HQ=GFX>0; // 2: yüksek, 1: orta, 0: düşük
 function newMat(o={}){if(GFX>=2)return new THREE.MeshStandardMaterial(o);const p=Object.assign({},o);delete p.roughness;delete p.metalness;delete p.envMapIntensity;return new THREE.MeshLambertMaterial(p)}
 const renderer=new THREE.WebGLRenderer({antialias:GFX===2,powerPreference:'high-performance'});
 renderer.domElement.id='gl';
@@ -371,7 +377,7 @@ function wild(x,z){return Math.hypot(x-VC.x,z-VC.z)>40&&!(x>14&&x<38&&z>38&&z<60
   }
   geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));geo.computeVertexNormals();
   const tex=TEX.ground;tex.repeat.set(SZ/5,SZ/5);
-  const ground=new THREE.Mesh(geo,newMat({vertexColors:true,roughness:1,map:tex}));ground.receiveShadow=true;ground.userData.dyn=1;ground.matrixAutoUpdate=false;scene.add(ground);
+  const ground=new THREE.Mesh(geo,newMat({vertexColors:true,roughness:1,map:tex}));ground.receiveShadow=true;ground.userData.dyn=1;ground.matrixAutoUpdate=false;scene.add(ground);GROUND=ground;
 }
 // uzak dağlar
 {const mm=newMat({color:'#5d7a58',roughness:1,flatShading:true});const mm2=newMat({color:'#6f8a74',roughness:1,flatShading:true});
@@ -725,7 +731,7 @@ function bladeGeo(n,hgt,wd){const v=[],c=[];for(let k=0;k<n;k++){const a=k*Math.
   const tx=ox+Math.cos(a)*lean,tz=oz+Math.sin(a)*lean;v.push(ox-px,0,oz-pz,ox+px,0,oz+pz,tx,h,tz);c.push(.35,.4,.3,.35,.4,.3,1,1,1)}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));g.computeVertexNormals();return g}
 {
-  const N=[5000,12000,20000][GFX];const gGeo=bladeGeo(GFX===2?5:4,.42,.05),gMat=windMat();const cells=new Map();const CS=16;
+  const N=[5000,12000,20000][GFX];const gGeo=bladeGeo(GFX===2?5:4,.42,.05),gMat=windMat();GRASSMAT=gMat;const cells=new Map();const CS=16;
   const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),s=new THREE.Vector3(),p=new THREE.Vector3(),c=new THREE.Color();let n=0,tries=0;
   while(n<N&&tries<N*6){tries++;const u=Math.random();let cx=0,cz=6,R0=85;if(u<.16){cx=VC.x;cz=VC.z;R0=40}else if(u<.28){cx=YC.x;cz=YC.z;R0=30}const r=Math.sqrt(Math.random())*R0,a=rand(Math.PI*2),x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
     if(Math.hypot(x-VC.x,z-VC.z)<10)continue;
@@ -898,7 +904,7 @@ function mkHorse(c,young){
   if(young)R.g.scale.setScalar(.62);R.h=by+1.05;return R}
 // ================= TAVUK =================
 function mkChicken(c){
-  const R=rig0('chicken'),{body}=R;const V=[['#f5f1e8','#ece4d4','#e8e0d0'],['#9c5a2b','#2a3a2a','#c47a3c'],['#c9893d','#3a2c1c','#e0a55a'],['#262322','#1b3326','#3a3430'],['#d9d2c4','#555','#bdb3a2']][c%5];
+  const R=rig0('chicken'),{body}=R;const V=[['#f5f1e8','#ece4d4','#e8e0d0'],['#9c5a2b','#2a3a2a','#c47a3c'],['#c9893d','#3a2c1c','#e0a55a'],['#262322','#1b3326','#3a3430'],['#d9d2c4','#555','#bdb3a2'],['#f2d35a','#e8c040','#f5dc70']][c===99?5:c%5];
   const bm=M(V[0],.9),tm=M(V[1],.6),nm=M(V[2],.9),rd=M('#c8261c',.55),yl=M('#e3a62c',.5);const by=.4;
   part(EGGL,bm,.42,.3,.28,0,by,0,body,0,0,-.2);part(SPL,bm,.13,.14,.13,.13,by-.01,0,body);
   for(let i=0;i<5;i++)part(SPL,tm,.05,.16-i*.012,.035,-.2-i*.012,by+.12+i*.03,(i-2)*.03,body,0,0,.7-i*.12);
@@ -923,7 +929,7 @@ function mkGoose(c){
   for(const s of[1,-1])part(SPL,M('#0e0c0b',.15),.013,.013,.013,.1,.465,s*.032,head);bake(head);
   for(const lz of [.07,-.07]){const l=new THREE.Group();l.position.set(0,.22,lz);body.add(l);part(new THREE.CylinderGeometry(1,1,1,6),or,.018,.2,.018,0,-.1,0,l);part(G.box,or,.12,.012,.09,.035,-.2,0,l);bake(l);R.legs.push(l)}
   R.h=.95;R.small=1;return R}
-function makeModel(t,c){switch(t){case'inek':return mkCow(c,0);case'buzagi':return mkCow(c,1);case'koyun':return mkSheep(c,0);case'kuzu':return mkSheep(c,1);case'keci':return mkGoat(c,0);case'oglak':return mkGoat(c,1);case'at':return mkHorse(c,0);case'tay':return mkHorse(c,1);case'tavuk':return mkChicken(c);case'kaz':return mkGoose(c)}}
+function makeModel(t,c){switch(t){case'inek':return mkCow(c,0);case'buzagi':return mkCow(c,1);case'koyun':return mkSheep(c,0);case'kuzu':return mkSheep(c,1);case'keci':return mkGoat(c,0);case'oglak':return mkGoat(c,1);case'at':return mkHorse(c,0);case'tay':return mkHorse(c,1);case'tavuk':return mkChicken(c);case'civciv':{const R=mkChicken(99);R.g.scale.setScalar(.45);R.h=.3;return R}case'kaz':return mkGoose(c)}}
 
 /* ================= insan modeli ================= */
 /* ================= insan modeli (detaylı) ================= */
@@ -1016,14 +1022,14 @@ function planPath(pid,x,z,tx,tz){const B=PENS[pid].bld;if(!B||B.open)return [[tx
   return ai?[best[1],best[0],[tx,tz]]:[best[0],best[1],[tx,tz]]}
 function penRandPos(pid,m=.9,inside){const P=PENS[pid],B=P.bld;if(inside&&B)return [rand(B.x0+m,B.x1-m),rand(B.z0+m+(pid==='kumes'?.6:0),B.z1-m)];return [P.x+rand(-P.w/2+m,P.w/2-m),P.z+rand(-P.d/2+m,P.d/2-m)]}
 function spawnVis(a){
-  const R=modelFor(a);R.g.position.set(a.x,0,a.z);const h=rand(6.3);R.g.rotation.y=-h;
+  const R=modelFor(a);R.g.position.set(a.x,0,a.z);if(a.t==='tavuk'&&a.sex==='e')R.g.scale.setScalar(1.2);const h=rand(6.3);R.g.rotation.y=-h;
   R.g.traverse(o=>{o.userData.aid=a.id});scene.add(R.g);pickables.push(R.g);
   a._v={R,h,path:[],wait:rand(3),ph:rand(6),goal:null,eat:0,graze:0,ic:null,icKey:'',stuck:0,lastD:1e9,hold:0};
 }
 function killVis(a){if(!a._v)return;scene.remove(a._v.R.g);const i=pickables.indexOf(a._v.R.g);if(i>=0)pickables.splice(i,1);if(a._v.ic)a._v.ic.remove();a._v=null}
 function setTarget(a,tx,tz){const v=a._v;v.path=planPath(penOf(a),a.x,a.z,tx,tz);v.stuck=0;v.lastD=1e9}
 function updateAnimalVis(a,dt,night){
-  const v=a._v;if(!v)return;const d=AT[a.t],R=v.R,pid=penOf(a),P=PENS[pid];
+  const v=a._v;if(!v||v.ride)return;const d=AT[a.t],R=v.R,pid=penOf(a),P=PENS[pid];
   let moving=false;
   if(v.mig){
     if(v.migD>0)v.migD-=dt;
@@ -1060,7 +1066,10 @@ function updateAnimalVis(a,dt,night){
   if(R.legs.length===4){R.legs[0].rotation.z=sw;R.legs[3].rotation.z=sw;R.legs[1].rotation.z=-sw;R.legs[2].rotation.z=-sw}
   else if(R.legs.length===2){R.legs[0].rotation.z=sw;R.legs[1].rotation.z=-sw}
   const t=performance.now()/1000;const pdist=Math.hypot(a.x-PL.x,a.z-PL.z);R.g.visible=pdist<75;
-  R.body.position.y=moving?Math.abs(Math.cos(v.ph))*.03:0;
+  if(d.genc&&!R.waddle){if(!moving&&(v.hop=(v.hop||0)-dt)<-rand(4,9))v.hop=.45;R.body.position.y=moving?Math.abs(Math.sin(v.ph*.5))*.1:v.hop>0?Math.sin(v.hop/.45*Math.PI)*.22:0}else R.body.position.y=moving?Math.abs(Math.cos(v.ph))*(R.kind==='sheep'||R.kind==='goat'?.05:.03):0;
+  if(!R.waddle)R.body.rotation.z=moving?Math.sin(v.ph*2)*.035:0;
+  if(R.kind==='chicken'){if(v.hx===undefined)v.hx=R.head.position.x;R.head.position.x=v.hx+(moving?Math.sin(v.ph*2)*.035:0)}
+  if(v.hug>0){v.hug-=dt;R.body.rotation.x=Math.sin(t*14)*.08}
   if(R.waddle)R.body.rotation.x=moving?Math.sin(v.ph)*.14:0;else R.body.scale.y=1+Math.sin(t*1.6+a.id)*.012;
   if(!R.waddle){const pg=a.preg!=null&&d.gebelik?clamp(a.preg/d.gebelik,0,1):0;R.body.scale.z=1+pg*.14}
   let hy=0;if(pdist<4.5&&!moving&&v.eat<=0&&v.graze<=0){const ang=Math.atan2(PL.z-a.z,PL.x-a.x);hy=clamp(Math.atan2(Math.sin(ang-v.h),Math.cos(ang-v.h)),-.7,.7)}
@@ -1079,7 +1088,7 @@ function goTo(a,goal){const v=a._v,P=PENS[penOf(a)],F=goal==='feed'?P.fd:P.tr,L=
 function separate(){
   const by={};for(const a of S.animals){if(!a._v)continue;(by[penOf(a)]||(by[penOf(a)]=[])).push(a)}
   for(const k in by){const L=by[k];for(let i=0;i<L.length;i++){const A=L[i];
-    const pdx=A.x-PL.x,pdz=A.z-PL.z,pd=Math.hypot(pdx,pdz),pm=AT[A.t].r*.8+.35;if(pd<pm&&pd>1e-4){A.x+=pdx/pd*(pm-pd);A.z+=pdz/pd*(pm-pd)}
+    if(A._v&&A._v.ride)continue;const pdx=A.x-PL.x,pdz=A.z-PL.z,pd=Math.hypot(pdx,pdz),pm=AT[A.t].r*.8+.35;if(pd<pm&&pd>1e-4){A.x+=pdx/pd*(pm-pd);A.z+=pdz/pd*(pm-pd)}
     for(let j=i+1;j<L.length;j++){const B=L[j],dx=B.x-A.x,dz=B.z-A.z,d=Math.hypot(dx,dz),m=AT[A.t].r+AT[B.t].r;if(d<m&&d>1e-4){const p=(m-d)/d*.25;A.x-=dx*p;A.z-=dz*p;B.x+=dx*p;B.z+=dz*p}}}}
 }
 
@@ -1114,12 +1123,12 @@ function sim(dt,live){
   LIVE=live;const prevT=S.t;S.t+=dt/DAY;
   if(prevT<.75&&S.t>=.75&&S.wk.pazarci)sellAll(.05,true);
   if(S.t>=1){S.t-=1;newDay()}
-  const k=(isNight()?.5:1)*.5;
+  const k=(isNight()?.5:1)*.5*(season()===3?1.2:1);weatherSim(dt);
   for(const id of PEN_IDS){const p=S.pens[id];if(p.un&&p.auto)p.water=PENS[id].waterCap}
   for(const a of [...S.animals]){
     const d=AT[a.t],pid=penOf(a),p=S.pens[pid];
     a.hu=Math.max(0,a.hu-.4*k*dt*(a.trait==='obur'?1.3:1));a.th=Math.max(0,a.th-.5*k*dt);a.ag+=dt;
-    const busy=live&&a._v&&(a._v.goal||a._v.hold>0||a._v.mig);
+    const busy=live&&a._v&&(a._v.goal||a._v.hold>0||a._v.mig||a._v.ride);
     if(pid==='yayla'){a.hu=Math.min(100,a.hu+1.1*dt);a.th=Math.min(100,a.th+1.1*dt)}
     else if(!busy){
       if(a.hu<60&&p.feed>=d.ogun){if(live&&a._v)goTo(a,'feed');else eat(a)}
@@ -1131,13 +1140,13 @@ function sim(dt,live){
     const ok=!a.sick&&a.hu>25&&a.th>25,mood=(a.hu+a.th+a.hp)/300,rate=dt*(.5+mood*.7)*animalMult(a);
     if(d.buyur&&a.ag>=d.buyume){grow(a,live);continue}
     const male=a.sex==='e';
-    if(ok&&d.urun&&!a.rd&&!(male&&d.sagim)){a.pr+=rate;if(a.pr>=d.aralik){if(dayOk(a,d)){a.pr=0;markDay(a);
+    if(ok&&d.urun&&!a.rd&&!(male&&(d.sagim||a.t==='tavuk'))){a.pr+=rate;if(a.pr>=d.aralik){if(dayOk(a,d)){a.pr=0;markDay(a);
       if(a.t==='tavuk'){if(p.eggs+p.geggs<300)p.eggs++}else if(a.t==='kaz'){if(p.eggs+p.geggs<300)p.geggs++}else a.rd=1}else a.pr=d.aralik}}
     if(ok&&d.yun&&!a.wr){a.wp+=rate;if(a.wp>=d.yun.aralik)a.wr=1}
     if(ok&&d.gelir){a.pr+=rate;if(a.pr>=d.gelir.aralik&&dayOk(a,d)){a.pr=0;markDay(a);S.money+=d.gelir.miktar;if(live)floatAt(a,'+'+tl(d.gelir.miktar)+' 🏇')}}
     // yavrulama artık gebelik sistemiyle (günlük)
   }
-  lifeSim(dt,live,prevT);fieldSim(dt,live);
+  lifeSim(dt,live,prevT);fieldSim(dt,live);eventsTick(prevT);
   workerSim(dt,live);
 }
 function workerSim(dt){
@@ -1163,7 +1172,7 @@ function newDay(){
   while(wages>0&&S.money<wages){const ks=Object.keys(WK).filter(k=>S.wk[k]>0).sort((a,b)=>WK[b].maas-WK[a].maas);if(!ks.length)break;S.wk[ks[0]]--;wages-=WK[ks[0]].maas;quit.push(WK[ks[0]].ad)}
   S.money-=wages;
   for(const k in PR)S.pm[k]=clamp(S.pm[k]*rand(.86,1.16)*(1+(1-S.pm[k])*.3),.7,1.4);
-  onNewDay();
+  onNewDay();eventsDaily();
   if(LIVE){toast(`🌅 Gün ${S.day} başladı${wages?` · Maaşlar: -${tl(wages)}`:''}`);if(quit.length)toast(`😞 Maaş ödenemedi: ${quit.join(', ')} işi bıraktı.`)}
   if(quit.length)syncHumans();
 }
@@ -1186,7 +1195,7 @@ function shear(a,silent){if(!a.wr)return;const got=addProd('yun',AT[a.t].yun.mik
 function heal(a,cost){if(!a.sick)return;if(cost&&!canPay(cost))return;S.money-=cost;a.sick=0;a.hp=80;a.hu=Math.max(a.hu,40);a.th=Math.max(a.th,40);if(LIVE){toast(`🧑‍⚕️ ${a.n} iyileşti!`);if(a._v)floatAt(a,'💚')}refresh()}
 function animalValue(a){const d=AT[a.t];return Math.round(d.fiyat*(a.sick?.3:.65)*(.5+a.hp/200))}
 function sellAnimal(a){const v=animalValue(a);S.money+=v;killVis(a);S.animals=S.animals.filter(x=>x!==a);toast(`${AT[a.t].e} ${a.n} satıldı: +${tl(v)}`);deselect();refresh()}
-function price(k){return PR[k].f*S.pm[k]*(UI.p==='market'&&UI.boost?1.3:1)}
+function price(k){return PR[k].f*S.pm[k]*(UI.p==='market'&&UI.boost?+UI.boost||1.3:1)}
 function sell(k,fee=0){const n=S.prod[k];if(n<=0)return 0;const m=n*price(k)*(1-fee)*(S.usta?1.2:1);S.money+=m;S.stats.sold+=m;S.prod[k]=0;return m}
 function sellAll(fee,auto){let m=0;for(const k in PR)m+=sell(k,fee);if(m>0&&LIVE)toast(auto?`🧔 Pazarcı ürünleri sattı: +${tl(m)}`:`💰 Hepsi satıldı: +${tl(m)}`);if(!auto&&m<=0)toast('Depoda satılacak ürün yok.');refresh();return m}
 function unlockPen(pid){const P=PENS[pid];if(S.pens[pid].un)return;if(!canPay(P.unlock))return;S.money-=P.unlock;S.pens[pid].un=1;penObj[pid].sign.visible=false;toast(`🎉 ${P.ad} artık senin!`);refresh()}
@@ -1232,7 +1241,7 @@ function bar(v,max=100,col){const p=clamp(v/max*100,0,100);const c=col||(p<25?'#
 function refresh(){updateHUD();if(UI.p)renderSheet();if(SEL)renderCard()}
 function updateHUD(){
   $('hMoney').textContent=tl(S.money);const h=hour(),hh=Math.floor(h),mm=Math.floor((h-hh)*6)*10;
-  $('hTime').textContent=`${isNight()?'🌙':h<8||h>18.5?'🌅':'☀️'} Gün ${S.day} · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  $('hTime').textContent=`${SEAS[season()].e}${WEA[S.weather].e} ${isNight()?'🌙':''}Gün ${S.day} · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
   $('hDepo').textContent=`📦 ${Math.floor(depoUsed())}/${depoCap()}`;
   const al=[];
   for(const id of PEN_IDS){const p=S.pens[id],P=PENS[id];if(!p.un||!penCount(id))continue;const fa=S.animals.find(a=>AT[a.t].pen===id);if(p.feed<AT[fa.t].ogun)al.push(`⚠️ ${P.ad}: yemlik boş`);else if(p.water<P.waterCap*.1)al.push(`⚠️ ${P.ad}: su bitti`)}
@@ -1256,7 +1265,7 @@ function renderSheet(){
       Object.keys(PR).map(k=>{const P=PR[k],n=S.prod[k],pr=price(k),tr=S.pm[k]>1.04?`<span class="up">▲ %${Math.round((S.pm[k]-1)*100)}</span>`:S.pm[k]<.96?`<span class="down">▼ %${Math.round((1-S.pm[k])*100)}</span>`:'<span>—</span>';
       return `<div class="item"><div class="ie">${P.e}</div><div class="ib"><b>${P.ad}: ${f1(n)} ${P.b}</b><small class="price">${f1(pr)}₺/${P.b} ${tr}</small></div><button class="btn" data-act="sell" data-k="${k}" ${n>0?'':'disabled'}>${n>0?tl(n*pr):'Sat'}</button></div>`}).join('')+
       `<button class="btn gold" style="width:100%;padding:12px" data-act="sellall">💰 Hepsini sat</button>`}}
-  else if(p==='phone'){title='📱 Telefon';tb=tabs([['farm','🏡 Çiftlik'],['orders','📋 Sipariş'],['people','👥 Köy'],['staff','🧑‍🌾 Eleman'],['up','🔨 Geliştir'],['shop','💎 Mağaza'],['set','⚙️']]);
+  else if(p==='phone'){title='📱 Telefon';tb=tabs([['farm','🏡 Çiftlik'],['orders','📋 Sipariş'],['people','👥 Köy'],['staff','🧑‍🌾 Eleman'],['up','🔨 Geliştir'],['decor','🪴 Süsle'],['cal','📅 Takvim'],['shop','💎 Mağaza'],['set','⚙️']]);
     if(UI.tab==='farm'){body=`<div class="sec">Depo · ${Math.floor(depoUsed())}/${depoCap()}</div><div class="item" style="display:block">${Object.keys(PR).map(k=>`<div class="stat"><span>${PR[k].e} ${PR[k].ad}</span><b>${f1(S.prod[k])} ${PR[k].b}</b></div>`).join('')}</div>
       <div class="sec">Yem ambarı</div><div class="item" style="display:block">${Object.keys(FEED).map(k=>`<div class="stat"><span>${FEED[k].e} ${FEED[k].ad}</span><b>${f1(S.feed[k])} kg</b></div>`).join('')}</div><div class="sec">Bölmeler</div>`+
       PEN_IDS.map(id=>{const q=S.pens[id],P=PENS[id];if(!q.un)return `<div class="item"><div class="ie">🔒</div><div class="ib"><b>${P.ad}</b><small>Tabelasına git ya da Geliştir'den aç: ${tl(P.unlock)}</small></div></div>`;
@@ -1272,7 +1281,7 @@ function renderSheet(){
       <p style="font-size:13px;color:var(--muted)">Telefonlarda <b>Orta</b> önerilir. Hâlâ kasarsa <b>Düşük</b> seç (gölgeler kapanır).</p>
       <div class="stat"><span>Toplam hayvan</span><b>${S.animals.length}</b></div><div class="stat"><span>Toplanan yumurta</span><b>${S.stats.eggs}</b></div><div class="stat"><span>Sağılan süt</span><b>${f1(S.stats.milk)} L</b></div><div class="stat"><span>Doğan yavru</span><b>${S.stats.born}</b></div><div class="stat"><span>Toplam satış</span><b>${tl(S.stats.sold)}</b></div>
       <p style="font-size:12px;color:var(--muted);margin-top:10px">3D hayvan ve karakter modelleri: Quaternius (CC0, poly.pizza)</p><div class="btns" style="margin-top:14px"><button class="btn alt" data-act="help">❓ Nasıl oynanır</button><button class="btn red" data-act="reset" data-c="0">Yeni oyun</button></div>`}}
-  body=lifeSheet(p,UI.tab,tractorSheet(p,UI.tab,sheetHook(p,UI.tab,body)));
+  body=extrasSheet(p,UI.tab,lifeSheet(p,UI.tab,tractorSheet(p,UI.tab,sheetHook(p,UI.tab,body))));
   $('shTitle').textContent=title;setHTML($('shTabs'),tb);$('shTabs').classList.toggle('hidden',!tb);setHTML($('shBody'),body);
 }
 const ring=new THREE.Mesh(new THREE.RingGeometry(.8,1,32),new THREE.MeshBasicMaterial({color:0xffd34d,transparent:true,opacity:.85,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.visible=false;scene.add(ring);
@@ -1306,6 +1315,7 @@ function welcome(){modal(`<h2>⛰️ Bizim Yayla</h2><p>Kendi çiftliğindesin! 
 function nearSeg(x0,z,l,px,pz){return segDist(px,pz,x0-l/2,z,x0+l/2,z)}
 function findAction(){
   if(PL.drive)return {i:'🚪',l:'Traktörden in',run:exitTractor};
+  if(PL.ride)return {i:'🐎',l:`Attan in: ${PL.ride.n}`,run:dismount};
   const px=PL.x,pz=PL.z,fx=Math.cos(PL.h),fz=Math.sin(PL.h);let best=null,bs=1e9;
   const C=(dist,range,o,pen=0)=>{if(dist>range)return;const s=dist+pen+(o.dis?.6:0);if(s<bs){bs=s;best=o}};
   const car=S.carry;
@@ -1326,6 +1336,7 @@ function findAction(){
     else if(a.rd)C(dist,1.9,{i:'🥛',l:`Sağ: ${a.n}`,dur:2.2,pose:'crouch',a,run:()=>{if(a.trait==='inatci'&&(a.bond||0)<40&&Math.random()<.4){toast(`😤 ${a.n} tekme attı! Önce biraz sev, fırçala.`);addBond(a,2);return}milk(a);addBond(a,1);S.stats.handMilk=(S.stats.handMilk||0)+1}},pen-.2);
     else if(a.wr)C(dist,1.9,{i:'✂️',l:`Yününü kırk: ${a.n}`,dur:2.6,pose:'crouch',a,run:()=>shear(a)},pen-.2);
     else if(car&&car.k===(PENS[d.pen].feed)&&a.hu<85&&car.kg>=d.ogun)C(dist,1.9,{i:'🤲',l:`Elinle besle: ${a.n}`,dur:1.2,pose:'pour',a,run:()=>{car.kg-=d.ogun;a.hu=Math.min(100,a.hu+45);floatAt(a,'❤️');if(car.kg<.01)S.carry=null}},pen+.9);
+    else if(d.genc&&a.hg!==S.day)C(dist,1.9,{i:'🤗',l:`Kucakla: ${a.n}`,dur:1.6,pose:'pick',a,run:()=>{a.hg=S.day;addBond(a,8);if(a._v)a._v.hug=1.6;floatAt(a,'🤗 💕');play(AT[a.t].pen==='kumes'?'cluck':AT[a.t].pen==='agil'?'baa':'moo',a.x,a.z)}},pen+.2);
     else if(a.gr!==S.day&&!d.genc)C(dist,1.9,{i:'🪮',l:`Fırçala: ${a.n}`,dur:2,pose:'crouch',a,run:()=>{a.gr=S.day;addBond(a,6);floatAt(a,'✨ 💞')}},pen+.3);
     else if(!a.pet||performance.now()-a.pet>20000)C(dist,1.9,{i:'🤚',l:`Sev: ${a.n}`,dur:1,pose:'pick',a,run:()=>{a.pet=performance.now();addBond(a,3);floatAt(a,'❤️')}},pen+.4);
     else C(dist,1.9,{i:d.e,l:`${a.n} · ${d.ad}`,run:()=>selectAnimal(a.id)},pen+.5);
@@ -1335,7 +1346,7 @@ function findAction(){
     if(!car)C(dA(s),1.6,S.feed[k]>0?{i:F.e,l:`${F.ad} al (${f1(Math.min(F.tasi,S.feed[k]))} kg ${F.birim})`,dur:.7,pose:'pick',run:()=>{const t=Math.min(F.tasi,S.feed[k]);S.feed[k]=Math.round((S.feed[k]-t)*100)/100;S.carry={k,kg:t}}}:{i:F.e,l:`Ambarda ${F.ad.toLocaleLowerCase('tr')} yok · pazardan al`,dis:1});
     else if(car.k===k)C(dA(s),1.6,{i:'↩️',l:'Geri koy',run:()=>{S.feed[k]+=car.kg;S.carry=null}})}
   C(dA(SPOT.market),2,{i:'🏪',l:'Pazarcıyla konuş',run:()=>openSheet('market')});
-  extraActions(C,px,pz,car);tractorActions(C,px,pz);
+  extraActions(C,px,pz,car);tractorActions(C,px,pz);extrasActions(C,px,pz,car);
   const sleepy=hour()>=19||hour()<5;C(dA(SPOT.bed),1.8,{i:'🛏️',l:sleepy?'Uyu (sabaha kadar)':'Henüz uyku vakti değil',dis:!sleepy,run:sleep});
   return best;
 }
@@ -1382,6 +1393,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 
 function updatePlayer(dt,t){
   if(PL.drive)return driveUpdate(dt,t);
+  if(PL.ride)return rideUpdate(dt,t);
   let ix=joy.x,iy=joy.y;
   if(keys.KeyW||keys.ArrowUp)iy+=1;if(keys.KeyS||keys.ArrowDown)iy-=1;if(keys.KeyA||keys.ArrowLeft)ix-=1;if(keys.KeyD||keys.ArrowRight)ix+=1;
   let m=Math.hypot(ix,iy);if(m>1){ix/=m;iy/=m;m=1}
@@ -1532,7 +1544,7 @@ function applyLvl(pid){const P=PENS[pid];if(P.baseFeed===undefined){P.baseFeed=P
 for(const id of PEN_IDS)applyLvl(id);
 const inRect=(P,x,z)=>Math.abs(x-P.x)<P.w/2&&Math.abs(z-P.z)<P.d/2;
 const inB=(B,x,z)=>x>B.x0&&x<B.x1&&z>B.z0&&z<B.z1;
-const isFair=()=>S.day%7===0&&hour()>=9&&hour()<19;
+const isFair=()=>(S.day%7===0||eventOf(S.day)==='hasat')&&hour()>=9&&hour()<19;
 const TRAITS={sevecen:{ad:'Sevecen',e:'🥰',d:'Sana çabuk alışır, yanına gelir'},inatci:{ad:'İnatçı',e:'😤',d:'Az sevilirse sağdırmaz'},obur:{ad:'Obur',e:'🍽️',d:'Çok yer ama verimli'},
   utangac:{ad:'Utangaç',e:'🙈',d:'Alışana kadar senden kaçar'},neseli:{ad:'Neşeli',e:'😄',d:'Mutlu, %15 daha verimli'},tembel:{ad:'Tembel',e:'😴',d:'Ağır hareket eder'}};
 const TRAIT_KEYS=Object.keys(TRAITS);
@@ -1601,7 +1613,7 @@ const AREAS=[{B:KAHVE,via:KV},{B:MUHTAR,via:MV},{B:{x0:14,x1:38,z0:38,z1:60},via
 const CHAIN=[[1,3],[-8,12],[-9.4,36],[-10,44],[-10,50],[-10,54.2]];
 const NP=[];
 function fr(id){return S.npc[id]||(S.npc[id]={f:0,talk:0,tea:0,gift:0})}
-function npcKey(n){const h=hour();let key=n.sch[n.sch.length-1][1];for(const [hh,k] of n.sch)if(h>=hh)key=k;if(n.fair&&isFair()&&h>=10&&h<18)key=n.fair;return key}
+function npcKey(n){const h=hour();let key=n.sch[n.sch.length-1][1];for(const [hh,k] of n.sch)if(h>=hh)key=k;if(n.fair&&isFair()&&h>=10&&h<18)key=n.fair;const ek=npcEventKey(n,h);if(ek)key=ek;return key}
 function poiOf(n,key){if(key==='home')return HOMES[n.home||n.id];return SEATS[key]||POI[key]}
 function areaOf(x,z){return AREAS.find(A=>inB(A.B,x,z))}
 function planNPC(n){
@@ -1631,7 +1643,7 @@ function updateNPCs(dt,t){
       else{n.h=angLerp(n.h,Math.atan2(dz,dx),Math.min(1,dt*6));sp=n.kid?1.9:1.4;n.x+=Math.cos(n.h)*sp*dt;n.z+=Math.sin(n.h)*sp*dt;[n.x,n.z]=collide(n.x,n.z,.28,WALLCOL);
         n.stuck+=dt;if(n.stuck>2){if(d>n.lastD-.3){n.x=tx;n.z=tz;n.path.shift()}n.stuck=0;n.lastD=d}}
       if(!n.path.length)n.arrived=true}
-    else{const P=poiOf(n,n.key);n.h=angLerp(n.h,P.h||0,Math.min(1,dt*4));pose=P.pose||'';if(P.hide)n.hidden=true;
+    else{const P=poiOf(n,n.key);n.h=angLerp(n.h,P.h||0,Math.min(1,dt*4));pose=P.pose||'';if(P.hide)n.hidden=true;if(n.key==='halay'){const [hx,hz,hh]=halayPos(n,t);n.x=lerp(n.x,hx,Math.min(1,dt*2));n.z=lerp(n.z,hz,Math.min(1,dt*2));n.h=hh;sp=1}
       if(n.key.startsWith('farm')&&n.visit!==S.day){n.visit=S.day;farmVisit(n)}}
     n.R.g.visible=!n.hidden&&far<70;if(n.R.gl)glCast(n.R,far<22);
     if(n.R.g.visible){const P=poiOf(n,n.key);const sw=n.key==='swing'&&!n.path.length;n.R.g.position.set(n.x+(sw?Math.sin(t*1.8)*.5:0),getH(n.x,n.z)+(P&&P.y&&!n.path.length?P.y:0),n.z);n.R.g.rotation.y=-n.h;if(far<60)animPerson(n.R,dt,sp,pose,t)}
@@ -1743,6 +1755,7 @@ function renderChat(){const n=CHAT;if(!n)return;const F=fr(n.id);const o=S.order
   else if(CHATMODE==='gift'){const ks=Object.keys(PR).filter(k=>S.prod[k]>=1);h+=`<div class="sec">Ne hediye edeceksin?</div>`+(ks.length?`<div class="btns">${ks.map(k=>`<button class="btn alt" data-act="chat-give" data-k="${k}">${PR[k].e} 1 ${PR[k].b} ${PR[k].ad}${n.fav.includes(k)?' ⭐':''}</button>`).join('')}</div>`:'<p>Depoda hediye edecek ürün yok.</p>')+`<div class="btns"><button class="btn alt" data-act="chat-back">Geri</button></div>`}
   else if(CHATMODE==='offer'&&n.offer){const O=n.offer;h+=`<div class="item" style="display:block"><b>📋 ${O.q} ${PR[O.k].b} ${PR[O.k].ad}</b><small style="display:block;color:var(--muted)">3 gün içinde teslim · Ödül ${tl(O.r)} ve gönül</small></div><div class="btns"><button class="btn" data-act="chat-accept">Tamam, getiririm</button><button class="btn alt" data-act="chat-back">Şimdi olmaz</button></div>`}
   else{h+=`<div class="btns">`;
+    if(eventOf(S.day)==='bayram')h+=`<button class="btn gold" data-act="chat-bayram" ${F.bay===S.day?'disabled':''}>${n.kid?'🪙 Harçlık ver (50₺)':'🤲 Bayramlaş'}</button>`;
     h+=`<button class="btn" data-act="chat-talk">💬 Sohbet et</button><button class="btn alt" data-act="chat-ask">❓ Bir şey sor</button>`;
     if(inKahve(PL.x,PL.z)&&inKahve(n.x,n.z)&&n.id!=='cemal')h+=`<button class="btn gold" data-act="chat-tea" ${F.tea===S.day?'disabled':''}>☕ Çay ısmarla (15₺)</button>`;
     if(n.id==='hasan'&&inKahve(n.x,n.z))h+=`<button class="btn gold" data-act="chat-tavla">🎲 Tavla at (50₺)</button>`;
@@ -1764,6 +1777,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(
     case'chat-bye':closeModal();CHAT=null;break;
     case'chat-back':CHATMODE='';FDELTA=null;renderChat();break;
     case'chat-talk':startConv(n);break;
+    case'chat-bayram':{const F=fr(n.id);if(F.bay===S.day)break;if(n.kid){if(!canPay(50))break;S.money-=50}F.bay=S.day;FDELTA=addF(n.id,n.kid?10:7);n.lastLine=n.kid?'Yaşasın! Sağ ol abi, bununla bayram şekeri alacağım! 🍬':pick(['Bayramın mübarek olsun evladım, nice bayramlara! Gel bir lokum ye.','Hayırlı bayramlar! Hayvanların bereketli, kazancın bol olsun.','Bayramın kutlu olsun! Bu bayram köyde herkes birbirine kavuştu.']);CHATMODE='after';renderChat();break}
     case'chat-reply':{if(!CONV)break;const a=CONV.a[+D.i];FDELTA=addF(n.id,a[1]);if(a[1]>0&&!FDELTA)FDELTA=null;
       if(a[3]){CONV=a[3];n.lastLine=a[2]+' '+CONV.q;CHATMODE='conv'}else{CONV=null;n.lastLine=a[2];CHATMODE='after'}renderChat();break}
     case'chat-ask':CHATMODE='ask';FDELTA=null;renderChat();break;
@@ -1789,7 +1803,7 @@ function giveDog(){S.dog={n:'Karabaş',ag:0,tr:0,lt:0,bond:0};spawnDog()}
 const dogAdult=()=>S.dog&&S.dog.ag>=1.5*DAY;
 const dogGuard=()=>dogAdult()&&S.dog.tr>=30;
 function spawnDog(){if(DOG.R)return;DOG.R=GL_READY&&GLB.dog?glDog():mkCanine({body:'#cdaa70',dark:'#2a2420',belly:'#e0c48e',mask:1,tail:'curl'});DOG.x=PL.x-1.5;DOG.z=PL.z-1;scene.add(DOG.R.g)}
-function updateDog(dt,t){if(!S.dog||!DOG.R)return;const s=lerp(.5,1.08,clamp(S.dog.ag/(1.5*DAY),0,1));DOG.R.g.scale.setScalar(s);
+function updateDog(dt,t){if(!S.dog||!DOG.R)return;const s=lerp(.5,1.08,clamp(S.dog.ag/(1.5*DAY),0,1));DOG.R.g.scale.setScalar(s);if(fetchUpdate(dt,t))return;
   const pred=PREDS.find(p=>p.st!=='flee');let tx,tz,spd=0,chase=false;
   if(pred&&dogGuard()&&Math.hypot(pred.x-DOG.x,pred.z-DOG.z)<90){tx=pred.x;tz=pred.z;chase=true}
   else{const fx=Math.cos(PL.h),fz=Math.sin(PL.h);tx=PL.x-fx*1.8+fz*.9;tz=PL.z-fz*1.8-fx*.9}
@@ -1886,7 +1900,7 @@ function startRace(){const h=S.animals.filter(a=>a.t==='at'&&!a.sick).sort((x,y)
 
 /* ---------- yayla göçü ---------- */
 const UPR=[[-2,-11.8],[-2,-8.6],[-14,-8],[-14,-28],[-40,-44],[-62,-56]];
-function herdUp(){if(isNight())return toast('Gece yola çıkılmaz, sabahı bekle.');const L=S.animals.filter(a=>!a.loc&&AT[a.t].pen==='agil');if(!L.length)return toast('Ağılda hayvan yok.');
+function herdUp(){if(isNight())return toast('Gece yola çıkılmaz, sabahı bekle.');if(season()===3)return toast('❄️ Kışın yayla karla kaplı. Baharı bekle.');const L=S.animals.filter(a=>!a.loc&&AT[a.t].pen==='agil');if(!L.length)return toast('Ağılda hayvan yok.');
   L.forEach((a,i)=>{a.loc='yayla';if(a._v){a._v.mig=[...UPR.map(p=>[p[0]+rand(-.6,.6),p[1]+rand(-.6,.6)]),penRandPos('yayla',2)];a._v.migD=i*.8;a._v.path=[];a._v.goal=null;a._v.hold=0}});
   S.stats.yayla++;toast(`⛰️ ${L.length} hayvan yaylaya yola çıktı! Yolu takip et.${dogGuard()?'':' Kangalsız yayla tehlikeli olabilir!'}`)}
 function herdDown(){const L=S.animals.filter(a=>a.loc==='yayla');if(!L.length)return;const free=penCap('agil')-penCount('agil');if(free<L.length)return toast(`Ağılda yer yok (${free} boş yer). Ağılı genişlet.`);
@@ -1898,7 +1912,8 @@ function extraActions(C,px,pz,car){
   for(const p of PREDS)if(p.st!=='flee'){const d=Math.hypot(p.x-px,p.z-pz);C(d,6,{i:p.k==='tilki'?'🦊':'🐺',l:'Kovala! Uzaklaştır!',run:()=>scare(p,'player')},-3)}
   for(const n of NP){if(n.hidden||!n.R.g.visible)continue;const d=Math.hypot(n.x-px,n.z-pz);const o=S.orders.find(o=>o.npc===n.id);C(d,2.3,{i:n.e,l:`Sohbet et: ${n.ad}${o&&S.prod[o.k]>=o.q?' · 📦':''}`,run:()=>openChat(n)},-.2)}
   if(S.dog&&DOG.R){const d=Math.hypot(DOG.x-px,DOG.z-pz);if(S.dog.lt!==S.day)C(d,2.2,{i:'🎓',l:`Eğit: ${S.dog.n} (%${Math.round(S.dog.tr)})`,dur:3,pose:'pick',run:()=>{S.dog.tr=Math.min(100,S.dog.tr+20);S.dog.lt=S.day;floatWorld(new THREE.Vector3(DOG.x,1.3,DOG.z),'🎓 +20');toast(`🐕 ${S.dog.n} "otur", "bekle" ve "koru" komutlarını çalıştı! Eğitim %${Math.round(S.dog.tr)}`)}},-.1);
-    else C(d,2.2,{i:'🐕',l:`Okşa: ${S.dog.n}`,dur:1,pose:'pick',run:()=>{S.dog.bond=Math.min(100,(S.dog.bond||0)+3);floatWorld(new THREE.Vector3(DOG.x,1.2,DOG.z),'❤️')}},.3)}
+    else if(!DOG.fetch&&d>1.3&&dogAdult()&&performance.now()-(DOG.lastFetch||0)>4000)C(d,2.6,{i:'🎾',l:`Top at: ${S.dog.n}`,run:throwBall},.25);
+    if(S.dog.lt===S.day)C(d,2.2,{i:'🐕',l:`Okşa: ${S.dog.n}`,dur:1,pose:'pick',run:()=>{S.dog.bond=Math.min(100,(S.dog.bond||0)+3);floatWorld(new THREE.Vector3(DOG.x,1.2,DOG.z),'❤️')}},.3)}
   const cem=NP.find(n=>n.id==='cemal');if(cem&&!cem.hidden&&cem.key==='counter'&&!cem.path.length){const free=fr('cemal').f>=40;C(dA([-21.7,48]),1.5,{i:'☕',l:free?'Çay iç (Cemal ısmarlıyor)':'Çay iç (10₺)',dur:2.2,pose:'pick',run:()=>{if(!free){if(!canPay(10))return;S.money-=10}S.stats.tea++;fr('cemal').f=Math.min(100,fr('cemal').f+3);
     for(const n of NP)if(inKahve(n.x,n.z)&&n.id!=='cemal')fr(n.id).f=Math.min(100,fr(n.id).f+1);toast(pick(['☕ Oh be! Tavşan kanı çay gibisi yok.','☕ Çay içip kahvedekilerle laflattın.','☕ İnce belli bardakta tavşan kanı!']));refresh()}},.2)}
   if(!S.mandira)C(dA([7,.6]),2.5,{i:'🔒',l:`Satın al: Mandıra · ${tl(MANDIRA_FIYAT)}`,dis:S.money<MANDIRA_FIYAT,run:()=>{if(!canPay(MANDIRA_FIYAT))return;S.money-=MANDIRA_FIYAT;S.mandira=1;mandSign.visible=false;toast('🧀 Mandıra artık senin! Sütünü yoğurda, peynire, tereyağına çevir.');refresh()}});
@@ -1906,7 +1921,7 @@ function extraActions(C,px,pz,car){
     if(k)C(d,1.4,{i:PR[RC[k].out].e,l:`${RC[k].ad} (${inTxt(k)})`,run:()=>craft(k)});else C(d,1.4,{i:'🧺',l:`${st.ad}: ${inTxt(st.r[0])} gerekli`,dis:1})}
   if(isFair()){C(dA([20.4,48]),2,S.fairBeauty===S.day?{i:'🏆',l:'Bugünkü yarışmaya katıldın',dis:1}:{i:'🏆',l:'Güzellik yarışmasına katıl',run:beautyModal});
     C(dA([29.1,54.6]),2,S.fairRace===S.day?{i:'🏇',l:'Bugünkü yarışa katıldın',dis:1}:{i:'🏇',l:'At yarışına katıl',run:startRace});
-    C(dA([26,47.6]),2.2,{i:'🎪',l:'Panayır tezgâhı: ürünlerini %30 fazlaya sat',run:()=>{openSheet('market','sell');UI.boost=true;renderSheet()}})}
+    C(dA([26,47.6]),2.2,{i:'🎪',l:`Panayır tezgâhı: ürünlerini %${eventOf(S.day)==='hasat'?50:30} fazlaya sat`,run:()=>{openSheet('market','sell');UI.boost=eventOf(S.day)==='hasat'?1.5:1.3;renderSheet()}})}
   const nAgil=S.animals.filter(a=>!a.loc&&AT[a.t].pen==='agil').length,nY=S.animals.filter(a=>a.loc==='yayla').length;
   C(dA([-14,-10.4]),2.2,nAgil?{i:'⛰️',l:`Sürüyü yaylaya çıkar (${nAgil} hayvan)`,run:herdUp}:{i:'⛰️',l:nY?'Sürün yaylada':'Ağılda yaylaya çıkacak hayvan yok',dis:1});
   const night=hour()>=19||hour()<5;C(dA([-86,-66.6]),2.2,night?{i:'⛺',l:'Çadırda uyu',run:sleep}:nY?{i:'🐑',l:`Sürüyü köye indir (${nY} hayvan)`,run:herdDown}:{i:'⛺',l:'Yayla çadırı',dis:1});
@@ -1916,7 +1931,7 @@ function extraActions(C,px,pz,car){
 function crossed(prevT,h){const a=prevT*24,b=S.t*24;return a<=b?(a<h&&b>=h):(a<h||b>=h)}
 function lifeSim(dt,live,prevT){
   if(S.dog)S.dog.ag+=dt;
-  if(crossed(prevT,22.5)||crossed(prevT,2.5)){if(S.day>=3&&Math.random()<.3)predEvent('tilki');if(S.day>=5&&Math.random()<(S.animals.some(a=>a.loc==='yayla')?.4:.18))predEvent('kurt')}
+  if(crossed(prevT,22.5)||crossed(prevT,2.5)){if(S.day>=3&&Math.random()<.3)predEvent('tilki');if(S.day>=5&&Math.random()<(S.animals.some(a=>a.loc==='yayla')?.4:season()===3?.3:.18))predEvent('kurt')}
   if(crossed(prevT,9)&&S.day%7===0&&live)toast('🎪 Bugün köyde panayır var! 09:00-19:00 arası, panayır alanında.');
 }
 function onNewDay(){
@@ -2014,7 +2029,7 @@ const fPlane=new THREE.Mesh(new THREE.PlaneGeometry(FC.nx*FC.cs,FC.nz*FC.cs),new
 fPlane.rotation.x=-Math.PI/2;fPlane.position.set(FIELD.x0+FC.nx*FC.cs/2,.035,FIELD.z0+FC.nz*FC.cs/2);fPlane.receiveShadow=true;scene.add(fPlane);
 function paintCell(i){const c=S.field[i],cx=(i%FC.nx)*24,cy=Math.floor(i/FC.nx)*24,x=fCtx;
   x.fillStyle=['#b49c60','#5a3d26','#5e4029','#7c6038'][c.s];x.fillRect(cx,cy,24,24);
-  if(c.s===0){for(let k=0;k<26;k++){x.fillStyle=Math.random()<.5?'#d4bd7a':'#8f7a44';x.fillRect(cx+rand(24),cy+rand(24),1.2,rand(2,4))}}
+  if(c.s===0){for(let k=0;k<26;k++){x.fillStyle=Math.random()<.5?'#d4bd7a':'#8f7a44';x.fillRect(cx+rand(24),cy+rand(24),1.2,rand(2,4))}if(c.sap){x.fillStyle='#e6cf7e';x.fillRect(cx+8,cy,8,24);x.fillStyle='rgba(120,90,30,.4)';for(let k=0;k<14;k++)x.fillRect(cx+8+rand(8),cy+rand(24),1,rand(2,5))}}
   else{for(let r=0;r<6;r++){x.fillStyle='rgba(30,18,8,.35)';x.fillRect(cx,cy+r*4+1,24,1.5);x.fillStyle='rgba(140,100,60,.25)';x.fillRect(cx,cy+r*4+2.5,24,1)}
     if(c.s===2){x.fillStyle='#6fa83a';for(let k=0;k<6+c.g*30;k++)x.fillRect(cx+rand(24),cy+Math.floor(rand(6))*4+1,1.5,1.5)}}}
 for(let i=0;i<S.field.length;i++)paintCell(i);fTex.needsUpdate=true;
@@ -2030,7 +2045,7 @@ const dirtyCells=new Set();
 function flushField(){if(!dirtyCells.size)return;for(const i of dirtyCells){paintCell(i);wheatCell(i)}dirtyCells.clear();fTex.needsUpdate=true;wheat.instanceMatrix.needsUpdate=true;wheat.instanceColor.needsUpdate=true}
 function fieldCounts(){const n=[0,0,0,0];for(const c of S.field)n[c.s]++;return n}
 let growT=0;
-function fieldSim(dt,live){let ch=false;for(let i=0;i<S.field.length;i++){const c=S.field[i];if(c.s!==2)continue;c.g+=dt/(DAY*1.1);if(c.g>=1){c.s=3;c.g=1;dirtyCells.add(i);ch=true}}
+function fieldSim(dt,live){let ch=false;const gm=season()===3?0:S.weather==='yagmur'?1.5:1;for(let i=0;i<S.field.length;i++){const c=S.field[i];if(c.s!==2)continue;c.g+=dt/(DAY*1.1)*gm;if(c.g>=1){c.s=3;c.g=1;dirtyCells.add(i);ch=true}}
   if(live){growT+=dt;if(growT>4){growT=0;S.field.forEach((c,i)=>{if(c.s===2)dirtyCells.add(i)})}}}
 
 /* --- traktör modeli --- */
@@ -2043,7 +2058,7 @@ const TR={g:new THREE.Group(),v:0,steer:0,spin:0,front:[],rear:[],sign:null,puff
  part(G.box,gr,1.36,.08,1.42,0,1.45,0,cab);part(G.box,gl,1.15,1.25,1.2,0,.72,0,cab);part(G.box,M('#3a3a3a',.6),.45,.08,.45,-.15,.32,0,cab);part(G.cyl,M('#222',.5),.18,.03,.18,.32,.62,0,cab,0,0,1.1);
  part(G.cyl,ch,.045,1,.045,1.1,2.1,.3,g);part(G.cyl,M('#555',.4,{metalness:.7}),.06,.12,.06,1.1,2.62,.3,g);
  // arka ekipman (pulluk/ekici)
- const tool=new THREE.Group();tool.position.set(-1.95,0,0);g.add(tool);part(G.box,M('#b03a2e',.5,{metalness:.3}),.35,.25,2.2,0,.6,0,tool);for(let i=-2;i<=2;i++)part(G.cyl,ch,.22,.04,.22,-.1,.3,i*.45,tool,Math.PI/2);part(G.box,M('#b03a2e',.5),.9,.08,.12,.4,.62,0,tool);
+ const tool=new THREE.Group();tool.position.set(-1.95,0,0);g.add(tool);TR.tools={pulluk:tool};part(G.box,M('#b03a2e',.5,{metalness:.3}),.35,.25,2.2,0,.6,0,tool);for(let i=-2;i<=2;i++)part(G.cyl,ch,.22,.04,.22,-.1,.3,i*.45,tool,Math.PI/2);part(G.box,M('#b03a2e',.5),.9,.08,.12,.4,.62,0,tool);
  const tyre=new THREE.CylinderGeometry(1,1,1,24);
  const wheel=(x,z,r,w,front)=>{const st=new THREE.Group();st.position.set(x,r,z);g.add(st);const sp=new THREE.Group();st.add(sp);const t=new THREE.Mesh(tyre,bk);t.scale.set(r,w,r);t.rotation.x=Math.PI/2;sp.add(t);
    const h=new THREE.Mesh(tyre,yl);h.scale.set(r*.55,w+.02,r*.55);h.rotation.x=Math.PI/2;sp.add(h);for(let k=0;k<8;k++){const lug=new THREE.Mesh(G.box,bk);lug.scale.set(.08,w+.04,.16);const a=k/8*Math.PI*2;lug.position.set(Math.cos(a)*r*.98,Math.sin(a)*r*.98,0);lug.rotation.z=a;lug.rotation.x=0;sp.add(lug)}
@@ -2059,14 +2074,15 @@ addCol(FIELD.x1-.1,FIELD.z0,FIELD.x1+.1,FIELD.z0+3.5,1.1,'fence');addCol(FIELD.x
 const trCol=()=>{const x=S.tractor.x,z=S.tractor.z;return {x0:x-1.2,x1:x+1.2,z0:z-1.2,z1:z+1.2,h:2.5,tag:'tractor'}};
 let TRC=trCol();COL.push(TRC);
 function syncTrCol(){const n=trCol();Object.assign(TRC,n)}
-function enterTractor(){PL.drive=true;PL.act=null;TRC.x0=TRC.x1=TRC.z0=TRC.z1=-999;cam.saveDist=cam.dist;cam.dist=Math.max(cam.dist,9.5);toast('🚜 Traktöre bindin! İleri/geri ile sür, sağa sola çevir. Tarlada geçtiğin yer biçilir, sürülür ya da ekilir.')}
-function exitTractor(){PL.drive=false;TR.v=0;const h=S.tractor.h;let x=S.tractor.x+Math.sin(h)*1.9,z=S.tractor.z-Math.cos(h)*1.9;syncTrCol();[x,z]=collide(x,z,.35,COL);PL.x=x;PL.z=z;PL.h=h;cam.dist=cam.saveDist||7;$('trHud').classList.add('hidden');save()}
+function enterTractor(){PL.drive=true;$('toolBtn').classList.toggle('hidden',Object.keys(S.tractor.tools).length<2);PL.act=null;TRC.x0=TRC.x1=TRC.z0=TRC.z1=-999;cam.saveDist=cam.dist;cam.dist=Math.max(cam.dist,9.5);toast('🚜 Traktöre bindin! İleri/geri ile sür, sağa sola çevir. Tarlada geçtiğin yer biçilir, sürülür ya da ekilir.')}
+function exitTractor(){PL.drive=false;TR.v=0;const h=S.tractor.h;let x=S.tractor.x+Math.sin(h)*1.9,z=S.tractor.z-Math.cos(h)*1.9;syncTrCol();[x,z]=collide(x,z,.35,COL);PL.x=x;PL.z=z;PL.h=h;cam.dist=cam.saveDist||7;$('trHud').classList.add('hidden');$('toolBtn').classList.add('hidden');save()}
 const worked=new Map();let seedWarn=0,ambarWarn=0;
 function cellAt(x,z){const cx=Math.floor((x-FIELD.x0)/FC.cs),cz=Math.floor((z-FIELD.z0)/FC.cs);if(cx<0||cz<0||cx>=FC.nx||cz>=FC.nz)return -1;return cz*FC.nx+cx}
 function workCell(i){const now=performance.now();if(now-(worked.get(i)||0)<6000)return;const c=S.field[i];
-  if(c.s===3){c.s=0;c.g=0;const t0=S.feed.tahil,s0=S.feed.saman;S.feed.tahil=Math.min(FEED.tahil.cap,S.feed.tahil+3);S.feed.saman=Math.min(FEED.saman.cap,S.feed.saman+4.5);S.stats.harvest++;
+  const tl0=S.tractor.tool||'pulluk';if(tl0==='romork')return;if(tl0==='balya'){if(c.s===0&&c.sap){c.sap=0;worked.set(i,now);dirtyCells.add(i);if(++TR.balN>=6){TR.balN=0;dropBale()}}return}
+  if(c.s===3){c.s=0;c.g=0;const t0=S.feed.tahil,s0=S.feed.saman;S.feed.tahil=Math.min(FEED.tahil.cap,S.feed.tahil+3);if(S.tractor.tools.balya)c.sap=1;else S.feed.saman=Math.min(FEED.saman.cap,S.feed.saman+4.5);S.stats.harvest++;
     if(S.feed.tahil===t0&&S.feed.saman===s0&&!ambarWarn){ambarWarn=1;toast('🏚️ Ambar dolu! Hasat boşa gidiyor.')}else if(Math.random()<.18)floatWorld(new THREE.Vector3(S.tractor.x,2.6,S.tractor.z),'+🌾 +🌿')}
-  else if(c.s===0){c.s=1;S.stats.plowed++}
+  else if(c.s===0){c.s=1;c.sap=0;S.stats.plowed++}
   else if(c.s===1){if(S.seed>0){S.seed--;c.s=2;c.g=0;S.stats.sown++}else{if(!seedWarn){seedWarn=1;toast('🌱 Tohumun yok! Köy pazarından buğday tohumu al.')}return}}
   else return;worked.set(i,now);dirtyCells.add(i)}
 function driveUpdate(dt,t){
@@ -2080,11 +2096,12 @@ function driveUpdate(dt,t){
   TR.spin+=TR.v*dt;for(const w of TR.rear)w.sp.rotation.z=-TR.spin/w.r;for(const w of TR.front){w.sp.rotation.z=-TR.spin/w.r;w.st.rotation.y=-TR.steer}
   TR.g.position.set(T.x,getH(T.x,T.z),T.z);TR.g.rotation.y=-T.h;TR.g.children[0].position.y=1.1+Math.sin(t*40)*.006*(Math.abs(TR.v)>.1?2:1);
   if(Math.abs(TR.v)>.4){const lx=-Math.sin(T.h),lz=Math.cos(T.h);for(const lat of[-.9,0,.9]){const i=cellAt(T.x-Math.cos(T.h)*2+lx*lat,T.z-Math.sin(T.h)*2+lz*lat);if(i>=0)workCell(i)}}
+  toolTick(T);
   PL.x=T.x;PL.z=T.z;PL.h=T.h;const sx=T.x-Math.cos(T.h)*.62,sz=T.z-Math.sin(T.h)*.62;PL.R.g.position.set(sx,getH(T.x,T.z)+.85,sz);PL.R.g.rotation.y=-T.h;animPerson(PL.R,dt,0,'drive',t);
   carryVis.tahil.visible=false;carryVis.saman.visible=false;
   if(performance.now()-cam.lastLook>1500){const behind=Math.atan2(-Math.cos(T.h),-Math.sin(T.h));cam.yaw=angLerp(cam.yaw,behind,Math.min(1,dt*(1+Math.abs(TR.v)*.4)))}
   const inF=cellAt(T.x,T.z)>=0||cellAt(T.x-Math.cos(T.h)*2,T.z-Math.sin(T.h)*2)>=0;const n=fieldCounts();
-  const hud=`🚜 ${Math.round(Math.abs(TR.v)*3.6)} km/s${TR.v<-.1?' (geri)':''}${inF?` · 🌾 ${n[3]} olgun · ${n[0]} anız · ${n[1]} sürülmüş · ${n[2]} ekili · 🌱 ${S.seed}`:''}`;
+  const hud=`🚜 ${Math.round(Math.abs(TR.v)*3.6)} km/s · ${TOOLS[S.tractor.tool].e} ${TOOLS[S.tractor.tool].ad}${S.tractor.tool==='romork'?` (${S.tractor.load}/8 balya)`:''}${TR.v<-.1?' (geri)':''}${inF?` · 🌾 ${n[3]} olgun · ${n[0]} anız · ${n[1]} sürülmüş · ${n[2]} ekili · 🌱 ${S.seed}`:''}`;
   const el=$('trHud');el.classList.remove('hidden');if(el._h!==hud){el._h=hud;el.textContent=hud}
 }
 function tractorActions(C,px,pz){const d=Math.hypot(px-S.tractor.x,pz-S.tractor.z);
@@ -2092,11 +2109,38 @@ function tractorActions(C,px,pz){const d=Math.hypot(px-S.tractor.x,pz-S.tractor.
   else C(d,3,{i:'🚜',l:'Traktöre bin',run:enterTractor},-.2);
   const fd=Math.hypot(px-(FIELD.x1+1.2),pz-(FIELD.z0+8));const n=fieldCounts();C(fd,3,{i:'🌾',l:`Tarla: ${n[3]} olgun · ${n[0]} anız · ${n[1]} sürülmüş · ${n[2]} ekili`,dis:1})}
 function tractorSheet(p,tab,body){
+  if(p==='market'&&tab==='feed'&&!UI.boost&&S.tractor.own)body=`<div class="sec">🚜 Traktör ekipmanı</div>`+['balya','romork'].map(k=>{const T=TOOLS[k];return `<div class="item"><div class="ie">${T.e}</div><div class="ib"><b>${T.ad}</b><small>${T.d}</small></div>${S.tractor.tools[k]?'<button class="btn alt" disabled>Var</button>':`<button class="btn" data-act="buytool" data-k="${k}" ${S.money<T.f?'disabled':''}>${tl(T.f)}</button>`}</div>`}).join('')+body;
   if(p==='market'&&tab==='feed'&&!UI.boost)return `<div class="sec">🌱 Tarla</div><div class="item"><div class="ie">🌱</div><div class="ib"><b>Buğday tohumu · tüm tarlaya yeter</b><small>Traktörle sürülmüş tarlaya ekilir, ~13 dakikada olgunlaşır. Elinde: ${S.seed} parsellik</small></div><button class="btn" data-act="buyseed" ${S.money<SEED_FIYAT||S.seed>=260?'disabled':''}>${tl(SEED_FIYAT)}</button></div>`+body;
   if(p==='market'&&tab==='animals'&&!S.tractor.own)return `<div class="item"><div class="ie">🚜</div><div class="ib"><b>Traktör · ${tl(TRACTOR_FIYAT)}</b><small>Yem ambarının yanındaki satılık traktöre git, oradan satın al. Tarlayı biçer, sürer, eker.</small></div></div>`+body;
   return body}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act="buyseed"]');if(!b||b.disabled)return;if(!canPay(SEED_FIYAT))return;S.money-=SEED_FIYAT;S.seed=Math.min(260,S.seed+130);seedWarn=0;toast('🌱 Tohum alındı: 130 parsellik. Sürülmüş tarlaya traktörle ek.');refresh()});
 Q.splice(24,0,{t:'Traktörü satın al',c:()=>!!S.tractor.own,r:800,w:()=>[S.tractor.x,S.tractor.z]},{t:'Traktörle tarlayı hasat et (50 parsel)',c:()=>S.stats.harvest>=50,r:1000,w:[(FIELD.x0+FIELD.x1)/2,(FIELD.z0+FIELD.z1)/2]},{t:'Tarlayı sür ve tohum ek (30 parsel)',c:()=>S.stats.sown>=30,r:800,w:[(FIELD.x0+FIELD.x1)/2,(FIELD.z0+FIELD.z1)/2]});
+
+/* --- ekipmanlar: pulluk/ekici, balya makinesi, römork --- */
+S.tractor.tools=S.tractor.tools||{pulluk:1};if(!S.tractor.tool)S.tractor.tool='pulluk';S.tractor.load=S.tractor.load||0;S.bales=S.bales||[];TR.balN=0;
+const TOOLS={pulluk:{ad:'Pulluk ve ekici',e:'🔻',f:0,d:'Biçer, sürer, eker'},balya:{ad:'Balya makinesi',e:'🌀',f:8000,d:'Biçerken sap tarlada kalır; balya makinesiyle sapı rulo balya yap (her balya 40 kg saman, elle toplamaktan %50 fazla)'},
+  romork:{ad:'Römork',e:'🛻',f:6000,d:'Tarladaki balyaları toplar (8 balya), ambarın yanına sürünce boşaltır'}};
+const AMBAR_P=[-8.5,4];
+{const yl=M('#e8c21c',.45,{metalness:.3}),rd=M('#b03a2e',.5,{metalness:.3}),bk=M('#1d1d1d',.85),hay=M('#d9b64a',.95);
+ const b=new THREE.Group();b.position.set(-2.4,0,0);TR.g.add(b);part(G.box,yl,1.3,1,1.5,-.3,.95,0,b);part(G.cyl,rd,.55,1.5,.55,-.3,.95,0,b,Math.PI/2);part(G.box,M('#333',.6),.5,.15,1.6,.45,.35,0,b);part(G.box,yl,.9,.08,.1,.6,.65,0,b);
+ for(const z of[.85,-.85])part(G.cyl,bk,.35,.2,.35,-.3,.35,z,b,Math.PI/2);TR.tools.balya=b;
+ const r=new THREE.Group();r.position.set(-3.3,0,0);TR.g.add(r);part(G.box,rd,3,.12,1.9,-.3,.85,0,r);for(const z of[.95,-.95])part(G.box,rd,3,.3,.06,-.3,1.05,z,r);part(G.box,M('#333',.6),1.4,.08,.1,1.6,.75,0,r);
+ for(const z of[.85,-.85])part(G.cyl,bk,.42,.25,.42,-.3,.42,z,r,Math.PI/2);TR.loadM=[];for(let i=0;i<8;i++){const m=new THREE.Mesh(G.cyl,hay);m.scale.set(.45,.9,.45);m.rotation.x=Math.PI/2;m.position.set(-1.35+(i%4)*.7,1.37+(i>=4?.75:0),0);m.castShadow=true;r.add(m);TR.loadM.push(m)}TR.tools.romork=r;
+ for(const k in TR.tools)TR.tools[k].traverse(o=>{if(o.isMesh)o.castShadow=true})}
+const baleM=[];
+function baleMesh(B){const m=new THREE.Mesh(G.cyl,M('#d9b64a',.95));m.scale.set(.6,1.1,.6);m.rotation.set(Math.PI/2,0,B.r||0);m.position.set(B.x,getH(B.x,B.z)+.6,B.z);m.castShadow=true;scene.add(m);baleM.push(m);return m}
+for(const B of S.bales)baleMesh(B);
+function dropBale(){const T=S.tractor;const B={x:T.x-Math.cos(T.h)*3.4,z:T.z-Math.sin(T.h)*3.4,r:-T.h};S.bales.push(B);baleMesh(B);floatWorld(new THREE.Vector3(B.x,1.6,B.z),'🌀 Balya!')}
+function syncTools(){for(const k in TR.tools)TR.tools[k].visible=k===S.tractor.tool;TR.loadM.forEach((m,i)=>m.visible=i<S.tractor.load)}
+syncTools();
+function cycleTool(){if(!PL.drive)return;const ks=Object.keys(TOOLS).filter(k=>S.tractor.tools[k]);const i=ks.indexOf(S.tractor.tool);S.tractor.tool=ks[(i+1)%ks.length];syncTools();toast(`${TOOLS[S.tractor.tool].e} ${TOOLS[S.tractor.tool].ad} takıldı.`)}
+function toolTick(T){if(S.tractor.tool!=='romork')return;
+  if(S.tractor.load<8)for(let i=S.bales.length-1;i>=0;i--){const B=S.bales[i];if(Math.hypot(B.x-T.x,B.z-T.z)<3.6){S.bales.splice(i,1);scene.remove(baleM[i]);baleM.splice(i,1);S.tractor.load++;syncTools();if(S.tractor.load>=8)break}}
+  if(S.tractor.load>0&&Math.hypot(T.x-AMBAR_P[0],T.z-AMBAR_P[1])<6.5){const room=FEED.saman.cap-S.feed.saman;const n=Math.min(S.tractor.load,Math.floor(room/40));
+    if(n>0){S.tractor.load-=n;S.feed.saman+=n*40;syncTools();toast(`🛻 ${n} balya ambara boşaltıldı: +${n*40} kg saman`);refresh()}else if(!TR.fullWarn){TR.fullWarn=1;toast('🏚️ Ambarda saman yeri yok.')}}else TR.fullWarn=0}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act="buytool"]');if(!b||b.disabled)return;const k=b.dataset.k,T=TOOLS[k];if(!canPay(T.f))return;S.money-=T.f;S.tractor.tools[k]=1;toast(`${T.e} ${T.ad} alındı! Traktördeyken 🔧 düğmesiyle (ya da T tuşu) ekipman değiştir.`);refresh()});
+$('toolBtn').addEventListener('click',e=>{e.stopPropagation();cycleTool()});
+addEventListener('keydown',e=>{if(e.code==='KeyT')cycleTool()});
 
 /* =====================================================================
    GERÇEK ANİMASYONLU MODELLER — Quaternius (CC0, poly.pizza)
@@ -2166,6 +2210,209 @@ function onGLReady(){
   const fk=['mbusiness','madv','mcasual'];FAIRNPC.forEach((f,i)=>{f.R=swap(f.R,fk[i])});
   for(const h of humans)scene.remove(h.R.g);humans.length=0;syncHumans();
 }
+
+/* =====================================================================
+   EKLER: ses, yedek kodu, mevsim ve hava, köy etkinlikleri, süsleme,
+   kuluçka, ata binme, köpekle top oyunu
+   ===================================================================== */
+/* ---------- 🔊 SES (Web Audio ile üretilen sesler) ---------- */
+const AU={ctx:null,master:null,amb:{}};if(S.sound===undefined)S.sound=1;if(S.vol===undefined)S.vol=.7;
+function auInit(){if(AU.ctx)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;AU.ctx=new C();AU.master=AU.ctx.createGain();AU.master.gain.value=S.sound?S.vol:0;AU.master.connect(AU.ctx.destination);
+  const n=AU.ctx.sampleRate*2,b=AU.ctx.createBuffer(1,n,AU.ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;AU.noise=b;ambInit()}catch(e){AU.ctx=null}}
+document.addEventListener('pointerdown',()=>{auInit();if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume()},true);
+function auSet(){if(AU.master)AU.master.gain.setTargetAtTime(S.sound?S.vol:0,AU.ctx.currentTime,.05)}
+function vAt(x,z,D=28){const d=Math.hypot(x-PL.x,z-PL.z);return d>D?0:Math.pow(1-d/D,1.4)}
+function osc(type,f0,f1,dur,vol,o={}){if(!AU.ctx||vol<=.001)return;const c=AU.ctx,t=c.currentTime+(o.delay||0);const os=c.createOscillator();os.type=type;os.frequency.setValueAtTime(f0,t);os.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur);
+  if(o.vib){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=o.vib;lg.gain.value=o.vd||8;l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+dur+.05)}
+  const g=c.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+(o.a||.02));g.gain.setValueAtTime(vol,t+dur*.7);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  let node=os;if(o.lp){const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=o.lp;node.connect(f);node=f}if(o.bp){const f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=o.bp;f.Q.value=o.q||2;node.connect(f);node=f}
+  node.connect(g);g.connect(AU.master);os.start(t);os.stop(t+dur+.05)}
+function nz(dur,vol,o={}){if(!AU.ctx||vol<=.001)return;const c=AU.ctx,t=c.currentTime+(o.delay||0);const s=c.createBufferSource();s.buffer=AU.noise;const f=c.createBiquadFilter();f.type=o.type||'lowpass';f.frequency.value=o.f||500;f.Q.value=o.q||1;
+  const g=c.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(AU.master);s.start(t,rand(1.5));s.stop(t+dur+.05)}
+const SFX={
+  moo:v=>{osc('sawtooth',120,92,1.5,.22*v,{lp:520,vib:5,vd:3,a:.15});osc('sawtooth',240,184,1.5,.06*v,{bp:420,q:3,a:.15})},
+  baa:v=>osc('sawtooth',390,330,.75,.16*v,{lp:1900,vib:9,vd:30,a:.04}),
+  meh:v=>osc('sawtooth',520,450,.6,.14*v,{lp:2200,vib:12,vd:40,a:.03}),
+  cluck:v=>{for(let i=0;i<3;i++)osc('square',640,430,.07,.07*v,{bp:950,q:4,delay:i*.11})},
+  crow:v=>{osc('sawtooth',520,880,.25,.12*v,{bp:1100,q:3});osc('sawtooth',880,620,.9,.12*v,{bp:1200,q:3,delay:.25,vib:7,vd:20})},
+  honk:v=>{for(let i=0;i<2;i++)osc('sawtooth',320,270,.22,.13*v,{bp:720,q:4,delay:i*.28})},
+  neigh:v=>osc('sawtooth',760,380,1.2,.12*v,{bp:1300,q:2,vib:14,vd:70,a:.05}),
+  bark:v=>{for(let i=0;i<2;i++){nz(.1,.2*v,{type:'bandpass',f:800,q:2,delay:i*.22});osc('square',280,170,.12,.08*v,{lp:900,delay:i*.22})}},
+  howl:v=>osc('sine',320,380,2.4,.14*v,{vib:5,vd:25,a:.5}),
+  bird:v=>{const n=2+irand(3),f=rand(2600,3600);for(let i=0;i<n;i++)osc('sine',f,f*rand(1.2,1.5),.08,.05*v,{delay:i*.12})},
+  step:v=>nz(.06,.12*v,{f:380}),hoof:v=>{nz(.05,.2*v,{f:600});osc('sine',180,90,.06,.08*v)},
+  coin:()=>{osc('sine',1320,1320,.12,.1);osc('sine',1760,1760,.2,.08,{delay:.07})},click:()=>osc('sine',900,700,.04,.05),
+  clink:()=>{osc('sine',3100,3000,.35,.06);osc('sine',4200,4100,.25,.04,{delay:.03})},pour:()=>nz(.8,.15,{f:900,type:'bandpass',q:.6}),
+  splash:()=>nz(.5,.18,{f:1500,type:'highpass'})};
+function play(k,x,z){if(!AU.ctx||!S.sound)return;const v=x===undefined?1:vAt(x,z);if(v>0)SFX[k](v)}
+function loopNoise(type,f,q){const c=AU.ctx,s=c.createBufferSource();s.buffer=AU.noise;s.loop=true;const fl=c.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q||.7;const g=c.createGain();g.gain.value=0;s.connect(fl);fl.connect(g);g.connect(AU.master);s.start();return {g,fl}}
+function ambInit(){const c=AU.ctx;AU.amb.wind=loopNoise('lowpass',380);AU.amb.rain=loopNoise('bandpass',2600,.4);
+  const eo=c.createOscillator();eo.type='sawtooth';eo.frequency.value=45;const ef=c.createBiquadFilter();ef.type='lowpass';ef.frequency.value=420;const eg=c.createGain();eg.gain.value=0;eo.connect(ef);ef.connect(eg);eg.connect(AU.master);eo.start();AU.amb.eng={o:eo,g:eg};
+  const co=c.createOscillator();co.type='square';co.frequency.value=4300;const cm=c.createGain();cm.gain.value=0;const cl=c.createOscillator();cl.type='square';cl.frequency.value=17;const cg=c.createGain();cg.gain.value=0;
+  cl.connect(cm.gain);co.connect(cm);cm.connect(cg);cg.connect(AU.master);co.start();cl.start();AU.amb.crick=cg}
+let sndT=0,stepP=0,lastMoney=S.money,lastTea=S.stats.tea||0,lastPred=0,lastMilk=S.stats.milkings||0,musT=0,musN=0;
+function updateSound(dt,t){if(!AU.ctx)return;const T=AU.ctx.currentTime,night=isNight(),w=S.weather;
+  AU.amb.wind.g.gain.setTargetAtTime((w==='kar'||w==='bulut'?.07:.03)*(PL.drive?.5:1),T,.5);
+  AU.amb.rain.g.gain.setTargetAtTime(w==='yagmur'&&!inside?.16:w==='yagmur'?.06:0,T,.5);
+  AU.amb.crick.gain.setTargetAtTime(night&&season()!==3&&w!=='yagmur'?.012:0,T,.8);
+  AU.amb.eng.g.gain.setTargetAtTime(PL.drive?.07+Math.abs(TR.v)*.012:0,T,.15);AU.amb.eng.o.frequency.setTargetAtTime(42+Math.abs(TR.v)*9,T,.15);
+  // ayak sesi / nal sesi
+  const sp=PL.ride?PL.rspd||0:PL.drive?0:PL.spd;if(sp>.3){stepP+=dt*sp*(PL.ride?1.1:.75);if(stepP>1){stepP=0;play(PL.ride?'hoof':'step')}}
+  // hayvan sesleri ve kuşlar
+  sndT-=dt;if(sndT<=0){sndT=rand(.6,1.4);const near=S.animals.filter(a=>a._v&&Math.hypot(a.x-PL.x,a.z-PL.z)<26);
+    if(near.length&&Math.random()<.35){const a=pick(near);const k={inek:'moo',buzagi:'moo',koyun:'baa',kuzu:'baa',keci:'meh',oglak:'meh',tavuk:'cluck',civciv:'cluck',kaz:'honk',at:'neigh',tay:'neigh'}[a.t];if(k&&!(k==='moo'&&Math.random()<.5))play(k,a.x,a.z)}
+    if(!night&&w!=='yagmur'&&Math.random()<.3)play('bird',PL.x+rand(-15,15),PL.z+rand(-15,15))}
+  if(S.money>lastMoney+.5)play('coin');lastMoney=S.money;
+  if((S.stats.tea||0)>lastTea){play('clink');lastTea=S.stats.tea}
+  if(S.stats.milkings>lastMilk){if(PL.act)play('pour');lastMilk=S.stats.milkings}
+  if(PREDS.length>lastPred){const p=PREDS[PREDS.length-1];if(p.k==='kurt')play('howl',PL.x+20,PL.z);else play('bark',p.x,p.z)}lastPred=PREDS.length;
+  // düğün müziği: davul ve zurna
+  if(eventOf(S.day)==='dugun'&&hour()>=15&&hour()<22){const v=vAt(VC.x,VC.z,60);musT-=dt;if(v>0&&musT<=0){musT=.32;musN++;const sc=[392,440,494,523,587,523,494,440];
+    osc('sine',85,55,.18,(musN%2?.25:.4)*v,{a:.005});if(musN%2===0)osc('square',sc[(musN/2)%8|0]*(musN%16<8?1:1.12),sc[(musN/2)%8|0],.3,.05*v,{bp:1400,q:2,vib:6,vd:8})}}}
+document.addEventListener('click',e=>{if(e.target.closest('button'))play('click')},true);
+
+/* ---------- 💾 YEDEK KODU ---------- */
+function backupCode(){save();let raw='';try{raw=localStorage.getItem(KEY)||''}catch(e){}return 'BY1:'+btoa(unescape(encodeURIComponent(raw)))}
+function backupModal(){const code=backupCode();modal(`<h2>💾 Yedek kodu</h2><p style="font-size:13px;color:var(--muted)">Bu kodu not al ya da kendine mesaj at. Telefon değişse de tarayıcı silinse de bu kodla çiftliğini geri yüklersin.</p>
+  <textarea id="bkc" class="inp" style="width:100%;height:120px;font-size:11px" readonly>${code}</textarea><div class="btns"><button class="btn" data-act="bk-copy">📋 Kopyala</button><button class="btn alt" data-act="closemodal">Kapat</button></div>`)}
+function restoreModal(){modal(`<h2>📥 Yedekten yükle</h2><p style="font-size:13px;color:var(--muted)">Daha önce aldığın yedek kodunu yapıştır. Şu anki çiftliğin bu yedekle değiştirilir.</p>
+  <textarea id="bki" class="inp" style="width:100%;height:120px;font-size:11px" placeholder="BY1:..."></textarea><div class="btns"><button class="btn gold" data-act="bk-load">Yükle</button><button class="btn alt" data-act="closemodal">Vazgeç</button></div>`)}
+function loadBackup(code){try{code=(code||'').trim();if(!code.startsWith('BY1:'))throw 0;const raw=decodeURIComponent(escape(atob(code.slice(4))));const o=JSON.parse(raw);if(!o||!o.pens)throw 0;
+  window.__nosave=true;localStorage.setItem(KEY,raw);location.reload()}catch(e){toast('Kod geçersiz. Tamamını kopyaladığından emin ol.')}}
+
+/* ---------- 🌦️ MEVSİMLER VE HAVA ---------- */
+const SEAS=[{ad:'İlkbahar',e:'🌸',gr:'#ffffff',gd:'#ffffff'},{ad:'Yaz',e:'☀️',gr:'#f4e6a8',gd:'#fbf3d9'},{ad:'Sonbahar',e:'🍂',gr:'#e6b46a',gd:'#ecdcbc'},{ad:'Kış',e:'❄️',gr:'#9aa39a',gd:'#8d949c'}];
+const WEA={acik:{ad:'Açık',e:'☀️',sun:1},bulut:{ad:'Bulutlu',e:'⛅',sun:.6},yagmur:{ad:'Yağmurlu',e:'🌧️',sun:.38},sis:{ad:'Sisli',e:'🌫️',sun:.5},kar:{ad:'Karlı',e:'🌨️',sun:.6}};
+function season(){return Math.floor((S.day-1)/7)%4}
+function rollWeather(){const s=season(),r=Math.random();S.weather=s===0?(r<.3?'yagmur':r<.5?'bulut':'acik'):s===1?(r<.1?'yagmur':r<.22?'bulut':'acik'):s===2?(r<.3?'yagmur':r<.45?'sis':r<.65?'bulut':'acik'):(r<.45?'kar':r<.6?'sis':r<.8?'bulut':'acik')}
+if(!S.weather)rollWeather();
+const PRC=(()=>{const n=GFX?1100:500;const im=new THREE.InstancedMesh(new THREE.BoxGeometry(.018,.55,.018),new THREE.MeshBasicMaterial({color:'#bcd3e6',transparent:true,opacity:.55,depthWrite:false}),n);
+  const sm=new THREE.InstancedMesh(new THREE.SphereGeometry(.05,5,4),new THREE.MeshBasicMaterial({color:'#ffffff'}),n);im.frustumCulled=sm.frustumCulled=false;im.visible=sm.visible=false;im.userData.dyn=sm.userData.dyn=1;scene.add(im,sm);
+  const P=[];for(let i=0;i<n;i++)P.push([rand(-22,22),rand(0,20),rand(-22,22),rand(6.3)]);return {im,sm,P,n}})();
+const _pm=new THREE.Matrix4(),_gray=new THREE.Color('#8a949c');let seasonShown=-1;
+function updateWeather(dt,t){const W=WEA[S.weather]||WEA.acik;const s=season();
+  if(seasonShown!==s){seasonShown=s;const SE=SEAS[s];if(GROUND)GROUND.material.color.set(SE.gd);if(GRASSMAT)GRASSMAT.color.set(SE.gr);if(s!==3){if(GROUND)GROUND.material.emissive.set(0);if(GRASSMAT)GRASSMAT.emissive.set(0)}}
+  if(s===3){const L=clamp(sun.intensity/2.75,0,1)*.62+.06;if(GROUND)GROUND.material.emissive.setRGB(.82*L,.86*L,.92*L);if(GRASSMAT)GRASSMAT.emissive.setRGB(.7*L,.74*L,.8*L)}
+  sun.intensity*=W.sun;hemi.intensity*=lerp(1,.75,1-W.sun);skyU.top.value.lerp(_gray,(1-W.sun)*.75);skyU.bot.value.lerp(_gray,(1-W.sun)*.5);skyU.glow.value*=W.sun;
+  scene.fog.color.lerp(_gray,(1-W.sun)*.5);renderer.setClearColor(scene.fog.color);
+  const fogN=S.weather==='sis'?10:S.weather==='kar'||S.weather==='yagmur'?60:150,fogF=S.weather==='sis'?95:S.weather==='kar'||S.weather==='yagmur'?260:480;scene.fog.near=lerp(scene.fog.near,fogN,Math.min(1,dt));scene.fog.far=lerp(scene.fog.far,fogF,Math.min(1,dt));
+  const rain=S.weather==='yagmur',snow=S.weather==='kar';PRC.im.visible=rain;PRC.sm.visible=snow;
+  if(rain||snow){const cx=camera.position.x,cz=camera.position.z,cy=camera.position.y;const M=rain?PRC.im:PRC.sm;
+    for(let i=0;i<PRC.n;i++){const p=PRC.P[i];p[1]-=(rain?16:1.3)*dt;if(snow){p[0]+=Math.sin(t+p[3])*.3*dt;p[2]+=Math.cos(t*.7+p[3])*.3*dt}
+      if(p[1]<-2){p[1]=rand(14,20);p[0]=rand(-22,22);p[2]=rand(-22,22)}_pm.makeTranslation(cx+p[0],cy-4+p[1],cz+p[2]);M.setMatrixAt(i,_pm)}M.instanceMatrix.needsUpdate=true}}
+function weatherSim(dt){if(S.weather==='yagmur')for(const id of PEN_IDS){const p=S.pens[id];if(p.un)p.water=Math.min(PENS[id].waterCap,p.water+PENS[id].waterCap*.002*dt)}}
+
+/* ---------- 🎉 KÖY ETKİNLİKLERİ ---------- */
+function eventOf(d){if(d%28===21)return 'hasat';if(d%15===9)return 'bayram';if(d%10===5)return 'dugun';if(d%9===4)return 'imece';return null}
+const EVN={dugun:{ad:'Köy düğünü',e:'💃',d:'15:00-22:00 köy meydanında halay, davul zurna'},bayram:{ad:'Bayram',e:'🎉',d:'Köylülerle bayramlaş, çocuklara harçlık ver'},
+  imece:{ad:'İmece günü',e:'🤝',d:'Komşular sabah çiftliğine yardıma gelir'},hasat:{ad:'Hasat Şenliği',e:'🌾',d:'Panayır alanında ürünler %50 fazlaya satılır'}};
+POI.halay={x:VC.x+4.8,z:VC.z,h:0};
+const halayG=new THREE.Group();halayG.userData.dyn=1;scene.add(halayG);halayG.visible=false;
+{const cols=['#e63946','#f4a261','#2a9d8f','#e9c46a','#a855f7'];for(let i=0;i<6;i++){const a=i/6*Math.PI*2;const x=VC.x+Math.cos(a)*9,z=VC.z+Math.sin(a)*9;const p=new THREE.Mesh(G.cyl,M('#5a3e26'));p.scale.set(.06,4,.06);p.position.set(x,2,z);halayG.add(p);
+   const b=(i+1)%6,bx=VC.x+Math.cos(b/6*Math.PI*2)*9,bz=VC.z+Math.sin(b/6*Math.PI*2)*9;for(let k=1;k<8;k++){const f=k/8;const q=new THREE.Mesh(G.sph,new THREE.MeshBasicMaterial({color:cols[(i+k)%5]}));q.scale.setScalar(.09);q.position.set(lerp(x,bx,f),3.9-Math.sin(f*Math.PI)*.6,lerp(z,bz,f));halayG.add(q)}}}
+function npcEventKey(n,h){const ev=eventOf(S.day);if(ev==='dugun'&&h>=15&&h<22)return 'halay';if(ev==='imece'&&h>=9&&h<15)return ['farm1','farm2','farm3','farmfence'][NP.indexOf(n)%4];return null}
+function halayPos(n,t){const i=NP.indexOf(n),a=i/NP.length*Math.PI*2+t*.25;return [VC.x+Math.cos(a)*4.8,VC.z+Math.sin(a)*4.8,a+Math.PI/2]}
+function eventsDaily(){const ev=eventOf(S.day);
+  if(ev){const E=EVN[ev];const msg=`${E.e} Bugün ${E.ad}! ${E.d}.`;if(LIVE)toast(msg);else S.news.push(msg)}
+  if(eventOf(S.day+1))S.news.push(`📅 Yarın: ${EVN[eventOf(S.day+1)].ad}.`);
+  if(S.day%7===1){const s=SEAS[season()];const msg=`${s.e} ${s.ad} geldi!${season()===3?' Kışın tarla büyümez, hayvanlar daha çok yer.':season()===0?' Baharda hayvanlar daha kolay gebe kalır.':''}`;if(LIVE)toast(msg);else S.news.push(msg)}
+  if(season()===3&&S.animals.some(a=>a.loc==='yayla'))S.news.push('❄️ Kış geldi ama sürün hâlâ yaylada! Hemen köye indir.');
+  rollWeather();
+  // kovanlar bal verir
+  const kov=(S.decor||[]).filter(d=>d.k==='kovan').length;if(kov&&season()!==3){const got=addProd('bal',kov);if(got>0)S.news.push(`🍯 Arı kovanlarından ${got} kg bal toplandı.`)}
+  // kuluçka
+  if(S.kulucka&&S.day>=S.kulucka.day){const free=penCap('kumes')-penCount('kumes');const n=Math.min(free,3+irand(3));for(let i=0;i<n;i++){const b=newAnimal('civciv',-26+rand(-.5,.5),-11.6+rand(-.4,.4));b.ag=0;S.animals.push(b);if(READY)spawnVis(b)}
+    const msg=n>0?`🐣 Kuluçkadan ${n} civciv çıktı!`:'🐣 Civcivler çıktı ama kümeste yer yoktu, Ayşe Teyze\'ye verdin.';if(LIVE)toast(msg);else S.news.push(msg);S.kulucka=null}}
+let imeceDone=0;
+function eventsTick(prevT){if(eventOf(S.day)==='imece'&&crossed(prevT,9.5)&&imeceDone!==S.day){imeceDone=S.day;let e=0,m=0;
+  for(const id of PEN_IDS){const p=S.pens[id],P=PENS[id];if(!p.un)continue;p.water=P.waterCap;const need=P.feedCap-p.feed,tk=Math.min(need,S.feed[P.feed]);if(tk>0){p.feed+=tk;S.feed[P.feed]-=tk}const n0=p.eggs+p.geggs;collectEggs(id,true);e+=n0-(p.eggs+p.geggs)}
+  for(const a of S.animals){if(a.rd){const r=a.rd;milk(a,true);if(r&&!a.rd)m++}if(a.wr)shear(a,true)}
+  const msg=`🤝 İmece! Komşular yemlikleri doldurdu, ${e} yumurta topladı, ${m} hayvan sağdı. Kahvede teşekkür etmeyi unutma.`;if(LIVE)toast(msg);else S.news.push(msg)}}
+
+/* ---------- 🪴 SÜSLEME ---------- */
+if(!S.decor)S.decor=[];PR.bal=PR.bal||{ad:'Bal',b:'kg',f:250,e:'🍯'};if(S.prod.bal===undefined)S.prod.bal=0;if(S.pm.bal===undefined)S.pm.bal=1;
+const DECOR_SHOP=[{k:'saksi',ad:'Çiçek saksısı',e:'🪴',f:150},{k:'tarh',ad:'Çiçek tarhı',e:'🌷',f:700},{k:'fidan',ad:'Meyve ağacı',e:'🌳',f:400},{k:'bank',ad:'Bank',e:'🪑',f:500},
+  {k:'fener',ad:'Fener direği',e:'🏮',f:600,d:'Geceleri yanar'},{k:'korkuluk',ad:'Korkuluk',e:'🧍',f:350},{k:'kuyu',ad:'Taş kuyu',e:'🪣',f:1800},{k:'degirmen',ad:'Rüzgâr gülü',e:'🌀',f:3000,d:'Kanatları döner'},
+  {k:'kovan',ad:'Arı kovanı',e:'🐝',f:1500,d:'Kış hariç günde 1 kg bal (250₺)'}];
+const DECM=[];
+function buildDecor(D){const g=new THREE.Group();const w=TMat('wood'),st=M('#9a948a',.95);
+  switch(D.k){case'saksi':part(G.cyl,M('#b5582e',.9),.25,.35,.2,0,.17,0,g);for(let i=0;i<6;i++)part(G.sph,M(pick(['#e25c7a','#f2d348','#b98ee6','#ffffff']),.7),.09,.09,.09,rand(-.12,.12),.45+rand(.1),rand(-.12,.12),g);part(G.lump,M('#4a8a2e',.9,{flatShading:true}),.18,.12,.18,0,.38,0,g);break;
+    case'tarh':part(G.cyl,M('#6b4a2e',1),1,.15,1,0,.07,0,g);for(let i=0;i<22;i++){const a=rand(6.3),r=rand(.1,.9);part(G.sph,M(pick(['#e25c7a','#f2d348','#ff8c42','#b98ee6','#ffffff']),.7),.08,.08,.08,Math.cos(a)*r,.25,Math.sin(a)*r,g)}break;
+    case'fidan':part(G.cyl,M('#5b4030'),.1,1.4,.1,0,.7,0,g);part(new THREE.IcosahedronGeometry(1,1),M('#4f8a2e',.9,{flatShading:true}),.75,.65,.75,0,1.6,0,g);for(let i=0;i<7;i++)part(G.sph,M('#d23a22',.5),.07,.07,.07,rand(-.5,.5),1.4+rand(.5),rand(-.5,.5),g);break;
+    case'bank':part(G.box,w,.5,.06,1.6,0,.45,0,g);part(G.box,w,.06,.4,1.6,-.22,.72,0,g);for(const z of[-.65,.65])part(G.box,M('#2f2f2f'),.4,.45,.06,0,.22,z,g);break;
+    case'fener':part(G.cyl,M('#2c2c2c',.5),.06,2.8,.06,0,1.4,0,g);const b=new THREE.Mesh(G.box,winMat());b.scale.set(.25,.35,.25);b.position.y=2.9;g.add(b);part(G.cone,M('#2c2c2c'),.2,.2,.2,0,3.15,0,g);break;
+    case'korkuluk':part(G.cyl,w,.05,1.8,.05,0,.9,0,g);part(G.cyl,w,.04,1.3,.04,0,1.35,0,g,Math.PI/2);part(G.sph,M('#e8d6a8',.9),.18,.2,.18,0,1.95,0,g);part(G.cyl,M('#d8c08a',.95),.32,.03,.32,0,2.12,0,g);part(G.cyl,M('#d8c08a',.95),.14,.15,.14,0,2.2,0,g);part(G.box,M('#a8322b',.9),.25,.5,.55,0,1.45,0,g);break;
+    case'kuyu':part(G.cyl,st,.8,.8,.8,0,.4,0,g);part(G.cyl,M('#203040',.1),.62,.05,.62,0,.78,0,g);for(const z of[-.7,.7])part(G.box,w,.1,1.6,.1,0,1.4,z,g);part(G.box,M('#8f3a28'),1,.1,1.8,0,2.25,0,g,0,0,.25);part(G.cyl,w,.05,1.4,.05,0,1.7,0,g,Math.PI/2);part(G.cyl,M('#7a5a3a'),.15,.2,.15,0,1.1,0,g);break;
+    case'degirmen':part(G.cyl,M('#e9e2d0'),.25,4.5,.25,0,2.25,0,g);const bl=new THREE.Group();bl.position.set(.3,4.4,0);for(let i=0;i<4;i++){const s=new THREE.Mesh(G.box,M('#f2ece0',.8));s.scale.set(.05,1.6,.3);s.position.y=.8;const h=new THREE.Group();h.rotation.x=i*Math.PI/2;h.add(s);bl.add(h)}g.add(bl);g.userData.blades=bl;break;
+    case'kovan':for(let i=0;i<3;i++)part(G.box,M(i%2?'#e9c46a':'#f4dfa0',.8),.6,.25,.6,0,.25+i*.26,0,g);part(G.box,M('#8f3a28'),.7,.06,.7,0,1.03,0,g);for(const [x,z] of[[-.25,-.25],[.25,-.25],[-.25,.25],[.25,.25]])part(G.box,w,.05,.25,.05,x,.06,z,g);break}
+  g.position.set(D.x,getH(D.x,D.z),D.z);g.rotation.y=-(D.r||0);g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});scene.add(g);
+  const cr={kuyu:.85,degirmen:.35,bank:.5,kovan:.4,fidan:.25,fener:.12,korkuluk:.15,tarh:.9}[D.k];let col=null;if(cr){col=addCol(D.x-cr,D.z-cr,D.x+cr,D.z+cr,D.k==='degirmen'||D.k==='kuyu'?3:1.2)}
+  DECM.push({D,g,col})}
+for(const D of S.decor)buildDecor(D);
+function buyDecor(k){const it=DECOR_SHOP.find(x=>x.k===k);if(!it||!canPay(it.f))return;const x=PL.x+Math.cos(PL.h)*2.2,z=PL.z+Math.sin(PL.h)*2.2;
+  if(inBld(x,z,.2)||inPen(x,z,-.5)&&k!=='saksi'&&k!=='kovan'){toast('Buraya konmaz. Açık bir alana geçip tekrar dene.');return}
+  S.money-=it.f;const D={k,x,z,r:PL.h};S.decor.push(D);buildDecor(D);closeSheet();toast(`${it.e} ${it.ad} önüne kondu!`);save()}
+function removeDecor(m){const it=DECOR_SHOP.find(x=>x.k===m.D.k);scene.remove(m.g);if(m.col){const i=COL.indexOf(m.col);if(i>=0)COL.splice(i,1)}DECM.splice(DECM.indexOf(m),1);S.decor.splice(S.decor.indexOf(m.D),1);S.money+=Math.round(it.f/2);toast(`${it.e} ${it.ad} kaldırıldı, +${tl(it.f/2)}`)}
+
+/* ---------- 🐣 KULUÇKA MAKİNESİ ---------- */
+{const g=new THREE.Group();part(G.box,M('#e8e2d4',.6),.6,.45,.5,0,.5,0,g);part(G.box,M('#7a5a3a'),.66,.06,.56,0,.27,0,g);for(const [x,z] of[[-.25,-.2],[.25,-.2],[-.25,.2],[.25,.2]])part(G.box,M('#7a5a3a'),.05,.27,.05,x,.13,z,g);
+ const l=new THREE.Mesh(G.box,winMat());l.scale.set(.3,.15,.02);l.position.set(0,.55,.26);g.add(l);g.position.set(-26.7,0,-11);scene.add(g);addCol(-27.05,-11.3,-26.35,-10.7,.8)}
+
+/* ---------- 🐎 ATA BİNME ---------- */
+function mountHorse(a){if(PL.drive||S.carry)return;PL.ride=a;a._v.ride=true;a._v.path=[];PL.rspd=0;PL.x=a.x;PL.z=a.z;PL.h=a._v.h;cam.saveDist=cam.dist;cam.dist=Math.max(cam.dist,8);addBond(a,2);toast(`🐎 ${a.n} sırtındasın! Sonuna kadar it, dörtnala gitsin.`)}
+function dismount(){const a=PL.ride;if(!a)return;PL.ride=null;a._v.ride=false;const h=PL.h;let x=PL.x+Math.sin(h)*1.4,z=PL.z-Math.cos(h)*1.4;[x,z]=collide(x,z,.35,COL);
+  const P=PENS[penOf(a)];if(!inRect(P,a.x,a.z)){const [px,pz]=penRandPos(penOf(a));a.x=px;a.z=pz;toast(`🐎 ${a.n} ahırına geri döndü.`)}PL.x=x;PL.z=z;cam.dist=cam.saveDist||7;PL.rspd=0}
+function rideUpdate(dt,t){const a=PL.ride;if(!a||!a._v){PL.ride=null;return}const R=a._v.R;
+  let ix=joy.x,iy=joy.y;if(keys.KeyW||keys.ArrowUp)iy+=1;if(keys.KeyS||keys.ArrowDown)iy-=1;if(keys.KeyA||keys.ArrowLeft)ix-=1;if(keys.KeyD||keys.ArrowRight)ix+=1;let m=Math.min(1,Math.hypot(ix,iy));
+  if(UI.p||!$('modal').classList.contains('hidden'))m=0;const run=keys.ShiftLeft||keys.ShiftRight||(joy.id!==null&&Math.hypot(joy.x,joy.y)>.92);
+  const fx=-Math.sin(cam.yaw),fz=-Math.cos(cam.yaw),rx=Math.cos(cam.yaw),rz=-Math.sin(cam.yaw);const mx=rx*ix+fx*iy,mz=rz*ix+fz*iy;
+  const tgt=m*(run?8.5:3.2);PL.rspd=lerp(PL.rspd,tgt,Math.min(1,dt*(tgt>PL.rspd?2.5:4)));
+  if(m>.05)PL.h=angLerp(PL.h,Math.atan2(mz,mx),Math.min(1,dt*4));
+  let nx=PL.x+Math.cos(PL.h)*PL.rspd*dt,nz=PL.z+Math.sin(PL.h)*PL.rspd*dt;[nx,nz]=collide(nx,nz,.7,COL);const L=Math.hypot(nx,nz-10);if(L>125){nx*=125/L}PL.x=nx;PL.z=nz;
+  a.x=PL.x;a.z=PL.z;a._v.h=PL.h;const gy=getH(PL.x,PL.z);R.g.position.set(PL.x,gy,PL.z);R.g.rotation.y=-PL.h;R.g.visible=true;
+  if(R.gl)glAnim(R,dt,PL.rspd>5?'Gallop':PL.rspd>.2?'Walk':'Idle',PL.rspd>5?clamp(PL.rspd/8,.8,1.3):PL.rspd>.2?clamp(PL.rspd/2.2,.7,1.5):1);
+  else{a._v.ph+=dt*PL.rspd*3;const sw=PL.rspd>.2?Math.sin(a._v.ph)*.6:0;R.legs.forEach((l,i)=>l.rotation.z=(i===0||i===3)?sw:-sw)}
+  const back=(R.gl?1.3:1.55)*(AT[a.t].genc?.6:1);PL.R.g.position.set(PL.x-Math.cos(PL.h)*.1,gy+back-.5,PL.z-Math.sin(PL.h)*.1);PL.R.g.rotation.y=-PL.h;PL.R.g.visible=true;animPerson(PL.R,dt,0,'drive',t);
+  if(performance.now()-cam.lastLook>1500&&PL.rspd>.5){const behind=Math.atan2(-Math.cos(PL.h),-Math.sin(PL.h));cam.yaw=angLerp(cam.yaw,behind,Math.min(1,dt*1.5))}
+  if(PL.rspd>6&&Math.random()<dt*.05)addBond(a,1)}
+
+/* ---------- 🎾 KÖPEKLE TOP OYUNU ---------- */
+const BALL=new THREE.Mesh(new THREE.SphereGeometry(.09,12,8),M('#d9e021',.5));BALL.visible=false;BALL.castShadow=true;scene.add(BALL);
+function throwBall(){if(!S.dog||!DOG.R)return;const fx=Math.cos(PL.h),fz=Math.sin(PL.h);DOG.fetch={st:'fly',x:PL.x+fx*.4,z:PL.z+fz*.4,y:1.5,vx:fx*8,vz:fz*8,vy:4};DOG.lastFetch=performance.now();BALL.visible=true}
+function fetchUpdate(dt,t){const F=DOG.fetch;if(!F)return false;let tx,tz,spd=0;
+  if(F.st==='fly'){F.vy-=9.8*dt;F.x+=F.vx*dt;F.z+=F.vz*dt;F.y+=F.vy*dt;const gy=getH(F.x,F.z)+.09;if(F.y<gy){F.y=gy;F.vx*=.5;F.vz*=.5;F.vy=Math.abs(F.vy)*.35;if(Math.hypot(F.vx,F.vz)<.4)F.st='ground'}[F.x,F.z]=collide(F.x,F.z,.1,COL)}
+  if(F.st==='fly'||F.st==='ground'){tx=F.x;tz=F.z;if(Math.hypot(tx-DOG.x,tz-DOG.z)<.7&&F.st==='ground')F.st='back'}
+  if(F.st==='back'){tx=PL.x;tz=PL.z;F.x=DOG.x+Math.cos(DOG.h)*.45;F.z=DOG.z+Math.sin(DOG.h)*.45;F.y=getH(DOG.x,DOG.z)+.55;
+    if(Math.hypot(tx-DOG.x,tz-DOG.z)<1.4){DOG.fetch=null;BALL.visible=false;S.dog.bond=Math.min(100,(S.dog.bond||0)+4);S.dog.tr=Math.min(100,S.dog.tr+1);floatWorld(new THREE.Vector3(DOG.x,1.2,DOG.z),'🎾 ❤️');play('bark',DOG.x,DOG.z);return true}}
+  BALL.position.set(F.x,F.y,F.z);
+  const dx=tx-DOG.x,dz=tz-DOG.z,d=Math.hypot(dx,dz);if(d>.4){spd=Math.min(7,d*2+2);DOG.h=angLerp(DOG.h,Math.atan2(dz,dx),Math.min(1,dt*8));DOG.x+=Math.cos(DOG.h)*spd*dt;DOG.z+=Math.sin(DOG.h)*spd*dt;[DOG.x,DOG.z]=collide(DOG.x,DOG.z,.3,COL)}
+  DOG.R.g.position.set(DOG.x,getH(DOG.x,DOG.z),DOG.z);DOG.R.g.rotation.y=-DOG.h;
+  if(DOG.R.gl)glAnim(DOG.R,dt,spd>4?'Gallop':spd>.1?'Walk':'Idle',spd>4?1.2:1);else{animQuad(DOG.R,dt,spd,DOG.v);DOG.R.tail.rotation.x=Math.sin(t*16)*.5}
+  return true}
+
+/* ---------- eylemler ---------- */
+function extrasActions(C,px,pz,car){
+  for(const a of S.animals)if(a.t==='at'&&a._v&&!a.sick&&!car){const d=Math.hypot(a.x-px,a.z-pz);if(d<2.3)C(d,2.3,{i:'🐎',l:`Bin: ${a.n}`,run:()=>mountHorse(a)},.15)}
+  {const d=Math.hypot(px+26.7,pz+11);if(d<1.6)C(d,1.6,S.kulucka?{i:'🐣',l:`Kuluçkada ${S.kulucka.n} yumurta · ${S.kulucka.day>S.day?'yarın':'bu gece'} çıkacak`,dis:1}:S.prod.yumurta>=5?{i:'🐣',l:'Kuluçkaya 5 yumurta koy',dur:1.2,pose:'crouch',run:()=>{S.prod.yumurta-=5;S.kulucka={day:S.day+1,n:5};toast('🐣 Yumurtalar kuluçkada. Yarın civciv çıkacak!')}}:{i:'🐣',l:'Kuluçka için depoda 5 yumurta lazım',dis:1})}
+  if(eventOf(S.day)==='dugun'&&hour()>=15&&hour()<22){const d=Math.hypot(px-VC.x,pz-VC.z);if(d<7.5)C(d,7.5,S.halayDay===S.day?{i:'💃',l:'Bugün halay çektin',dis:1}:{i:'💃',l:'Halaya katıl!',run:()=>{S.halayDay=S.day;PL.halayT=16;for(const n of NP)if(n.key==='halay')addF(n.id,6);toast('💃 Halaya katıldın! Davul zurna eşliğinde köylüler çok sevindi.')}},-.5)}
+  for(const m of DECM){const d=Math.hypot(m.D.x-px,m.D.z-pz);if(d<1.4){const it=DECOR_SHOP.find(x=>x.k===m.D.k);C(d,1.4,{i:'🗑️',l:`Kaldır: ${it.ad} (+${tl(it.f/2)})`,run:()=>removeDecor(m)},1)}}}
+function extrasSheet(p,tab,body){
+  if(p==='phone'&&tab==='cal'){const s=season();let h=`<div class="item"><div class="ie">${SEAS[s].e}</div><div class="ib"><b>${SEAS[s].ad} · Gün ${S.day}</b><small>Hava: ${WEA[S.weather].e} ${WEA[S.weather].ad} · Mevsimin bitmesine ${7-((S.day-1)%7)} gün</small></div></div><div class="sec">Önümüzdeki günler</div>`;
+    for(let d=S.day;d<S.day+14;d++){const L=[];if(d%7===0)L.push('🎪 Panayır');const ev=eventOf(d);if(ev)L.push(EVN[ev].e+' '+EVN[ev].ad);if((d-1)%7===0&&d!==S.day)L.push(SEAS[Math.floor((d-1)/7)%4].e+' '+SEAS[Math.floor((d-1)/7)%4].ad+' başlar');
+      if(L.length)h+=`<div class="stat"><span>${d===S.day?'<b>Bugün</b>':d===S.day+1?'Yarın':'Gün '+d}</span><span>${L.join(' · ')}</span></div>`}return h}
+  if(p==='phone'&&tab==='decor')return `<small style="display:block;color:var(--muted);margin:0 2px 8px">Aldığın süs, çiftçinin tam önüne konur. Kaldırmak için yanına gidip düğmeye bas.</small>`+DECOR_SHOP.map(it=>`<div class="item"><div class="ie">${it.e}</div><div class="ib"><b>${it.ad}</b><small>${it.d||'Çiftliğine güzellik katar'}</small></div><button class="btn" data-act="decor-buy" data-k="${it.k}" ${S.money<it.f?'disabled':''}>${tl(it.f)}</button></div>`).join('');
+  if(p==='phone'&&tab==='set')return `<div class="stat"><span>🔊 Ses</span><span><button class="btn ${S.sound?'':'alt'}" data-act="snd" data-v="1">Açık</button> <button class="btn ${S.sound?'alt':''}" data-act="snd" data-v="0">Kapalı</button></span></div>
+    <div class="stat"><span>Ses düzeyi</span><span>${[.3,.6,1].map((v,i)=>`<button class="btn ${Math.abs(S.vol-v)<.05?'':'alt'}" data-act="vol" data-v="${v}">${['Kısık','Orta','Yüksek'][i]}</button>`).join(' ')}</span></div>
+    <div class="stat"><span>💾 Kayıt</span><span><button class="btn alt" data-act="bk-export">Yedek kodu al</button> <button class="btn alt" data-act="bk-import">Yedekten yükle</button></span></div>`+body;
+  return body}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const D=b.dataset;
+  switch(D.act){case'snd':S.sound=+D.v;auInit();auSet();renderSheet();break;case'vol':S.vol=+D.v;auSet();renderSheet();break;
+    case'bk-export':backupModal();break;case'bk-import':restoreModal();break;case'bk-copy':{const ta=$('bkc');ta.select();(navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>toast('📋 Kopyalandı!')).catch(()=>toast('Metni seçtim, uzun basıp kopyala.'));break}
+    case'bk-load':loadBackup(($('bki')||{}).value);break;case'decor-buy':buyDecor(D.k);break}});
+function updateExtras(dt,t){updateSound(dt,t);updateWeather(dt,t);
+  const dv=eventOf(S.day)==='dugun'&&hour()>=14;halayG.visible=dv;
+  for(const m of DECM)if(m.g.userData.blades)m.g.userData.blades.rotation.x+=dt*(S.weather==='bulut'||S.weather==='kar'?3:1.5);
+  if(PL.halayT>0){PL.halayT-=dt;const a=t*.25+Math.PI;PL.x=lerp(PL.x,VC.x+Math.cos(a)*4.8,Math.min(1,dt*3));PL.z=lerp(PL.z,VC.z+Math.sin(a)*4.8,Math.min(1,dt*3));PL.h=a+Math.PI/2}}
 /* ================= döngü ================= */
 let shT=0,last=performance.now(),hudT=0,saveT=0,sepT=0,miniT=0,actT=0,fpsT=0,fpsN=0,slow=0;
 function frame(now){
@@ -2181,7 +2428,7 @@ function frame(now){
     if(o.eggs){const n=Math.min(p.eggs,25),g=Math.min(p.geggs,5);let ni=0,gi=0;o.eggs.forEach((e,i)=>{if(i%6===5)e.visible=gi++<g;else e.visible=ni++<n})}}
   const ns=Math.min(24,Math.ceil(S.feed.tahil/25)),nb=Math.min(24,Math.ceil(S.feed.saman/40));ambarVis.sacks.forEach((s,i)=>s.visible=i<ns);ambarVis.bales.forEach((s,i)=>s.visible=i<nb);
   const sa=S.animals.find(a=>a.id===SEL);if(sa&&sa._v){ring.position.set(sa.x,.04,sa.z);ring.scale.setScalar(AT[sa.t].r*1.4);ring.material.opacity=.6+Math.sin(now/200)*.25}
-  updateCamera(dt);cullGrass(PL.x,PL.z);updateSky(t);updateIcons();
+  updateCamera(dt);cullGrass(PL.x,PL.z);updateSky(t);updateExtras(dt,t);updateIcons();
   actT+=dt;if(actT>.1){actT=0;curAct=findAction()}updateActionUI();
   miniT+=dt;if(miniT>.1){miniT=0;drawMini(t)}
   hudT+=dt;if(hudT>.5){hudT=0;updateHUD();checkQuest();if(!pdown&&!(document.activeElement&&document.activeElement.tagName==='INPUT')){if(UI.p)renderSheet();if(SEL)renderCard()}}
@@ -2209,5 +2456,6 @@ if(!S.welcomed)welcome();else setTimeout(showNews,1500);
 requestAnimationFrame(frame);
 window.__farm={get info(){const i=renderer.info;let objs=0;scene.traverse(()=>objs++);return {calls:i.render.calls,tris:i.render.triangles,objs,geos:i.memory.geometries,pr:renderer.getPixelRatio()}},renderer,get S(){return S},AT,PENS,PL,cam,sim,buyAnimal,findAction,doAction,camera,keys,joy,openSheet};
 </script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})</script>
 </body>
 </html>
