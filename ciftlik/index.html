@@ -162,16 +162,16 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 /* ================= oyun verisi ================= */
 const DAY=720; // bir oyun günü = 12 dakika
 const PENS={
-  kumes:{ad:'Kümes',e:'🐔',x:-24,z:-8,w:12,d:12,front:1,floor:'dirt',feed:'tahil',feedCap:30,waterCap:30,cap:[6,12,20],capCost:[0,1200,3500],unlock:0,autoCost:600,
-    fd:{x:-27.2,z:-3.3,l:2.6,s:-1},tr:{x:-20.8,z:-3.3,l:2,s:-1},
-    bld:{x0:-27.5,x1:-20.5,z0:-14,z1:-10,h:2.6,doors:[{side:'s',c:-24,w:1.5,h:2.15}]}},
-  agil:{ad:'Ağıl',e:'🐑',x:-2,z:-17,w:16,d:13,front:1,floor:'grass',feed:'saman',feedCap:80,waterCap:100,cap:[4,8,14],capCost:[0,3000,8000],unlock:1500,autoCost:1200,
+  kumes:{ad:'Kümes',e:'🐔',x:-27,z:-9,w:18,d:14,front:1,floor:'dirt',feed:'tahil',feedCap:40,waterCap:40,cap:[10,25,50,100],capCost:[0,1500,4500,12000],unlock:0,autoCost:600,
+    fd:{x:-31.5,z:-3.3,l:3.6,s:-1},tr:{x:-21.8,z:-3.3,l:2.6,s:-1},
+    bld:{x0:-34,x1:-20,z0:-16,z1:-10.5,h:2.8,doors:[{side:'s',c:-27,w:1.6,h:2.25}]}},
+  agil:{ad:'Ağıl',e:'🐑',x:-2,z:-17,w:16,d:13,front:1,floor:'grass',feed:'saman',feedCap:80,waterCap:100,cap:[6,12,20,30],capCost:[0,3000,8000,16000],unlock:1500,autoCost:1200,
     fd:{x:-2,z:-22.7,l:5,s:1},tr:{x:3.5,z:-11.8,l:3,s:-1},
     bld:{x0:-8,x1:4,z0:-23.5,z1:-19,h:2.8,open:1}},
-  ahir:{ad:'Ahır',e:'🐄',x:20,z:-14,w:18,d:18,front:1,floor:'dirt',feed:'saman',feedCap:200,waterCap:300,cap:[2,5,10],capCost:[0,8000,20000],unlock:6000,autoCost:2500,
+  ahir:{ad:'Ahır',e:'🐄',x:20,z:-14,w:18,d:18,front:1,floor:'dirt',feed:'saman',feedCap:200,waterCap:300,cap:[3,6,10,16],capCost:[0,8000,20000,35000],unlock:6000,autoCost:2500,
     fd:{x:20,z:-22.2,l:8,s:1},tr:{x:25.5,z:-6.3,l:3.4,s:-1},
     bld:{x0:13.5,x1:26.5,z0:-23,z1:-14,h:4.6,doors:[{side:'s',c:20,w:5,h:3.8}]}},
-  padok:{ad:'At Padoku',e:'🐎',x:6,z:16,w:22,d:14,front:-1,floor:'grass',feed:'saman',feedCap:120,waterCap:200,cap:[2,4,6],capCost:[0,12000,30000],unlock:12000,autoCost:2500,
+  padok:{ad:'At Padoku',e:'🐎',x:6,z:16,w:22,d:14,front:-1,floor:'grass',feed:'saman',feedCap:120,waterCap:200,cap:[2,4,6,10],capCost:[0,12000,30000,45000],unlock:12000,autoCost:2500,
     fd:{x:-.5,z:10.3,l:4,s:1},tr:{x:12.5,z:10.3,l:3,s:1},
     bld:{x0:0,x1:12,z0:18,z1:23,h:3.1,doors:[{side:'n',c:3,w:2.4,h:2.7},{side:'n',c:9,w:2.4,h:2.7}]}},
 };
@@ -301,9 +301,15 @@ const G={sph:new THREE.SphereGeometry(1,20,14),lump:new THREE.SphereGeometry(1,7
   cone:new THREE.ConeGeometry(1,1,12),box:new THREE.BoxGeometry(1,1,1),neck:new THREE.CylinderGeometry(.6,1,1,12),
   horn:new THREE.TorusGeometry(.12,.022,6,12,Math.PI*.78),cap:new THREE.CapsuleGeometry(1,1,4,10)};
 function part(geo,mat,sx,sy,sz,x,y,z,parent,rx=0,ry=0,rz=0){const m=new THREE.Mesh(geo,mat);m.scale.set(sx,sy,sz);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+const winMats=[];const VCM={};function vcMat(flat,rough,side){const k=(flat?'f':'s')+rough+'|'+side;return VCM[k]||(VCM[k]=new THREE.MeshStandardMaterial({vertexColors:true,roughness:rough,flatShading:!!flat,side}))}
 function bake(grp,shadow=true){
   const by=new Map();
-  for(const ch of [...grp.children]){if(!ch.isMesh)continue;ch.updateMatrix();const g=ch.geometry.clone().applyMatrix4(ch.matrix);const k=ch.material.uuid;if(!by.has(k))by.set(k,{m:ch.material,gs:[]});by.get(k).gs.push(g);grp.remove(ch)}
+  for(const ch of [...grp.children]){if(!ch.isMesh)continue;ch.updateMatrix();let g=ch.geometry.clone().applyMatrix4(ch.matrix);if(g.index)g=g.toNonIndexed();const m=ch.material;
+    for(const k of Object.keys(g.attributes))if(k!=='position'&&k!=='normal'&&k!=='uv')g.deleteAttribute(k);
+    if(!g.attributes.uv)g.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count*2),2));
+    let mat=m;const vc=m.isMeshStandardMaterial&&!m.map&&!m.transparent&&!m.vertexColors&&(m.metalness||0)<.3&&!(m.emissive&&m.emissive.getHex())&&!winMats.includes(m);
+    if(vc){const n=g.attributes.position.count,col=new Float32Array(n*3),cc=m.color;for(let i=0;i<n;i++){col[i*3]=cc.r;col[i*3+1]=cc.g;col[i*3+2]=cc.b}g.setAttribute('color',new THREE.BufferAttribute(col,3));mat=vcMat(m.flatShading,.8,m.side)}
+    const k=mat.uuid;if(!by.has(k))by.set(k,{m:mat,gs:[]});by.get(k).gs.push(g);grp.remove(ch)}
   for(const {m,gs} of by.values()){const mg=gs.length>1?mergeGeometries(gs):gs[0];const mesh=new THREE.Mesh(mg,m);mesh.castShadow=shadow;mesh.receiveShadow=true;grp.add(mesh)}
   return grp;
 }
@@ -330,7 +336,7 @@ function segHit(ax,ay,az,bx,by,bz,skip){
 const BLD=[]; // çimen dışlama: [x0,x1,z0,z1]
 const VC={x:-10,z:80},YC={x:-78,z:-62},YH=13;
 const YROAD=[[-14,-8],[-14,-28],[-40,-44],[-62,-56],[-78,-62]];
-const PATHS=[[-2,-9,-14,-8,2],[-14,-8,-14,-28,2.4],[-14,-28,-40,-44,2.6],[-40,-44,-62,-56,2.6],[-62,-56,-74,-60,2.6],[-10,62,-10,96,3],[-10,80,0,72.5,2.4],[-10,80,5,87,2.4],[-10,80,-22,86,2.2],[-10,80,18,72,2.6],[-10,70.5,-13.6,70.5,2],[-14,64,-18,62,2],[-10,92,-17.5,95,2],[-10,92,-3.5,100,2],[5,87,18,89,2],[18,89,18,99,2],[0,0,9,3.5,2],[0,0,-24,-2,2.2],[0,0,-2,-10.5,2.2],[0,0,20,-5,2.4],[0,0,6,9,2.2],[0,0,-8.2,4,2],[0,0,-8,12,2.6],[-8,12,-20,18,2],[-8,12,-9,40,3],[-9,40,-10,62,3],[-9,40,-4,41,2.6],[-9.4,37,-17.5,37,3]];
+const PATHS=[[-2,-9,-14,-8,2],[0,0,-27,-2,2.2],[-14,-8,-14,-28,2.4],[-14,-28,-40,-44,2.6],[-40,-44,-62,-56,2.6],[-62,-56,-74,-60,2.6],[-10,62,-10,96,3],[-10,80,0,72.5,2.4],[-10,80,5,87,2.4],[-10,80,-22,86,2.2],[-10,80,18,72,2.6],[-10,70.5,-13.6,70.5,2],[-14,64,-18,62,2],[-10,92,-17.5,95,2],[-10,92,-3.5,100,2],[5,87,18,89,2],[18,89,18,99,2],[0,0,9,3.5,2],[0,0,-2,-10.5,2.2],[0,0,20,-5,2.4],[0,0,6,9,2.2],[0,0,-8.2,4,2],[0,0,-8,12,2.6],[-8,12,-20,18,2],[-8,12,-9,40,3],[-9,40,-10,62,3],[-9,40,-4,41,2.6],[-9.4,37,-17.5,37,3]];
 const FIELD={x0:-44,x1:-18,z0:27,z1:47};
 function segDist(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,t=clamp(((px-ax)*dx+(pz-az)*dz)/(dx*dx+dz*dz),0,1);return Math.hypot(px-ax-dx*t,pz-az-dz*t)}
 function pathD(x,z){let m=1e9;for(const p of PATHS)m=Math.min(m,segDist(x,z,p[0],p[1],p[2],p[3])-p[4]+2.2);return Math.min(m,Math.hypot(x,z)-5)}
@@ -372,7 +378,7 @@ const clouds=[];{const ct=ctex(128,(x,s)=>{x.clearRect(0,0,s,s);for(let i=0;i<9;
  for(let i=0;i<22;i++){const sm=new THREE.SpriteMaterial({map:ct,transparent:true,opacity:.85,fog:false,depthWrite:false});const sp=new THREE.Sprite(sm);const a=rand(6.3),r=rand(80,330);sp.position.set(Math.cos(a)*r,rand(95,150),Math.sin(a)*r);const s=rand(70,140);sp.scale.set(s,s*.5,1);scene.add(sp);clouds.push(sp)}}
 
 /* ================= binalar ================= */
-const winMats=[];
+
 function winMat(){const m=new THREE.MeshStandardMaterial({color:'#2d3e4a',roughness:.15,metalness:.4,emissive:'#ffc66b',emissiveIntensity:0});winMats.push(m);return m}
 const BUILDINGS=[];
 function wallSeg(g,ax,az,bx,bz,y0,y1,mat,T=.22,colH){
@@ -421,14 +427,14 @@ function sack(x,y,z,ry=0){const g=new THREE.Group();const m=new THREE.Mesh(G.sph
 
 // --- Kümes ---
 {const B=PENS.kumes.bld;const b=building(B,{wall:TMat('wood'),roof:TMat('metal',{roughness:.5,metalness:.55}),floor:TMat('hay',{roughness:1}),pitch:.6});
- windowOn(b.g,-26,1.6,B.z1,'x',.7,.55);windowOn(b.g,-22,1.6,B.z1,'x',.7,.55);
+ for(const x of[-32,-29.5,-24.5,-22])windowOn(b.g,x,1.7,B.z1,'x',.8,.6);windowOn(b.g,B.x0,1.7,-13.2,'z',.8,.6);windowOn(b.g,B.x1,1.7,-13.2,'z',.8,.6);
  // folluklar (arka duvar)
- const nb=TMat('woodDark');for(let i=0;i<5;i++){const x=-26.4+i*1.1;const n=new THREE.Group();const s=new THREE.Mesh(boxUV(1,.06,.7),nb);s.position.y=.55;n.add(s);const s2=s.clone();s2.position.y=1.15;n.add(s2);
-   const sd=new THREE.Mesh(boxUV(.06,.6,.7),nb);sd.position.set(-.5,.85,0);n.add(sd);if(i===4){const sd2=sd.clone();sd2.position.x=.5;n.add(sd2)}
+ const nb=TMat('woodDark');for(let i=0;i<10;i++){const x=-32.5+i*1.1;const n=new THREE.Group();const s=new THREE.Mesh(boxUV(1,.06,.7),nb);s.position.y=.55;n.add(s);const s2=s.clone();s2.position.y=1.15;n.add(s2);
+   const sd=new THREE.Mesh(boxUV(.06,.6,.7),nb);sd.position.set(-.5,.85,0);n.add(sd);if(i===9){const sd2=sd.clone();sd2.position.x=.5;n.add(sd2)}
    const st=new THREE.Mesh(G.sph,TMat('hay',{roughness:1}));st.scale.set(.42,.08,.28);st.position.y=.6;n.add(st);n.position.set(x,0,B.z0+.5);n.traverse(o=>{o.castShadow=o.receiveShadow=true});scene.add(n)}
- addCol(-27.4,B.z0,-20.6,B.z0+.85,1.3);
- const perch=new THREE.Mesh(G.cyl,M('#7a5a3a'));perch.scale.set(.05,4,.05);perch.rotation.z=Math.PI/2;perch.position.set(-24,.9,-11.3);scene.add(perch);
- const ramp=new THREE.Mesh(boxUV(.7,.05,1.4),TMat('wood'));ramp.position.set(-26,.35,B.z1+.7);ramp.rotation.x=-.45;scene.add(ramp);}
+ addCol(-33.1,B.z0,-21.9,B.z0+.85,1.3);
+ const perch=new THREE.Mesh(G.cyl,M('#7a5a3a'));perch.scale.set(.05,9,.05);perch.rotation.z=Math.PI/2;perch.position.set(-27,.9,-12);scene.add(perch);const p2=perch.clone();p2.position.y=1.4;p2.position.z=-12.6;scene.add(p2);
+ const ramp=new THREE.Mesh(boxUV(.7,.05,1.4),TMat('wood'));ramp.position.set(-30,.35,B.z1+.7);ramp.rotation.x=-.45;scene.add(ramp);}
 // --- Ağıl sundurması ---
 {const B=PENS.agil.bld;const g=new THREE.Group();scene.add(g);
  wallSeg(g,B.x0,B.z0,B.x1,B.z0,0,B.h+.5,TMat('wood'));
@@ -729,9 +735,9 @@ for(const id of PEN_IDS){
   o.fpos=new THREE.Vector3(F.x,0,F.z);o.wpos=new THREE.Vector3(T.x,0,T.z);
   // yumurtalar (kümes folluklarında)
   if(id==='kumes'){o.eggs=[];const eg=new THREE.SphereGeometry(.06,10,8);const em=M('#f3ead8',.5),bm=M('#c58e5a',.5),gm2=M('#fbf8f0',.5);
-    o.nest=new THREE.Vector3(-24,.6,B.z0+.5);
-    for(let i=0;i<30;i++){const big=i%6===5;const e=new THREE.Mesh(eg,big?gm2:(i%2?em:bm));e.scale.set(1,1.3,1).multiplyScalar(big?1.5:1);const slot=i%5,row=Math.floor(i/5)%2;
-      e.position.set(-26.4+slot*1.1+rand(-.28,.28),(row?1.21:.61)+.06,B.z0+.5+rand(-.18,.18));e.rotation.set(rand(-1,1),0,rand(-1,1));e.visible=false;e.castShadow=true;e.userData.dyn=1;scene.add(e);o.eggs.push(e)}}
+    o.nest=new THREE.Vector3(-27.55,.6,B.z0+.5);
+    for(let i=0;i<40;i++){const big=i%6===5;const e=new THREE.Mesh(eg,big?gm2:(i%2?em:bm));e.scale.set(1,1.3,1).multiplyScalar(big?1.5:1);const slot=i%10,row=Math.floor(i/10)%2;
+      e.position.set(-32.5+slot*1.1+rand(-.28,.28),(row?1.21:.61)+.06,B.z0+.5+rand(-.18,.18));e.rotation.set(rand(-1,1),0,rand(-1,1));e.visible=false;e.castShadow=true;e.userData.dyn=1;scene.add(e);o.eggs.push(e)}}
   // kilit tabelası
   const sg=new THREE.Group();const post=M('#6b4a2a');part(G.box,post,.12,2,.12,-.8,1,0,sg);part(G.box,post,.12,2,.12,.8,1,0,sg);
   const sm=new THREE.MeshStandardMaterial({map:signTex(['🔒 '+P.ad,tl(P.unlock)]),roughness:.9});part(G.box,sm,2.2,1.1,.08,0,1.7,0,sg);
@@ -749,7 +755,7 @@ const WALLCOL=COL.filter(c=>c.h>1.3);
   scene.updateMatrixWorld(true);
   scene.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||!o.visible||isDyn(o)||o.material.isShaderMaterial)return;
     let g=o.geometry.clone();g.applyMatrix4(o.matrixWorld);if(g.index)g=g.toNonIndexed();
-    for(const k of Object.keys(g.attributes))if(k!=='position'&&k!=='normal'&&k!=='uv')g.deleteAttribute(k);
+    for(const k of Object.keys(g.attributes))if(k!=='position'&&k!=='normal'&&k!=='uv'&&!(k==='color'&&o.material.vertexColors))g.deleteAttribute(k);
     if(!g.attributes.normal)g.computeVertexNormals();if(!g.attributes.uv)g.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count*2),2));
     o.getWorldPosition(wp);const key=o.material.uuid+'|'+o.castShadow+'|'+Math.floor(wp.x/45)+','+Math.floor(wp.z/45);
     if(!groups.has(key))groups.set(key,{m:o.material,cast:o.castShadow,gs:[]});groups.get(key).gs.push(g);kill.push(o)});
@@ -758,112 +764,129 @@ const WALLCOL=COL.filter(c=>c.h>1.3);
   // boş grupları temizle
   const empty=[];scene.traverse(o=>{if(o.isGroup&&!o.userData.dyn&&o.children.length===0)empty.push(o)});for(const o of empty)o.parent&&o.parent.remove(o);
 }
-/* ================= hayvan modelleri ================= */
-function hideTex(base,spot,n){const c=document.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,256,128);x.fillStyle=spot;
-  for(let i=0;i<n;i++){const cx=rand(256),cy=rand(20,108),r=rand(10,26);for(let j=0;j<8;j++){x.beginPath();x.arc(cx+rand(-r,r),cy+rand(-r*.6,r*.6),rand(r*.35,r*.85),0,7);x.fill()}}
-  // ince kıl dokusu
-  const id=x.getImageData(0,0,256,128),d=id.data;for(let i=0;i<d.length;i+=4){const k=rand(-10,10);d[i]+=k;d[i+1]+=k;d[i+2]+=k}x.putImageData(id,0,0);
-  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+/* ================= hayvan modelleri (gerçekçi) ================= */
+function hideTex(base,spot,n,w=512,h=256){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,w,h);x.fillStyle=spot;
+  for(let i=0;i<n;i++){const cx=rand(w),cy=rand(h*.12,h*.88),r=rand(18,48);for(let j=0;j<10;j++){x.beginPath();x.ellipse(cx+rand(-r,r),cy+rand(-r*.6,r*.6),rand(r*.35,r*.85),rand(r*.3,r*.7),rand(3),0,7);x.fill()}}
+  const id=x.getImageData(0,0,w,h),d=id.data;for(let i=0;i<d.length;i+=4){const k=rand(-9,9);d[i]+=k;d[i+1]+=k;d[i+2]+=k}x.putImageData(id,0,0);
+  x.globalAlpha=.07;for(let i=0;i<2200;i++){x.strokeStyle=Math.random()<.5?'#000':'#fff';x.beginPath();const px=rand(w),py=rand(h);x.moveTo(px,py);x.lineTo(px+rand(-2,2),py+rand(3,7));x.stroke()}x.globalAlpha=1;
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=MAXANI;return t}
 function rig0(kind){const g=new THREE.Group(),body=new THREE.Group();g.add(body);return {g,body,legs:[],kind}}
 function eyes(head,x,y,z,r=.03){const dk=M('#120f0d',.25);part(G.sph,dk,r,r,r,x,y,z,head);part(G.sph,dk,r,r,r,x,y,-z,head)}
+// ---- yardımcı şekiller ----
+const LCACHE={};
+function lathe(prof,seg=22){const k=prof.join('|')+seg;if(LCACHE[k])return LCACHE[k];const g=new THREE.LatheGeometry(prof.map(([p,r])=>new THREE.Vector2(Math.max(r,1e-4),p)),seg);g.rotateZ(-Math.PI/2);return LCACHE[k]=g}
+// gövde: x ekseni boyunca, uzunluk 1, en kalın yer yarıçap 1 (ölçeklenir)
+const TORSO=lathe([[-.5,0],[-.49,.38],[-.46,.62],[-.4,.82],[-.3,.94],[-.15,1],[.05,1],[.22,.97],[.34,.9],[.42,.76],[.47,.52],[.5,.2],[.505,0]]);
+const SKULL=lathe([[0,0],[.03,.62],[.12,.95],[.3,1],[.5,.88],[.7,.74],[.86,.66],[.96,.5],[1,0]]);
+const EGG_PROF=[[-.5,0],[-.46,.55],[-.34,.86],[-.12,1],[.12,.96],[.32,.78],[.46,.44],[.5,0]];const EGGL=lathe(EGG_PROF,10);const SPL=new THREE.SphereGeometry(1,9,6);const CONL=new THREE.ConeGeometry(1,1,6);
+const EGG=lathe([[-.5,0],[-.46,.55],[-.34,.86],[-.12,1],[.12,.96],[.32,.78],[.46,.44],[.5,0]]);
+function seg(parent,mat,x1,y1,x2,y2,r1,r2,z=0,rs=12){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);const m=part(new THREE.CylinderGeometry(r2,r1,1,rs),mat,1,L,1,(x1+x2)/2,(y1+y2)/2,z,parent,0,0,Math.atan2(-dx,dy));return m}
+// eklemli bacak: pivot kalçada, ayak tam -len'de
+function limb(parent,x,y,z,len,r,mat,hoofMat,hind,lowerMat){const p=new THREE.Group();p.position.set(x,y,z);parent.add(p);
+  const k1=hind?-.32:.06,k2=hind?.2:-.04;const l1=len*.5,l2=len*.5;const kx=Math.sin(k1)*l1,ky=-Math.cos(k1)*l1;const fx=kx+Math.sin(k2)*l2,fy=ky-Math.cos(k2)*l2;
+  part(G.sph,mat,r*1.35,r*1.6,r*1.25,0,-r*.4,0,p);seg(p,mat,0,0,kx,ky,r*1.15,r*.78);part(G.sph,lowerMat||mat,r*.8,r*.8,r*.8,kx,ky,0,p);seg(p,lowerMat||mat,kx,ky,fx,fy+len*.06,r*.72,r*.62);
+  const sc=len/(-(fy));// ayağı tam yere oturt
+  if(hoofMat){part(G.sph,lowerMat||mat,r*.75,r*.7,r*.75,fx,fy+len*.07,0,p);part(new THREE.CylinderGeometry(r*.72,r*.86,len*.08,12),hoofMat,1,1,1,fx,fy+len*.03,0,p)}
+  p.scale.y=sc;bake(p);return p}
+// ================= İNEK =================
 function mkCow(c,young){
-  const R=rig0('cow'),{body}=R;const V=[['#f5f2ea','#1c1a19',9],['#f2ebdf','#8b4a26',11],['#7a5236','#5c3a24',3],['#24201e','#f2eee6',2]][c%4];
-  const hide=new THREE.MeshStandardMaterial({map:hideTex(V[0],V[1],V[2]),roughness:.88});const L=.74,by=L+.42;
-  part(G.sph,hide,.8,.5,.46,0,by,0,body);part(G.sph,hide,.5,.5,.46,-.52,by+.04,0,body);part(G.sph,hide,.48,.52,.45,.5,by,0,body);
-  part(G.sph,hide,.6,.2,.3,-.1,by+.38,0,body);
-  if(!young){const pk=M('#e5a19b',.6);part(G.sph,pk,.21,.16,.2,-.36,by-.44,0,body);for(const [dx,dz] of [[.07,.07],[.07,-.07],[-.07,.07],[-.07,-.07]])part(G.cyl,pk,.025,.12,.025,-.36+dx,by-.6,dz,body)}
+  const R=rig0('cow'),{body}=R;const V=[['#f6f3ec','#151312',9],['#f2ebdf','#8b4a26',11],['#7a5236','#5c3a24',3],['#2a2421','#f2eee6',3],['#b9864f','#8a5a32',2]][c%5];
+  const hide=new THREE.MeshStandardMaterial({map:hideTex(V[0],V[1],V[2]),roughness:.82});const plain=M(V[0]==='#2a2421'?'#2a2421':V[0]==='#7a5236'||V[0]==='#b9864f'?V[0]:'#f1ede4',.82);
+  const L=.78,by=L+.42;
+  part(TORSO,hide,1.95,.5,.43,-.05,by+.02,0,body);
+  part(G.sph,hide,.32,.18,.38,-.72,by+.3,0,body);part(G.sph,hide,.5,.12,.3,-.2,by+.36,0,body);// sağrı ve sırt
+  part(G.sph,hide,.22,.3,.36,.6,by-.08,0,body);// göğüs
+  if(!young){const pk=M('#e8aaa2',.55);part(EGG,pk,.36,.2,.24,-.42,by-.43,0,body,0,0,0);for(const [dx,dz] of [[.07,.07],[.07,-.07],[-.07,.07],[-.07,-.07]])part(G.cyl,pk,.024,.11,.024,-.42+dx,by-.6,dz,body)}
   bake(body);
-  const head=new THREE.Group();head.position.set(.92,by+.14,0);body.add(head);R.head=head;
-  part(G.sph,hide,.3,.3,.25,-.08,0,0,head);part(G.sph,hide,.27,.22,.19,.26,-.04,0,head,0,0,-.25);
-  part(G.sph,M('#d89a90',.55),.15,.13,.16,.5,-.16,0,head);
-  eyes(head,.33,.05,.16);const dk=M('#2a1d1a',.4);part(G.sph,dk,.025,.02,.025,.63,-.13,.06,head);part(G.sph,dk,.025,.02,.025,.63,-.13,-.06,head);
-  part(G.sph,hide,.05,.04,.14,.18,.1,.27,head,0,0,.2);part(G.sph,hide,.05,.04,.14,.18,.1,-.27,head,0,0,.2);
-  if(!young){const hn=M('#e8dcc0',.45);part(G.cone,hn,.035,.17,.035,.2,.22,.13,head,.7);part(G.cone,hn,.035,.17,.035,.2,.22,-.13,head,-.7)}
-  bake(head);
-  const hoof=M('#2b2420',.6);for(const [lx,lz] of [[.55,.25],[.55,-.25],[-.56,.25],[-.56,-.25]])R.legs.push(leg(body,lx,L,lz,.1,L,hide,hoof));
-  const tail=new THREE.Group();tail.position.set(-1,by+.32,0);body.add(tail);part(G.cyl,hide,.025,.75,.025,0,-.37,0,tail);part(G.sph,M(V[0]==='#24201e'?'#f2eee6':'#2a211c',1),.055,.13,.055,0,-.76,0,tail);bake(tail);R.tail=tail;
-  if(young)R.g.scale.setScalar(.58);R.h=by+.4;return R}
+  const head=new THREE.Group();head.position.set(.72,by+.12,0);body.add(head);R.head=head;
+  seg(head,hide,0,0,.38,.22,.3,.21);part(G.sph,hide,.2,.24,.12,.22,-.1,0,head);// boyun ve gerdan
+  const sk=part(SKULL,hide,.58,.17,.15,.32,.2,0,head,0,0,-.95);
+  part(G.sph,M('#d99a90',.5),.11,.1,.13,.65,-.21,0,head);for(const s of[1,-1])part(G.sph,M('#2a1d1a',.4),.022,.018,.022,.71,-.2,s*.05,head);
+  for(const s of[1,-1]){part(G.sph,M('#0e0c0b',.15),.028,.03,.028,.42,.21,s*.12,head);part(G.sph,plain,.06,.03,.13,.33,.29,s*.18,head,s*.3,0,-.2)}
+  if(!young)for(const s of[1,-1])part(G.cone,M('#e8dcc0',.4),.028,.16,.028,.36,.39,s*.11,head,s*.9,0,.2);
+  part(G.sph,plain,.06,.04,.07,.31,.36,0,head);bake(head);
+  const hoof=M('#2b2420',.5);
+  R.legs.push(limb(body,.55,by-.12,.21,by-.12,.075,plain,hoof,0),limb(body,.55,by-.12,-.21,by-.12,.075,plain,hoof,0),limb(body,-.62,by-.06,.21,by-.06,.085,hide,hoof,1,plain),limb(body,-.62,by-.06,-.21,by-.06,.085,hide,hoof,1,plain));
+  const tail=new THREE.Group();tail.position.set(-1.02,by+.3,0);body.add(tail);part(G.cyl,hide,.022,.8,.022,0,-.4,0,tail);part(EGG,M(V[0]==='#2a2421'?'#efe9df':'#2a211c',1),.22,.07,.07,0,-.82,0,tail,0,0,Math.PI/2);bake(tail);R.tail=tail;
+  if(young)R.g.scale.setScalar(.58);R.h=by+.55;return R}
+// ================= KOYUN =================
 function mkSheep(c,young){
-  const R=rig0('sheep'),{body}=R;const L=.42,by=L+.32;const black=!young&&c%5===4;
-  const wm=M(black?'#3b3430':'#ebe4d4',1,{flatShading:true});const wool=new THREE.Group();wool.position.set(0,by,0);body.add(wool);
-  part(G.lump,wm,.52,.32,.31,0,0,0,wool);
-  for(let i=0;i<24;i++){const u=rand(-.95,.95),th=rand(-.3,Math.PI+.3),r=Math.sqrt(1-u*u);const s=rand(.13,.2);part(G.lump,wm,s,s,s,u*.48,Math.sin(th)*r*.27+.03,Math.cos(th)*r*.27,wool,rand(3),rand(3),0)}
-  part(G.lump,wm,.1,.1,.1,-.55,.05,0,wool);bake(wool);R.wool=wool;
-  const face=M(young?'#efe5d6':(c%2?'#2a2420':'#e2d4c0'),.8);
+  const R=rig0('sheep'),{body}=R;const L=.34,by=L+.34;const black=!young&&c%5===4;
+  const wm=M(black?'#3b3430':'#ece5d4',1,{flatShading:true});const wool=new THREE.Group();wool.position.set(0,by,0);body.add(wool);
+  part(TORSO,wm,1.05,.33,.31,0,.02,0,wool);
+  for(let i=0;i<46;i++){const u=rand(-.47,.47),th=rand(-.5,Math.PI+.5);const pr=.95*Math.sqrt(Math.max(0,1-Math.pow(u/.52,4)));const s=rand(.09,.14);part(G.lump,wm,s,s,s,u,Math.sin(th)*pr*.3+.03,Math.cos(th)*pr*.29,wool,rand(3),rand(3),0)}
+  part(G.lump,wm,.11,.12,.1,-.54,.08,0,wool);bake(wool);R.wool=wool;
+  const face=M(young?'#f0e6d8':(c%2?'#2a2420':'#e6d8c4'),.75);
   bake(body);
-  const head=new THREE.Group();head.position.set(.5,by+.14,0);body.add(head);R.head=head;
-  part(G.sph,face,.18,.13,.12,.1,-.02,0,head,0,0,-.4);part(G.sph,face,.04,.025,.1,.0,.04,.13,head,.4);part(G.sph,face,.04,.025,.1,.0,.04,-.13,head,-.4);
-  part(G.lump,wm,.11,.09,.11,-.02,.09,0,head);eyes(head,.1,.03,.1,.022);part(G.sph,M('#1a1414',.5),.03,.02,.04,.25,-.1,0,head);
+  const head=new THREE.Group();head.position.set(.44,by+.12,0);body.add(head);R.head=head;
+  seg(head,wm,0,0,.14,.12,.16,.13);part(G.lump,wm,.1,.09,.1,.16,.17,0,head);
+  part(SKULL,face,.28,.1,.085,.15,.17,0,head,0,0,-1.05);part(G.sph,M('#3a2b26',.5),.035,.03,.045,.32,-.06,0,head);
+  for(const s of[1,-1]){part(G.sph,M('#0e0c0b',.15),.018,.02,.018,.2,.15,s*.065,head);part(G.sph,face,.03,.02,.09,.14,.16,s*.1,head,s*.4,0,-.3)}
   bake(head);
-  for(const [lx,lz] of [[.3,.14],[.3,-.14],[-.3,.14],[-.3,-.14]])R.legs.push(leg(body,lx,L,lz,.045,L,face,M('#2a2420',.6)));
-  if(young)R.g.scale.setScalar(.56);R.h=by+.4;return R}
+  const hoof=M('#2a2420',.5);
+  R.legs.push(limb(body,.3,by-.1,.13,by-.1,.035,face,hoof,0),limb(body,.3,by-.1,-.13,by-.1,.035,face,hoof,0),limb(body,-.32,by-.08,.13,by-.08,.04,face,hoof,1),limb(body,-.32,by-.08,-.13,by-.08,.04,face,hoof,1));
+  if(young)R.g.scale.setScalar(.56);R.h=by+.42;return R}
+// ================= KEÇİ =================
 function mkGoat(c,young){
   const R=rig0('goat'),{body}=R;const V=[['#ece6da','#ece6da'],['#7b5233','#2f241c'],['#2b2622','#2b2622'],['#8a5a35','#f0ebe0'],['#c8b59a','#5a4634']][c%5];
-  const bm=M(V[0],.85),hm=M(V[1],.85);const L=.5,by=L+.28;
-  part(G.sph,bm,.5,.27,.25,0,by,0,body);part(G.sph,bm,.3,.3,.24,.32,by+.03,0,body);part(G.sph,bm,.28,.28,.24,-.32,by+.02,0,body);
-  part(G.neck,bm,.14,.42,.14,.5,by+.24,0,body,0,0,-.55);
-  if(!young)part(G.cone,hm,.05,.16,.04,-.56,by+.2,0,body,0,0,.7);
+  const bm=M(V[0],.8),hm=M(V[1],.8);const L=.52,by=L+.26;
+  part(TORSO,bm,1.05,.27,.23,0,by,0,body);part(G.sph,bm,.16,.2,.22,.3,by-.03,0,body);
+  if(!young)part(G.cone,hm,.045,.14,.035,-.52,by+.2,0,body,0,0,.6);
   bake(body);
-  const head=new THREE.Group();head.position.set(.62,by+.44,0);body.add(head);R.head=head;
-  part(G.sph,hm,.19,.11,.1,.08,-.04,0,head,0,0,-.5);part(G.sph,M('#3a2f29',.6),.04,.03,.04,.24,-.14,0,head);
-  part(G.sph,hm,.03,.1,.05,-.01,-.04,.11,head,.5);part(G.sph,hm,.03,.1,.05,-.01,-.04,-.11,head,-.5);
-  eyes(head,.08,.03,.085,.02);
-  if(!young){const hn=M('#6f6a62',.6);part(G.horn,hn,1,1,1,-.12,.06,.05,head);part(G.horn,hn,1,1,1,-.12,.06,-.05,head);part(G.cone,M(V[1]==='#ece6da'?'#d8d0c0':'#3a2f27',1),.04,.14,.03,.16,-.2,0,head,0,0,Math.PI)}
+  const head=new THREE.Group();head.position.set(.44,by+.12,0);body.add(head);R.head=head;
+  seg(head,bm,0,0,.2,.28,.12,.085);
+  part(SKULL,hm,.3,.1,.085,.2,.32,0,head,0,0,-1.15);part(G.sph,M('#3a2f29',.6),.03,.028,.04,.33,.07,0,head);
+  for(const s of[1,-1]){part(G.sph,M('#2a1d10',.15),.018,.018,.018,.24,.3,s*.065,head);part(G.sph,M('#c9a43a',.3),.012,.01,.012,.252,.302,s*.067,head);part(G.sph,hm,.025,.09,.04,.18,.27,s*.1,head,s*.6,0,.2)}
+  if(!young){const hn=M('#6f6a62',.6);for(const s of[1,-1])part(G.horn,hn,1.15,1.15,1.15,.06,.38,s*.045,head,0,0,.15);part(G.cone,M(V[1]==='#ece6da'?'#d8d0c0':'#3a2f27',1),.035,.14,.028,.27,.02,0,head,0,0,Math.PI)}
   bake(head);
-  const hoof=M('#2b2420',.6);for(const [lx,lz] of [[.32,.13],[.32,-.13],[-.32,.13],[-.32,-.13]])R.legs.push(leg(body,lx,L,lz,.045,L,bm,hoof));
-  if(young)R.g.scale.setScalar(.55);R.h=by+.6;return R}
+  const hoof=M('#2b2420',.5);
+  R.legs.push(limb(body,.3,by-.08,.11,by-.08,.033,bm,hoof,0),limb(body,.3,by-.08,-.11,by-.08,.033,bm,hoof,0),limb(body,-.32,by-.06,.11,by-.06,.037,bm,hoof,1),limb(body,-.32,by-.06,-.11,by-.06,.037,bm,hoof,1));
+  if(young)R.g.scale.setScalar(.55);R.h=by+.62;return R}
+// ================= AT =================
 function mkHorse(c,young){
-  const R=rig0('horse'),{body}=R;const V=[['#6b3b1f','#1a1412'],['#1e1a18','#0f0d0c'],['#a3a39e','#55534f'],['#8a4a24','#e0c487'],['#ebe6dc','#cfc7b6']][c%5];
-  const bm=M(V[0],.55),mm=M(V[1],.9);const L=1.02,by=L+.38;
-  part(G.sph,bm,.75,.4,.37,0,by,0,body);part(G.sph,bm,.42,.44,.38,.5,by+.03,0,body);part(G.sph,bm,.45,.44,.39,-.52,by+.04,0,body);
-  part(G.neck,bm,.24,.95,.24,.86,by+.48,0,body,0,0,-.62);
-  part(G.box,mm,.08,.9,.07,.67,by+.6,0,body,0,0,-.62);
+  const R=rig0('horse'),{body}=R;const V=[['#6b3b1f','#1a1412',0],['#1e1a18','#0f0d0c',0],['#a3a39e','#55534f',1],['#8a4a24','#e0c487',1],['#ebe6dc','#cfc7b6',0],['#5a3420','#1a1412',1]][c%6];
+  const bm=M(V[0],.45),mm=M(V[1],.85),sock=V[2]?M('#f1ece2',.6):bm;const L=1.02,by=L+.36;
+  part(TORSO,bm,1.7,.4,.33,0,by,0,body);part(G.sph,bm,.36,.4,.34,-.52,by+.04,0,body);part(G.sph,bm,.3,.36,.31,.5,by-.02,0,body);
   bake(body);
-  const head=new THREE.Group();head.position.set(1.14,by+.86,0);body.add(head);R.head=head;
-  part(G.sph,bm,.34,.15,.14,.16,-.12,0,head,0,0,-1.05);part(G.sph,M(V[0]==='#ebe6dc'?'#c9bfb0':'#3a2a22',.6),.12,.1,.12,.3,-.4,0,head);
-  eyes(head,.1,0,.12,.03);part(G.cone,bm,.04,.14,.035,-.04,.16,.06,head);part(G.cone,bm,.04,.14,.035,-.04,.16,-.06,head);
-  part(G.box,mm,.18,.08,.1,.0,.1,0,head,0,0,-.5);
-  bake(head);
-  const hoof=M('#2a2622',.6);for(const [lx,lz] of [[.52,.19],[.52,-.19],[-.56,.19],[-.56,-.19]])R.legs.push(leg(body,lx,L,lz,.07,L,bm,hoof));
-  const tail=new THREE.Group();tail.position.set(-.95,by+.24,0);tail.rotation.z=-.25;body.add(tail);part(G.cone,mm,.13,.85,.11,0,-.42,0,tail,0,0,Math.PI);bake(tail);R.tail=tail;
-  if(young)R.g.scale.setScalar(.62);R.h=by+1.1;return R}
+  const head=new THREE.Group();head.position.set(.66,by+.2,0);body.add(head);R.head=head;
+  seg(head,bm,0,0,.34,.62,.23,.13);part(G.sph,bm,.16,.3,.12,.12,.25,0,head,0,0,-.5);
+  for(let i=0;i<9;i++){const t=i/8;part(G.box,mm,.08,.2,.05,-.08+t*.36,.18+t*.5,(i%2?.025:-.025),head,0,0,-.55)}
+  part(SKULL,bm,.62,.13,.11,.36,.66,0,head,0,0,-1.2);part(G.sph,M(V[0]==='#ebe6dc'?'#c9bfb0':'#3a2a22',.55),.09,.085,.095,.58,.14,0,head);
+  for(const s of[1,-1]){part(G.sph,M('#0e0c0b',.12),.03,.03,.03,.43,.6,s*.1,head);part(G.cone,bm,.035,.14,.03,.33,.8,s*.06,head,s*.2,0,.1);part(G.sph,M('#1a1412',.5),.014,.02,.014,.66,.12,s*.045,head)}
+  part(G.box,mm,.16,.08,.06,.42,.74,0,head,0,0,-.6);bake(head);
+  const hoof=M('#2a2622',.45);
+  R.legs.push(limb(body,.52,by-.14,.18,by-.14,.06,bm,hoof,0,sock),limb(body,.52,by-.14,-.18,by-.14,.06,bm,hoof,0,V[2]?bm:sock),limb(body,-.56,by-.06,.18,by-.06,.068,bm,hoof,1,sock),limb(body,-.56,by-.06,-.18,by-.06,.068,bm,hoof,1,bm));
+  const tail=new THREE.Group();tail.position.set(-.86,by+.22,0);tail.rotation.z=-.4;body.add(tail);part(G.cone,mm,.1,.25,.08,0,-.1,0,tail,0,0,Math.PI);
+  for(let i=0;i<5;i++)part(G.cone,mm,.05,.85,.04,rand(-.04,.04),-.55,rand(-.05,.05),tail,rand(-.08,.08),0,Math.PI+rand(-.08,.08));bake(tail);R.tail=tail;
+  if(young)R.g.scale.setScalar(.62);R.h=by+1.05;return R}
+// ================= TAVUK =================
 function mkChicken(c){
-  const R=rig0('chicken'),{body}=R;const V=[['#f3efe6','#e8e0d0'],['#9c5a2b','#2a3a2a'],['#c9893d','#3a2c1c'],['#262322','#1b3326']][c%4];
-  const bm=M(V[0],.9),tm=M(V[1],.7);const L=.16,by=L+.17;
-  part(G.sph,bm,.2,.16,.15,0,by,0,body);part(G.sph,bm,.12,.13,.12,.1,by,0,body);
-  part(G.sph,tm,.05,.14,.1,-.18,by+.1,0,body,0,0,.5);part(G.sph,tm,.04,.12,.08,-.15,by+.13,0,body,0,0,.2);
-  part(G.sph,bm,.13,.07,.03,0,by+.02,.14,body);part(G.sph,bm,.13,.07,.03,0,by+.02,-.14,body);
+  const R=rig0('chicken'),{body}=R;const V=[['#f5f1e8','#ece4d4','#e8e0d0'],['#9c5a2b','#2a3a2a','#c47a3c'],['#c9893d','#3a2c1c','#e0a55a'],['#262322','#1b3326','#3a3430'],['#d9d2c4','#555','#bdb3a2']][c%5];
+  const bm=M(V[0],.9),tm=M(V[1],.6),nm=M(V[2],.9),rd=M('#c8261c',.55),yl=M('#e3a62c',.5);const by=.4;
+  part(EGGL,bm,.42,.3,.28,0,by,0,body,0,0,-.2);part(SPL,bm,.13,.14,.13,.13,by-.01,0,body);
+  for(let i=0;i<5;i++)part(SPL,tm,.05,.16-i*.012,.035,-.2-i*.012,by+.12+i*.03,(i-2)*.03,body,0,0,.7-i*.12);
+  for(const s of[1,-1])part(EGGL,bm,.24,.1,.035,-.02,by+.02,s*.13,body,0,0,-.15);
+  for(const s of[1,-1]){part(new THREE.CylinderGeometry(1,1,1,6),yl,.014,.2,.014,0,.11,s*.05,body);part(SPL,nm,.045,.06,.045,0,.25,s*.05,body);for(const a of[-.5,0,.5])part(G.box,yl,.07,.012,.012,.03,.015,s*.05+Math.sin(a)*.03,body,0,-a,0);part(G.box,yl,.04,.012,.012,-.03,.015,s*.05,body)}
   bake(body);
-  const head=new THREE.Group();head.position.set(.13,by+.13,0);body.add(head);R.head=head;
-  part(G.sph,bm,.075,.08,.068,.02,.02,0,head);const rd=M('#c8261c',.6);
-  for(let i=0;i<3;i++)part(G.sph,rd,.022,.03,.012,-.02+i*.03,.1-Math.abs(i-1)*.01,0,head);
-  part(G.sph,rd,.018,.03,.012,.07,-.05,0,head);part(G.cone,M('#e0a32a',.5),.018,.06,.018,.11,.0,0,head,0,0,-Math.PI/2);
-  eyes(head,.06,.03,.05,.012);bake(head);
-  const lg=M('#e0a32a',.6);for(const lz of [.05,-.05])R.legs.push(leg(body,0,L,lz,.012,L,lg));
-  R.h=.55;return R}
+  const head=new THREE.Group();head.position.set(.12,by+.08,0);body.add(head);R.head=head;
+  seg(head,nm,0,0,.04,.12,.075,.055,0,7);part(SPL,bm,.065,.07,.06,.06,.15,0,head);
+  for(let i=0;i<4;i++)part(SPL,rd,.018,.028-Math.abs(i-1.5)*.004,.01,.02+i*.022,.22-Math.abs(i-1.5)*.008,0,head);
+  part(SPL,rd,.015,.03,.01,.11,.09,0,head);part(CONL,yl,.016,.05,.014,.13,.14,0,head,0,0,-1.75);
+  for(const s of[1,-1]){part(SPL,M('#c8261c',.6),.014,.016,.006,.078,.16,s*.05,head);part(SPL,M('#e8a020',.3),.01,.01,.01,.088,.165,s*.051,head);part(SPL,M('#0a0806',.1),.005,.005,.005,.093,.166,s*.056,head)}
+  bake(head);R.h=.6;R.legs=[];R.waddle=1;R.small=1;return R}
+// ================= KAZ =================
 function mkGoose(c){
-  const R=rig0('goose'),{body}=R;const bm=M(c%3===2?'#958f84':'#f2f0ea',.85),or=M('#ea8a24',.5);const L=.2,by=L+.2;
-  part(G.sph,bm,.3,.2,.19,0,by,0,body,0,0,.1);part(G.sph,bm,.1,.08,.12,-.3,by+.08,0,body,0,0,.5);
-  part(G.cyl,bm,.045,.4,.045,.25,by+.24,0,body,0,0,-.2);
+  const R=rig0('goose'),{body}=R;const gray=c%3===2;const bm=M(gray?'#9a948a':'#f3f1ea',.85),wm=M(gray?'#6f6a62':'#e6e2d8',.85),or=M('#ea8a24',.5),bk=M('#1a1612',.4);const by=.42;
+  part(EGGL,bm,.62,.32,.3,0,by,0,body,0,0,.08);part(SPL,M(gray?'#d8d2c6':'#f3f1ea',.85),.2,.14,.17,.05,by-.1,0,body);
+  for(const s of[1,-1])part(EGGL,wm,.4,.14,.05,-.08,by+.06,s*.15,body,0,0,.12);part(CONL,wm,.08,.16,.06,-.33,by+.06,0,body,0,0,1.9);
   bake(body);
-  const head=new THREE.Group();head.position.set(.3,by+.45,0);body.add(head);R.head=head;
-  part(G.sph,bm,.075,.065,.06,0,0,0,head);part(G.cone,or,.032,.1,.026,.1,-.01,0,head,0,0,-Math.PI/2);part(G.sph,or,.025,.025,.02,.05,.03,0,head);
-  eyes(head,.03,.02,.05,.012);bake(head);
-  for(const lz of [.06,-.06]){const l=leg(body,0,L,lz,.02,L,or);part(G.box,or,.1,.02,.08,.03,-L+.01,0,l)}
-  R.legs=body.children.filter(o=>o.isGroup&&o!==head);
-  R.h=.8;return R}
-function mkHuman(shirt){
-  const R=rig0('human'),{body}=R;const sk=M('#e0b48e',.7),pants=M('#34495e',.9),shoe=M('#2a211b',.8),sh=M(shirt,.85);const L=.85;
-  part(G.sph,sh,.17,.3,.13,0,L+.32,0,body);part(G.sph,pants,.16,.12,.12,0,L+.04,0,body);
-  bake(body);
-  const head=new THREE.Group();head.position.set(0,L+.72,0);body.add(head);R.head=head;
-  part(G.sph,sk,.12,.13,.12,0,0,0,head);const hat=M('#d8c08a',.95);part(G.cyl,hat,.26,.03,.26,0,.08,0,head);part(G.cyl,hat,.13,.12,.13,0,.15,0,head);
-  part(G.sph,sk,.03,.04,.03,.11,-.01,0,head);eyes(head,.1,.03,.045,.015);bake(head);
-  for(const lz of [.08,-.08])R.legs.push(leg(body,0,L,lz,.065,L,pants,shoe));
-  R.arms=[];for(const lz of [.21,-.21]){const a=leg(body,0,L+.55,lz,.05,.58,sh,sk);R.arms.push(a)}
-  R.h=1.9;return R}
+  const head=new THREE.Group();head.position.set(.24,by+.08,0);body.add(head);R.head=head;
+  const nk=[[0,0],[.09,.12],[.07,.25],[.1,.38]];for(let i=0;i<3;i++){seg(head,bm,nk[i][0],nk[i][1],nk[i+1][0],nk[i+1][1],.09-i*.01,.08-i*.01,0,7);part(SPL,bm,.08-i*.01,.08-i*.01,.08-i*.01,nk[i+1][0],nk[i+1][1],0,head)}
+  part(EGGL,bm,.13,.07,.065,.08,.44,0,head);part(CONL,or,.028,.11,.022,.18,.43,0,head,0,0,-1.65);if(gray)part(SPL,bk,.025,.025,.02,.14,.46,0,head);
+  for(const s of[1,-1])part(SPL,M('#0e0c0b',.15),.013,.013,.013,.1,.465,s*.032,head);bake(head);
+  for(const lz of [.07,-.07]){const l=new THREE.Group();l.position.set(0,.22,lz);body.add(l);part(new THREE.CylinderGeometry(1,1,1,6),or,.018,.2,.018,0,-.1,0,l);part(G.box,or,.12,.012,.09,.035,-.2,0,l);bake(l);R.legs.push(l)}
+  R.h=.95;R.small=1;return R}
 function makeModel(t,c){switch(t){case'inek':return mkCow(c,0);case'buzagi':return mkCow(c,1);case'koyun':return mkSheep(c,0);case'kuzu':return mkSheep(c,1);case'keci':return mkGoat(c,0);case'oglak':return mkGoat(c,1);case'at':return mkHorse(c,0);case'tay':return mkHorse(c,1);case'tavuk':return mkChicken(c);case'kaz':return mkGoose(c)}}
-
 
 /* ================= insan modeli ================= */
 /* ================= insan modeli (detaylı) ================= */
@@ -896,8 +919,8 @@ function mkPerson(o={}){
   part(GP.head,skin,.1,.122,.096,0,.115,0,head);part(GP.head,skin,.078,.06,.08,.026,.04,0,head);
   part(G.cone,skin,.022,.05,.026,.105,.098,0,head,0,0,-1.75);part(G.sph,skin,.018,.014,.03,.1,.075,0,head);
   for(const s of[1,-1]){part(G.sph,skin,.018,.03,.012,-.005,.105,s*.097,head);
-    part(G.sph,M('#f4f1ea',.3),.016,.014,.016,.083,.125,s*.037,head);part(G.sph,M(o.eye||'#3b2a1a',.2),.009,.011,.011,.096,.125,s*.037,head);part(G.sph,M('#0c0a08',.1),.004,.006,.006,.1015,.125,s*.037,head);
-    part(G.box,hair,.012,.009,.036,.093,.152,s*.038,head,s*.12)}
+    part(G.sph,M('#f1ece4',.3),.013,.011,.015,.084,.125,s*.036,head);part(G.sph,M(o.eye||'#3b2a1a',.2),.007,.009,.009,.095,.125,s*.036,head);part(G.sph,M('#0c0a08',.1),.003,.005,.005,.099,.125,s*.036,head);part(G.box,skin,.016,.006,.03,.09,.135,s*.036,head);
+    part(G.box,hair,.01,.006,.034,.093,.15,s*.037,head,s*.1)}
   part(G.box,M(o.lip||'#a8544a',.5),.01,.008,.036,.095,.057,0,head);part(G.sph,M(o.cheek||'#dda08a',.8),.008,.012,.016,.088,.088,.056,head);part(G.sph,M(o.cheek||'#dda08a',.8),.008,.012,.016,.088,.088,-.056,head);
   if(o.beard){part(G.sph,hair,.07,.065,.088,.04,.035,0,head);part(G.box,hair,.016,.016,.06,.098,.068,0,head)}else if(o.mustache)part(G.box,hair,.016,.016,.06,.098,.068,0,head);
   if(o.scarf){const sm=M(o.scarf,.9);part(GP.head,sm,.112,.135,.108,-.008,.12,0,head);part(G.cone,sm,.14,.24,.14,-.02,-.07,0,head)}
@@ -927,9 +950,13 @@ function animPerson(R,dt,spd,pose,t){
     const amp=clamp(spd/2.8,0,1)*.5+clamp((spd-2.8)/2.8,0,1)*.35,ph=R.ph;
     L=[Math.sin(ph)*amp,-Math.sin(ph)*amp];K=[-Math.max(0,Math.sin(ph+1.4))*amp*1.7-.05,-Math.max(0,Math.sin(ph+1.4+Math.PI))*amp*1.7-.05];
     A=[-Math.sin(ph)*amp*.9,Math.sin(ph)*amp*.9];E=[.25+amp*.6,.25+amp*.6];lean=-amp*.22;hy=.95+Math.abs(Math.cos(ph))*.035*amp-amp*.03;
-    if(spd<.1){const b=Math.sin(t*1.7)*.012;hy+=b;A=[.05+b,.05+b]}
+    if(spd<.1){const b=Math.sin(t*1.7)*.012;hy+=b;A=[.06+b,.04+b];E=[.18,.15]}
     if(pose==='sack'){A[0]=2.7;E[0]=2.2}else if(pose==='bale'){A=[1.05,1.05];E=[.7,.7]}else if(pose==='pour'){A=[1.9,1.9];E=[.3,.3];lean=-.15}else if(pose==='pick'){lean=-.5;A=[1,1];E=[.2,.2]}
   }
+  const walking=!pose&&spd>.1,wa=walking?clamp(spd/3,0,1.2):0,sph=Math.sin(R.ph);
+  R.hips.rotation.y=lerp(R.hips.rotation.y,walking?-sph*.1*wa:0,k);R.torso.rotation.y=lerp(R.torso.rotation.y,walking?sph*.2*wa:Math.sin(t*.4)*.03,k);R.torso.rotation.x=lerp(R.torso.rotation.x,walking?Math.cos(R.ph)*.03*wa:0,k);
+  R.head.rotation.y=lerp(R.head.rotation.y,walking?-sph*.15*wa:Math.sin(t*.37+R.blink)*.25,k*.5);R.head.rotation.z=lerp(R.head.rotation.z,pose==='crouch'?-.4:walking?-.05:Math.sin(t*.23)*.05,k*.5);
+  if(!pose&&spd<.1){R.hips.position.z=Math.sin(t*.5+R.blink)*.012;R.torso.scale.y=1+Math.sin(t*1.8)*.008}else{R.hips.position.z=0;R.torso.scale.y=1}
   R.hips.position.y=lerp(R.hips.position.y,hy,k);R.torso.rotation.z=lerp(R.torso.rotation.z,lean,k);
   for(let i=0;i<2;i++){R.leg[i].rotation.z=lerp(R.leg[i].rotation.z,L[i],k);R.knee[i].rotation.z=lerp(R.knee[i].rotation.z,K[i],k);R.arm[i].rotation.z=lerp(R.arm[i].rotation.z,A[i],k);R.elbow[i].rotation.z=lerp(R.elbow[i].rotation.z,E[i],k);R.arm[i].rotation.x=lerp(R.arm[i].rotation.x,(i?1:-1)*(pose==='bale'?.25:.06),k)}
 }
@@ -988,14 +1015,18 @@ function updateAnimalVis(a,dt,night){
   [a.x,a.z]=collide(a.x,a.z,d.r*.75,penCols[pid]||[]);
   }
   R.g.position.set(a.x,getH(a.x,a.z),a.z);R.g.rotation.y=-v.h;
-  const nearP=Math.abs(a.x-PL.x)<22&&Math.abs(a.z-PL.z)<22;if(v.cs!==nearP){v.cs=nearP;R.g.traverse(o=>{if(o.isMesh)o.castShadow=nearP})}
+  const nearP=!R.small&&Math.abs(a.x-PL.x)<22&&Math.abs(a.z-PL.z)<22;if(v.cs!==nearP){v.cs=nearP;R.g.traverse(o=>{if(o.isMesh)o.castShadow=nearP})}
   v.ph+=dt*(moving?d.hiz*7*(R.kind==='chicken'?1.8:1):0);
   const sw=moving?Math.sin(v.ph)*.55:0;
   if(R.legs.length===4){R.legs[0].rotation.z=sw;R.legs[3].rotation.z=sw;R.legs[1].rotation.z=-sw;R.legs[2].rotation.z=-sw}
   else if(R.legs.length===2){R.legs[0].rotation.z=sw;R.legs[1].rotation.z=-sw}
+  const t=performance.now()/1000;const pdist=Math.hypot(a.x-PL.x,a.z-PL.z);R.g.visible=pdist<75;
   R.body.position.y=moving?Math.abs(Math.cos(v.ph))*.03:0;
-  let hr=0;const t=performance.now()/1000;
-  if(v.eat>0||v.graze>0){if(v.graze>0)v.graze-=dt;hr=(R.kind==='chicken'||R.kind==='goose')?-.7-Math.abs(Math.sin(t*9))*.5:-.85+Math.sin(t*3)*.08}
+  if(R.waddle)R.body.rotation.x=moving?Math.sin(v.ph)*.14:0;else R.body.scale.y=1+Math.sin(t*1.6+a.id)*.012;
+  let hy=0;if(pdist<4.5&&!moving&&v.eat<=0&&v.graze<=0){const ang=Math.atan2(PL.z-a.z,PL.x-a.x);hy=clamp(Math.atan2(Math.sin(ang-v.h),Math.cos(ang-v.h)),-.7,.7)}
+  R.head.rotation.y=lerp(R.head.rotation.y,-hy,Math.min(1,dt*4));
+  let hr=0;
+  if(v.eat>0||v.graze>0){if(v.graze>0)v.graze-=dt;hr=(R.kind==='chicken'||R.kind==='goose')?-.8-Math.abs(Math.sin(t*9))*.45:(R.kind==='horse'?-1.15:R.kind==='cow'?-.95:-1.05)+Math.sin(t*3)*.06}
   else if(R.kind==='chicken'&&!moving)hr=Math.sin(t*2+a.id)*.15+(Math.sin(t*.7+a.id*3)>.7?-.9:0);
   else if(v.hold>0)hr=Math.sin(t*1.5)*.1+.1;
   else hr=Math.sin(t*.8+a.id)*.08;
@@ -1060,7 +1091,7 @@ function sim(dt,live){
     const ok=!a.sick&&a.hu>25&&a.th>25,mood=(a.hu+a.th+a.hp)/300,rate=dt*(.5+mood*.7)*animalMult(a);
     if(d.buyur&&a.ag>=d.buyume){grow(a,live);continue}
     if(ok&&d.urun&&!a.rd){a.pr+=rate;if(a.pr>=d.aralik){a.pr=0;
-      if(a.t==='tavuk'){if(p.eggs+p.geggs<60)p.eggs++}else if(a.t==='kaz'){if(p.eggs+p.geggs<60)p.geggs++}else a.rd=1}}
+      if(a.t==='tavuk'){if(p.eggs+p.geggs<300)p.eggs++}else if(a.t==='kaz'){if(p.eggs+p.geggs<300)p.geggs++}else a.rd=1}}
     if(ok&&d.yun&&!a.wr){a.wp+=rate;if(a.wp>=d.yun.aralik)a.wr=1}
     if(ok&&d.gelir){a.pr+=rate;if(a.pr>=d.gelir.aralik){a.pr=0;S.money+=d.gelir.miktar;if(live)floatAt(a,'+'+tl(d.gelir.miktar)+' 🏇')}}
     if(ok&&d.yavru&&a.hp>60&&a.hu>40){a.br+=rate;if(a.br>=d.dogum){if(penCount(pid)<penCap(pid)){a.br=0;birth(a,live)}else{a.br=d.dogum;if(live&&!a.fullWarn){a.fullWarn=1;toast(`🍼 ${a.n} doğuruma hazır ama ${PENS[pid].ad} dolu. Bölmeyi genişlet!`)}}}}
@@ -1118,7 +1149,7 @@ function price(k){return PR[k].f*S.pm[k]*(UI.p==='market'&&UI.boost?1.3:1)}
 function sell(k,fee=0){const n=S.prod[k];if(n<=0)return 0;const m=n*price(k)*(1-fee);S.money+=m;S.stats.sold+=m;S.prod[k]=0;return m}
 function sellAll(fee,auto){let m=0;for(const k in PR)m+=sell(k,fee);if(m>0&&LIVE)toast(auto?`🧔 Pazarcı ürünleri sattı: +${tl(m)}`:`💰 Hepsi satıldı: +${tl(m)}`);if(!auto&&m<=0)toast('Depoda satılacak ürün yok.');refresh();return m}
 function unlockPen(pid){const P=PENS[pid];if(S.pens[pid].un)return;if(!canPay(P.unlock))return;S.money-=P.unlock;S.pens[pid].un=1;penObj[pid].sign.visible=false;toast(`🎉 ${P.ad} artık senin!`);refresh()}
-function upgradePen(pid){const p=S.pens[pid],P=PENS[pid];if(p.lvl>=P.cap.length-1)return;const c=P.capCost[p.lvl+1];if(!canPay(c))return;S.money-=c;p.lvl++;toast(`🔨 ${P.ad} genişletildi: ${penCap(pid)} hayvan kapasitesi.`);S.animals.forEach(a=>a.fullWarn=0);refresh()}
+function upgradePen(pid){const p=S.pens[pid],P=PENS[pid];if(p.lvl>=P.cap.length-1)return;const c=P.capCost[p.lvl+1];if(!canPay(c))return;S.money-=c;p.lvl++;applyLvl(pid);toast(`🔨 ${P.ad} genişletildi: ${penCap(pid)} hayvan kapasitesi.`);S.animals.forEach(a=>a.fullWarn=0);refresh()}
 function buyAuto(pid){const p=S.pens[pid],P=PENS[pid];if(p.auto)return;if(!canPay(P.autoCost))return;S.money-=P.autoCost;p.auto=1;toast(`🚰 ${P.ad} için otomatik suluk kuruldu.`);refresh()}
 function upgradeDepo(){if(S.depo>=DEPO.length-1)return;const c=DEPO_COST[S.depo+1];if(!canPay(c))return;S.money-=c;S.depo++;toast(`📦 Depo büyütüldü: ${depoCap()} birim.`);refresh()}
 function buySagimMak(){if(S.sagimMak)return;if(!canPay(SAGIM_MAK))return;S.money-=SAGIM_MAK;S.sagimMak=1;toast('⚙️ Sağım makinesi kuruldu: %30 daha fazla süt!');refresh()}
@@ -1129,7 +1160,7 @@ function fire(k){if(S.wk[k]<=0)return;S.wk[k]--;toast(`${WK[k].e} Bir ${WK[k].ad
 const Q=[
   {t:'Köy pazarına yürü, 3 tavuk al',c:()=>cnt('tavuk')>=3,p:()=>`${Math.min(3,cnt('tavuk'))}/3`,r:150,w:SPOT.market},
   {t:'Yem ambarından tahıl çuvalı al, kümesin yemliğine dök',c:()=>S.stats.fed>=1,r:80,w:()=>S.carry?[PENS.kumes.fd.x,PENS.kumes.fd.z]:SPOT.ambarT},
-  {t:'Kümesin içindeki folluklardan 10 yumurta topla',c:()=>S.stats.eggs>=10,p:()=>`${Math.min(10,S.stats.eggs)}/10`,r:100,w:[-24,-12.5]},
+  {t:'Kümesin içindeki folluklardan 10 yumurta topla',c:()=>S.stats.eggs>=10,p:()=>`${Math.min(10,S.stats.eggs)}/10`,r:100,w:[-27,-14.8]},
   {t:'Pazarda ürünlerini sat',c:()=>S.stats.sold>=100,p:()=>`${tl(Math.min(100,S.stats.sold))}/100₺`,r:150,w:SPOT.market},
   {t:'Kümese bir kaz al',c:()=>cnt('kaz')>=1,r:150,w:SPOT.market},
   {t:'Ağılın tabelasına git, ağılı satın al',c:()=>S.pens.agil.un,r:300,w:()=>penObj.agil.signPos},
@@ -1246,7 +1277,7 @@ function findAction(){
     const T=P.tr,dT=nearSeg(T.x,T.z,T.l,px,pz);
     if(!p.auto&&p.water<P.waterCap-.5)C(dT,1.7,{i:'💧',l:'Musluğu aç, suluğu doldur',dur:1.6,pose:'pick',run:()=>{p.water=P.waterCap;S.stats.water++;floatWorld(o.wpos.clone().setY(1.3),'💧 Doldu')}});
     else C(dT,1.7,{i:'💧',l:p.auto?'Otomatik suluk':'Suluk dolu',dis:1});
-    if(id==='kumes'){const e=p.eggs+p.geggs;C(nearSeg(o.nest.x,o.nest.z+.6,5.4,px,pz),1.5,e?{i:'🥚',l:`Yumurtaları topla (${e})`,dur:1.1,pose:'pick',run:()=>collectEggs(id)}:{i:'🥚',l:'Follukta yumurta yok',dis:1})}
+    if(id==='kumes'){const e=p.eggs+p.geggs;C(nearSeg(o.nest.x,o.nest.z+.6,11,px,pz),2.4,e?{i:'🥚',l:`Yumurtaları topla (${e})`,dur:1.1,pose:'pick',run:()=>collectEggs(id)}:{i:'🥚',l:'Follukta yumurta yok',dis:1},e?-3:0)}
   }
   for(const a of S.animals){if(!a._v)continue;const d=AT[a.t];const dist=Math.hypot(a.x-px,a.z-pz)-d.r*.8;if(dist>1.9)continue;
     const dir=Math.atan2(a.z-pz,a.x-px),face=Math.cos(dir-PL.h);const pen=-face*.3;
@@ -1450,6 +1481,8 @@ PENS.yayla={ad:'Yayla',e:'⛰️',x:YAYLA.x,z:YAYLA.z,w:YAYLA.w,d:YAYLA.d,front:
 S.pens.yayla={un:1,lvl:0,feed:0,water:1e9,eggs:0,geggs:0,auto:1};
 penCols.yayla=COL.filter(c=>c.x1>YAYLA.x-YAYLA.w/2-1&&c.x0<YAYLA.x+YAYLA.w/2+1&&c.z1>YAYLA.z-YAYLA.d/2-1&&c.z0<YAYLA.z+YAYLA.d/2+1);
 function penOf(a){return a.loc||AT[a.t].pen}
+function applyLvl(pid){const P=PENS[pid];if(P.baseFeed===undefined){P.baseFeed=P.feedCap;P.baseWater=P.waterCap}const lv=Math.min(S.pens[pid].lvl,P.cap.length-1);S.pens[pid].lvl=lv;const m=Math.pow(P.cap[lv]/P.cap[0],.65);P.feedCap=Math.round(P.baseFeed*m);P.waterCap=Math.round(P.baseWater*m)}
+for(const id of PEN_IDS)applyLvl(id);
 const inRect=(P,x,z)=>Math.abs(x-P.x)<P.w/2&&Math.abs(z-P.z)<P.d/2;
 const inB=(B,x,z)=>x>B.x0&&x<B.x1&&z>B.z0&&z<B.z1;
 const isFair=()=>S.day%7===0&&hour()>=9&&hour()<19;
@@ -1979,7 +2012,7 @@ function frame(now){
   updateHumans(dt,t);updateLife(dt,t);flushField();
   for(const id of PEN_IDS){const o=penObj[id],p=S.pens[id],P=PENS[id];const fl=clamp(p.feed/P.feedCap,0,1),wl=clamp(p.water/P.waterCap,0,1);
     o.food.scale.y=Math.max(.001,.3*fl);o.food.position.y=.48+.15*fl;o.food.visible=fl>.01;o.water.scale.y=Math.max(.001,.3*wl);o.water.position.y=.36+.15*wl;o.water.visible=wl>.01;
-    if(o.eggs){const n=Math.min(p.eggs,25),g=Math.min(p.geggs,5);let ni=0,gi=0;o.eggs.forEach((e,i)=>{if(i%6===5)e.visible=gi++<g;else e.visible=ni++<n})}}
+    if(o.eggs){const n=Math.min(p.eggs,34),g=Math.min(p.geggs,6);let ni=0,gi=0;o.eggs.forEach((e,i)=>{if(i%6===5)e.visible=gi++<g;else e.visible=ni++<n})}}
   const ns=Math.min(24,Math.ceil(S.feed.tahil/25)),nb=Math.min(24,Math.ceil(S.feed.saman/40));ambarVis.sacks.forEach((s,i)=>s.visible=i<ns);ambarVis.bales.forEach((s,i)=>s.visible=i<nb);
   const sa=S.animals.find(a=>a.id===SEL);if(sa&&sa._v){ring.position.set(sa.x,.04,sa.z);ring.scale.setScalar(AT[sa.t].r*1.4);ring.material.opacity=.6+Math.sin(now/200)*.25}
   updateCamera(dt);updateSky(t);updateIcons();
