@@ -923,13 +923,12 @@ function bigSign(lines,bg,fg,w,h,opt={}){const c=document.createElement('canvas'
 {const g=new THREE.Group();scene.add(g);
  const asf=newMat({map:roadTex('asf'),roughness:.95}),par=newMat({map:roadTex('par'),roughness:.95});
  // çiftlik → köy asfalt yolu, köy içi parke taşı, köy → şehir asfalt
- ribbon([[-4.6,6.9],[-8,12],[-8.6,26],[-9,40],[-10,45.5]],5.4,asf,.05,6);
  ribbon([[-10,45.5],[-10,49.2]],4.6,par,.06,4);ribbon([[-10,67],[-10,74],[-10.3,80]],4.6,par,.06,4);ribbon([[-10.3,80],[-10.4,96],[-10.5,84.2+TOFF]],5.4,asf,.05,6);
  for(let z=88;z<84+TOFF;z+=7)for(const s of[-1,1]){const px=-10.4+s*3.3;part(G.box,M('#f4f4f0',.6),.12,.9,.12,px,getH(px,z)+.45,z,g);part(G.box,M('#1a1a1a',.6),.13,.12,.13,px,getH(px,z)+.75,z,g);part(G.box,new THREE.MeshBasicMaterial({color:'#ff8a1f'}),.135,.08,.135,px,getH(px,z)+.62,z,g)}
  for(let z=92;z<80+TOFF;z+=11)for(const s of[-1,1]){const x=-10.4+s*(8+rand(0,2.5));part(G.cyl,M('#4a3a2a'),.08,1.2,.08,x,getH(x,z)+.6,z,g);part(G.cone,M('#2f5a2a',.9,{flatShading:true}),.55,3.2,.55,x,getH(x,z)+2.6,z,g);}
  // yol kenarı: reflektörlü babalar ve ağaç sırası
  const post=M('#f4f4f0',.6),blk=M('#1a1a1a',.6),rf=new THREE.MeshBasicMaterial({color:'#ff8a1f'});
- for(const [ax,az,bx,bz] of[[-8,12,-8.6,26],[-8.6,26,-9,40]]){const L=Math.hypot(bx-ax,bz-az);for(let d=3;d<L;d+=7){const f=d/L,x=lerp(ax,bx,f),z=lerp(az,bz,f);for(const s of[-1,1]){const px=x+s*3.3,pz=z;part(G.box,post,.12,.9,.12,px,getH(px,pz)+.45,pz,g);part(G.box,blk,.13,.12,.13,px,getH(px,pz)+.75,pz,g);part(G.box,rf,.135,.08,.135,px,getH(px,pz)+.62,pz,g)}}}
+ for(const [ax,az,bx,bz] of[]){const L=Math.hypot(bx-ax,bz-az);for(let d=3;d<L;d+=7){const f=d/L,x=lerp(ax,bx,f),z=lerp(az,bz,f);for(const s of[-1,1]){const px=x+s*3.3,pz=z;part(G.box,post,.12,.9,.12,px,getH(px,pz)+.45,pz,g);part(G.box,blk,.13,.12,.13,px,getH(px,pz)+.75,pz,g);part(G.box,rf,.135,.08,.135,px,getH(px,pz)+.62,pz,g)}}}
  for(let z=30;z<40;z+=4)for(const s of[]){const x=-8.8+s*5.2;part(G.cyl,M('#5b4030'),.1,1.6,.1,x,getH(x,z)+.8,z,g);part(new THREE.IcosahedronGeometry(1,1),M('#5f9a35',.9,{flatShading:true}),.8,1,.8,x,getH(x,z)+2.1,z,g)}
  // yön tabelası: çiftlik kavşağı
  const pole=M('#8a8d92',.4,{metalness:.6});const sgn=(mat,w,h,x,y,z,ry)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.position.set(x,y,z);m.rotation.y=ry;g.add(m);part(G.box,M('#c9ccd1',.5),w+.08,h+.08,.04,x-Math.sin(ry)*.025,y,z-Math.cos(ry)*.025,g,0,ry,0);return m};
