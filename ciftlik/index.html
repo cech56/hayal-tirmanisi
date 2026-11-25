@@ -2481,10 +2481,10 @@ function glPersonAnim(R,dt,spd,pose,t){const I=R.gl;let n='Idle',ts=1;
   else if(spd>3.6){n='Run';ts=clamp(spd/5,.7,1.4)}else if(spd>.15){n='Walk';ts=clamp(spd/1.6,.6,1.6)}
   glPlay(I,n,.22,ts);if(R.g.visible)I.mixer.update(dt);if(pose==='halay')halayBones(R,t,R.blink);
   const sit=pose==='sit'||pose==='drive'||pose==='ride';I.inner.position.y=lerp(I.inner.position.y,I.baseY-(sit?.45:0),Math.min(1,dt*10));
-  if(sit&&R.g.visible){for(const s of['L','R']){const ul=I.bones['UpperLeg'+s],ll=I.bones['LowerLeg'+s];if(ul)ul.quaternion.multiply(_qx.setFromAxisAngle(_ax,SIT_A));if(ll)ll.quaternion.multiply(_qx.setFromAxisAngle(_ax,SIT_B));if(pose==='ride'&&ul)ul.quaternion.premultiply(_qx.setFromAxisAngle(_hz,s==='L'?-RIDE_S:RIDE_S))}
+  if(sit&&R.g.visible){for(const s of['L','R']){const ul=I.bones['UpperLeg'+s],ll=I.bones['LowerLeg'+s];const rd=pose==='ride';if(ul)ul.quaternion.multiply(_qx.setFromAxisAngle(_ax,rd?RIDE_A:SIT_A));if(ll)ll.quaternion.multiply(_qx.setFromAxisAngle(_ax,rd?RIDE_B:SIT_B));if(pose==='ride'&&ul&&RIDE_S)ul.quaternion.multiply(_qx.setFromAxisAngle(_rax.fromArray(RIDE_AX),s==='L'?-RIDE_S*RIDE_M:RIDE_S))}
     I.obj.updateMatrixWorld(true);for(const s of['L','R']){const ll=I.bones['LowerLeg'+s],ft=I.bones['Foot'+s];if(!ll||!ft||!ft.parent)continue;ll.getWorldPosition(_v1);_v1.y-=.43*R.g.scale.x;ft.parent.worldToLocal(_v1);ft.position.copy(_v1)}}}
 const _v1=new THREE.Vector3();
-let SIT_A=1.5,SIT_B=-1.5,RIDE_S=.35;
+let SIT_A=1.5,SIT_B=-1.5,RIDE_S=-.15,RIDE_AX=[0,0,1],RIDE_A=.55,RIDE_B=-.75,RIDE_M=1;const _rax=new THREE.Vector3();
 function glDog(){return glAnimal('dog',0,'#e3bf86')}
 function onGLReady(){
   // hayvanlar
