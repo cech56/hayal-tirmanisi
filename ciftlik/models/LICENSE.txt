@@ -1,0 +1,47 @@
+3D modeller: Quaternius — CC0 1.0 (Kamu Malı). Kaynak: poly.pizza
+Dosyalar gltf-transform ile sıkıştırıldı (meshopt).
+
+https://poly.pizza/bundle/Animated-Animal-Pack-ILAPXeUYiS
+Licence per model, as Poly Pizza lists it:
+
+Cow.glb  Cow  https://poly.pizza/m/26zM1outCr  CC0
+Donkey.glb  Donkey  https://poly.pizza/m/qmX6nhnvp7  CC0
+Deer.glb  Deer  https://poly.pizza/m/T6Cs7tmMHJ  CC0
+Alpaca.glb  Alpaca  https://poly.pizza/m/bCVFD48i2l  CC0
+Bull.glb  Bull  https://poly.pizza/m/a8PIIYwF7r  CC0
+Fox.glb  Fox  https://poly.pizza/m/Bc97C66HKi  CC0
+Shiba_Inu.glb  Shiba Inu  https://poly.pizza/m/y4wdQpg767  CC0
+Stag.glb  Stag  https://poly.pizza/m/tQdzbZ1Cmw  CC0
+Husky.glb  Husky  https://poly.pizza/m/wcWiuEqwzq  CC0
+Wolf.glb  Wolf  https://poly.pizza/m/P1gU3Qkr9r  CC0
+White_Horse.glb  White Horse  https://poly.pizza/m/bEdE4rmZy9  CC0
+Horse.glb  Horse  https://poly.pizza/m/qvTrSG9pZF  CC0
+
+https://poly.pizza/bundle/Ultimate-Modular-Men-Pack-ZiH8muWqwQ
+Licence per model, as Poly Pizza lists it:
+
+Adventurer.glb  Adventurer  https://poly.pizza/m/5EGWBMpuXq  CC0
+King.glb  King  https://poly.pizza/m/I1gTjmuK2m  CC0
+Farmer.glb  Farmer  https://poly.pizza/m/7pn3R6hPvE  CC0
+Hoodie_Character.glb  Hoodie Character  https://poly.pizza/m/gKLBoRsyKe  CC0
+Beach_Character.glb  Beach Character  https://poly.pizza/m/DojKLcO34E  CC0
+Casual_Character.glb  Casual Character  https://poly.pizza/m/kZ3DmIoGip  CC0
+Worker.glb  Worker  https://poly.pizza/m/Yg2bQZO6Hj  CC0
+Punk.glb  Punk  https://poly.pizza/m/BTALZymknF  CC0
+SWAT.glb  SWAT  https://poly.pizza/m/Btfn3G5Xv4  CC0
+Business_Man.glb  Business Man  https://poly.pizza/m/JFrLIKqvCH  CC0
+Astronaut.glb  Astronaut  https://poly.pizza/m/3hC2i0CTuO  CC0
+
+https://poly.pizza/bundle/Ultimate-Modular-Women-Pack-aCBDXDdTNN
+Licence per model, as Poly Pizza lists it:
+
+Sci_Fi_Character.glb  Sci Fi Character  https://poly.pizza/m/4pUXv5V8kq  CC-BY
+Witch.glb  Witch  https://poly.pizza/m/QBEOV9ZUT8  CC-BY
+Worker.glb  Worker  https://poly.pizza/m/E8079Ahx7k  CC-BY
+Suit.glb  Suit  https://poly.pizza/m/sOUciDsoVV  CC-BY
+Soldier.glb  Soldier  https://poly.pizza/m/oAArCNHjFB  CC-BY
+Animated_Woman.glb  Animated Woman  https://poly.pizza/m/nIItLV9nxS  CC0
+Punk.glb  Punk  https://poly.pizza/m/djXoqejw6w  CC0
+Adventurer.glb  Adventurer  https://poly.pizza/m/ZwF0K7WBmu  CC0
+Hooded_Adventurer.glb  Hooded Adventurer  https://poly.pizza/m/y9KWOVG21R  CC0
+Animated_Woman_qJ2gsTUBHL.glb  Animated Woman  https://poly.pizza/m/qJ2gsTUBHL  CC0
