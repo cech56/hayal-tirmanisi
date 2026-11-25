@@ -180,8 +180,8 @@ const PENS={
 };
 const PEN_IDS=Object.keys(PENS);
 const AT={
-  tavuk:{ad:'Tavuk',e:'🐔',pen:'kumes',fiyat:180,ogun:.04,su:.1,urun:'yumurta',aralik:DAY*.85,gunluk:1,miktar:1,hiz:1.1,r:.25,bilgi:'Günde 1 yumurta'},
-  kaz:{ad:'Kaz',e:'🪿',pen:'kumes',fiyat:600,ogun:.1,su:.2,urun:'kazYumurta',aralik:DAY*1.7,periyot:2,miktar:1,hiz:.9,r:.32,bilgi:'2 günde 1 kaz yumurtası'},
+  tavuk:{ad:'Tavuk',e:'🐔',pen:'kumes',fiyat:180,ogun:.04,su:.1,urun:'yumurta',aralik:60,gunluk:12,miktar:1,hiz:1.1,r:.25,bilgi:'Dakikada 1 yumurta (günde ~12)'},
+  kaz:{ad:'Kaz',e:'🪿',pen:'kumes',fiyat:600,ogun:.1,su:.2,urun:'kazYumurta',aralik:120,gunluk:6,miktar:1,hiz:.9,r:.32,bilgi:'2 dakikada 1 kaz yumurtası (günde ~6)'},
   koyun:{ad:'Koyun',erkek:'Koç',fiyatE:2800,e:'🐑',pen:'agil',fiyat:2400,ogun:.6,su:1.5,urun:'koyunSut',aralik:DAY*.85,gunluk:1,miktar:1.5,sagim:1,yun:{aralik:DAY*5,miktar:3},yavru:'kuzu',gebelik:4,hiz:.8,r:.5,bilgi:'Günde 1 sağım, 6 günde bir kırkım, 4 günlük gebelik'},
   kuzu:{ad:'Kuzu',e:'🐑',pen:'agil',fiyat:900,ogun:.3,su:.8,buyur:'koyun',buyume:DAY*3,hiz:1,r:.32,genc:1,bilgi:'3 günde büyür'},
   keci:{ad:'Keçi',erkek:'Teke',fiyatE:2300,e:'🐐',pen:'agil',fiyat:2000,ogun:.5,su:1.5,urun:'keciSut',aralik:DAY*.85,gunluk:1,miktar:2.5,sagim:1,yavru:'oglak',gebelik:4,hiz:.9,r:.45,bilgi:'Günde 1 sağım (2,5 L), 4 günlük gebelik'},
@@ -1125,7 +1125,7 @@ function sim(dt,live){
       if(a.hu<60&&p.feed>=d.ogun){if(live&&a._v)goTo(a,'feed');else eat(a)}
       else if(a.th<60&&p.water>=d.su){if(live&&a._v)goTo(a,'water');else drink(a)}
     }
-    if(a.hu<=0||a.th<=0)a.hp-=.07*dt;else if(!a.sick)a.hp=Math.min(100,a.hp+.04*dt);
+    if(a.hu<=0||a.th<=0){a.hp-=.025*dt;if(a.hp<60&&!a.hpWarn&&live){a.hpWarn=1;toast(`⚠️ ${a.n} aç ya da susuz, halsizleşiyor! Yem ve su ver.`)}}else if(a.hp>75)a.hpWarn=0;else if(!a.sick)a.hp=Math.min(100,a.hp+.04*dt);
     a.hp=Math.max(0,a.hp);
     if(a.hp<30&&!a.sick){a.sick=1;if(live)toast(`🤒 ${a.n} (${d.ad}) hastalandı! Veteriner gerekiyor.`)}
     const ok=!a.sick&&a.hu>25&&a.th>25,mood=(a.hu+a.th+a.hp)/300,rate=dt*(.5+mood*.7)*animalMult(a);
