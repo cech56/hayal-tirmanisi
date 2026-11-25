@@ -1826,7 +1826,7 @@ function victim(k,pen){const L=S.animals.filter(a=>penOf(a)===pen&&(k==='tilki'?
 function takeAnimal(a){killVis(a);S.animals=S.animals.filter(x=>x!==a);if(SEL===a.id)deselect();S.stats.lost++}
 function predEvent(k){if(!READY)return;const pen=predPen(k);if(!pen)return;const nm=k==='tilki'?'tilkiyi':'kurdu';
   if(!LIVE||!READY){if(dogGuard()){S.news.push(`🐕 Gece ${S.dog.n} bir ${nm} kovaladı. Hayvanların güvende!`);S.dog.tr=Math.min(100,S.dog.tr+2)}
-    else if(Math.random()<.4){const v=victim(k,pen);if(v){takeAnimal(v);S.news.push(`${k==='tilki'?'🦊':'🐺'} Gece ${k==='tilki'?'bir tilki':'bir kurt'} ${AT[v.t].e} ${v.n} adlı hayvanını kaçırdı! ${S.dog?'Kangalını eğit.':'Bir kangal edinmelisin.'}`)}}
+    else if(Math.random()<(isClosedNight(pen)?.08:.2)){const v=victim(k,pen);if(v){takeAnimal(v);S.news.push(`${k==='tilki'?'🦊':'🐺'} Gece ${k==='tilki'?'bir tilki':'bir kurt'} ${AT[v.t].e} ${v.n} adlı hayvanını kaçırdı! ${S.dog?'Kangalını eğit.':'Bir kangal edinmelisin.'}`)}}
     else S.news.push(`🌙 Gece ${PENS[pen].ad.toLocaleLowerCase('tr')} tarafından ${k==='tilki'?'tilki sesleri':'kurt ulumaları'} geldi ama bir şey olmadı.`);return}
   spawnPred(k,pen)}
 function spawnPred(k,pen){const P=PENS[pen];const cx=pen==='yayla'?YC.x+20:0,cz=pen==='yayla'?YC.z:0;const a=Math.atan2(P.z-cz,P.x-cx)+rand(-.7,.7);const c=Math.cos(a),s=Math.sin(a);
@@ -1834,7 +1834,7 @@ function spawnPred(k,pen){const P=PENS[pen];const cx=pen==='yayla'?YC.x+20:0,cz=
   const R=GL_READY&&GLB[k==='tilki'?'fox':'wolf']?glAnimal(k==='tilki'?'fox':'wolf'):k==='tilki'?mkCanine({body:'#c8642a',dark:'#2a1a12',belly:'#f2ebe0',earsUp:1,tail:'bush',tip:'#f5f0e6',s:.75}):mkCanine({body:'#8d8780',dark:'#3a3633',belly:'#c9c3b8',earsUp:1,tail:'bush',s:1.12});
   const p={k,pen,R,x:P.x+c*(sc+40),z:P.z+s*(sc+40),tx:P.x+c*sc,tz:P.z+s*sc,h:a+Math.PI,st:'come',t:k==='tilki'?40:55,v:{}};scene.add(R.g);PREDS.push(p);
   toast(k==='tilki'?`🦊 ${P.ad} tarafında bir tilki dolaşıyor! Koş, kovala!`:`🐺 ${P.ad} yakınında kurt uluması! Sürünü koru!`)}
-function scare(p,by){if(p.st==='flee')return;p.st='flee';const P=PENS[p.pen];p.h=Math.atan2(p.z-P.z,p.x-P.x);S.stats.chased++;
+function scare(p,by){if(p.st==='flee')return;p.st='flee';const P=PENS[p.pen];p.h=Math.atan2(p.z-P.z,p.x-P.x);if(by==='gün'){if(LIVE)toast(`🌅 Sabah oldu, ${p.k==='tilki'?'tilki':'kurt'} çekip gitti.`);return}S.stats.chased++;
   if(by==='dog'){toast(`🐕 ${S.dog.n} ${p.k==='tilki'?'tilkiyi':'kurdu'} kovaladı! Aferin oğlum!`);S.dog.tr=Math.min(100,S.dog.tr+3);S.dog.bond=Math.min(100,(S.dog.bond||0)+5)}
   else toast(`💪 ${p.k==='tilki'?'Tilkiyi':'Kurdu'} kovaladın!`)}
 function updatePreds(dt,t){for(let i=PREDS.length-1;i>=0;i--){const p=PREDS[i];let spd=0;
@@ -1930,6 +1930,7 @@ function extraActions(C,px,pz,car){
 }
 
 /* ---------- günlük döngü ---------- */
+const isClosedNight=pen=>!!(PENS[pen]&&PENS[pen].bld&&!PENS[pen].bld.open);
 function crossed(prevT,h){const a=prevT*24,b=S.t*24;return a<=b?(a<h&&b>=h):(a<h||b>=h)}
 function lifeSim(dt,live,prevT){
   if(S.dog)S.dog.ag+=dt;
@@ -2298,7 +2299,7 @@ function updateWeather(dt,t){const W=WEA[S.weather]||WEA.acik;const s=season();
   sun.intensity*=W.sun;hemi.intensity*=lerp(1,.75,1-W.sun);skyU.top.value.lerp(_gray,(1-W.sun)*.75);skyU.bot.value.lerp(_gray,(1-W.sun)*.5);skyU.glow.value*=W.sun;
   scene.fog.color.lerp(_gray,(1-W.sun)*.5);renderer.setClearColor(scene.fog.color);
   const fogN=S.weather==='sis'?10:S.weather==='kar'||S.weather==='yagmur'?60:150,fogF=S.weather==='sis'?95:S.weather==='kar'||S.weather==='yagmur'?260:480;scene.fog.near=lerp(scene.fog.near,fogN,Math.min(1,dt));scene.fog.far=lerp(scene.fog.far,fogF,Math.min(1,dt));
-  const rain=S.weather==='yagmur',snow=S.weather==='kar';PRC.im.visible=rain;PRC.sm.visible=snow;
+  const rain=S.weather==='yagmur',snow=S.weather==='kar';PRC.im.visible=rain&&!inside;PRC.sm.visible=snow&&!inside;
   if(rain||snow){const cx=camera.position.x,cz=camera.position.z,cy=camera.position.y;const M=rain?PRC.im:PRC.sm;
     for(let i=0;i<PRC.n;i++){const p=PRC.P[i];p[1]-=(rain?16:1.3)*dt;if(snow){p[0]+=Math.sin(t+p[3])*.3*dt;p[2]+=Math.cos(t*.7+p[3])*.3*dt}
       if(p[1]<-2){p[1]=rand(14,20);p[0]=rand(-22,22);p[2]=rand(-22,22)}_pm.makeTranslation(cx+p[0],cy-4+p[1],cz+p[2]);M.setMatrixAt(i,_pm)}M.instanceMatrix.needsUpdate=true}}
@@ -2329,7 +2330,7 @@ let imeceDone=0;
 function eventsTick(prevT){if(eventOf(S.day)==='imece'&&crossed(prevT,9.5)&&imeceDone!==S.day){imeceDone=S.day;let e=0,m=0;
   for(const id of PEN_IDS){const p=S.pens[id],P=PENS[id];if(!p.un)continue;p.water=P.waterCap;const need=P.feedCap-p.feed,tk=Math.min(need,S.feed[P.feed]);if(tk>0){p.feed+=tk;S.feed[P.feed]-=tk}const n0=p.eggs+p.geggs;collectEggs(id,true);e+=n0-(p.eggs+p.geggs)}
   for(const a of S.animals){if(a.rd){const r=a.rd;milk(a,true);if(r&&!a.rd)m++}if(a.wr)shear(a,true)}
-  const msg=`🤝 İmece! Komşular yemlikleri doldurdu, ${e} yumurta topladı, ${m} hayvan sağdı. Kahvede teşekkür etmeyi unutma.`;if(LIVE)toast(msg);else S.news.push(msg)}}
+  const msg=e+m>0?`🤝 İmece! Komşular yemlikleri doldurdu${e?`, ${e} yumurta topladı`:''}${m?`, ${m} hayvan sağdı`:''}. Kahvede teşekkür etmeyi unutma.`:'🤝 İmece! Komşular yemlikleri, suluklarını doldurup çiftliği süpürdü. Kahvede teşekkür etmeyi unutma.';if(LIVE)toast(msg);else S.news.push(msg)}}
 
 /* ---------- 🪴 SÜSLEME ---------- */
 if(!S.decor)S.decor=[];PR.bal=PR.bal||{ad:'Bal',b:'kg',f:250,e:'🍯'};if(S.prod.bal===undefined)S.prod.bal=0;if(S.pm.bal===undefined)S.pm.bal=1;
@@ -2566,7 +2567,7 @@ const TRD={R:null,gl:false,x:1.5,z:.5,cart:null};
 const tradeDay=()=>S.day%7===3;const tradeOpen=()=>tradeDay()&&hour()>=9&&hour()<18;
 function tradeDeals(){if(S.trd&&S.trd.day===S.day)return S.trd.d;const have=new Set();for(const a of S.animals){const d=AT[a.t];if(d.urun)have.add(d.urun);if(d.yun)have.add('yun')}
   for(const k of['peynir','tereyag','yogurt','bal','balik','olgunPeynir'])if(PR[k]&&(S.prod[k]>0||k==='bal'&&S.decor.some(d=>d.k==='kovan')))have.add(k);if(!have.size)have.add('yumurta');
-  const ks=[...have].sort(()=>Math.random()-.5).slice(0,3);const d=ks.map(k=>{const P=PR[k];let q=Math.max(2,Math.round(rand(900,2200)/P.f));if(P.b==='L')q=Math.round(q/5)*5||5;return {k,q,m:+rand(1.45,1.8).toFixed(2),done:0}});
+  const ks=[...have].sort(()=>Math.random()-.5).slice(0,3);const d=ks.map(k=>{const P=PR[k];let q=Math.max(2,Math.round(rand(450,1300)/P.f));if(P.b==='L')q=Math.round(q/5)*5||5;return {k,q,m:+rand(1.45,1.8).toFixed(2),done:0}});
   S.trd={day:S.day,d};return d}
 function tradeModal(){const D=tradeDeals();modal(`<h2>🧳 Tüccar Kadir</h2><p class="say" style="font-size:14px">"Selamün aleyküm! Şehirdeki lokantalara mal topluyorum. Toptan alırım, pazardan iyi para veririm. Akşam altıda yola çıkarım."</p>`+
   D.map((o,i)=>{const P=PR[o.k],tot=Math.round(o.q*P.f*o.m);return `<div class="item"><div class="ie">${P.e}</div><div class="ib"><b>${o.q} ${P.b} ${P.ad}</b><small>Pazarın ${o.m.toFixed(1)} katı · Depoda ${f1(S.prod[o.k]||0)} ${P.b}</small></div>${o.done?'<button class="btn alt" disabled>Satıldı</button>':`<button class="btn gold" data-act="trd" data-i="${i}" ${(S.prod[o.k]||0)>=o.q?'':'disabled'}>${tl(tot)}</button>`}</div>`}).join('')+
@@ -2591,7 +2592,7 @@ const ACH=[
   ['binici','🐎','Binici','Atına bin',()=>S.stats.ride>=1],['balikci','🎣','Balıkçı','10 balık tut',()=>S.stats.fish>=10],['peynirci','🧀','Mağara peynircisi','5 teneke peynir olgunlaştır',()=>S.stats.aged>=5],
   ['suslu','🌷','Süslü çiftlik','10 süs ya da ev eşyası koy',()=>S.decor.length>=10],['kis','❄️','Kışı atlattık','Bir kışı geride bırak',()=>S.day>=29],['yayla','⛰️','Yaylacı','Sürüyü yaylaya çıkar',()=>(S.stats.yayla||0)>=1],
   ['kurt','🐺','Kurtların korkulu rüyası','5 yırtıcı kovala',()=>(S.stats.chased||0)>=5],['tuccar','🧳','Tüccarın gözdesi','Tüccarla 3 kez anlaş',()=>S.stats.trade>=3],['kucak','🤗','Sevgi dolu','10 kez yavru kucakla',()=>S.stats.hug>=10]];
-let achT=0;function checkAch(dt){achT+=dt;if(achT<2)return;achT=0;for(const [id,e,ad,,c] of ACH)if(!S.ach[id]&&c()){S.ach[id]=S.day;S.money+=500;toast(`🏅 Rozet kazandın: ${e} ${ad} · +500₺`);play('coin')}}
+let achT=0;function checkAch(dt){achT+=dt;if(achT<2)return;achT=0;for(const [id,e,ad,,c] of ACH)if(!S.ach[id]&&c()){S.ach[id]=S.day;S.money+=500;toast(`🏅 Rozet kazandın: ${e} ${ad} · +500₺`);play('coin');break}}
 function achSheet(){const n=ACH.filter(a=>S.ach[a[0]]).length;return `<div class="item"><div class="ie">🏅</div><div class="ib"><b>${n}/${ACH.length} rozet</b>${bar(n,ACH.length,'#d99a1e')}<small>Her rozet +500₺</small></div></div>`+
   ACH.map(([id,e,ad,d])=>`<div class="item" style="${S.ach[id]?'':'opacity:.55'}"><div class="ie">${S.ach[id]?e:'🔒'}</div><div class="ib"><b>${ad}</b><small>${d}${S.ach[id]?` · Gün ${S.ach[id]}`:''}</small></div></div>`).join('')}
 
