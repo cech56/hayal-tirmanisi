@@ -863,7 +863,8 @@ function acUnits(o,y0,fl,g){const F=TFRONT(o);for(let f=0;f<fl;f++)if(Math.rando
  slab(-5.5,1.5,114.5,120.5,.1,newMat({color:'#cfc6b4',roughness:.9}));
  // sokak lambaları
  const pole=M('#3a3d42',.5,{metalness:.5});const lamp=(x,z,ry)=>{part(G.cyl,pole,.07,4.6,.07,x,2.3,z,g);part(G.box,pole,.07,.07,1,x+Math.cos(ry)*.45,4.55,z+Math.sin(ry)*.45,g,0,-ry,0);const h=new THREE.Mesh(G.box,winMat());h.scale.set(.35,.12,.22);h.position.set(x+Math.cos(ry)*.9,4.45,z+Math.sin(ry)*.9);h.rotation.y=-ry;g.add(h);addCol(x-.1,z-.1,x+.1,z+.1,4)};
- for(let z=90;z<128;z+=10){lamp(TWN.AV-4.6,z,0);lamp(TWN.AV+4.6,z+5,Math.PI)}for(let x=-40;x<36;x+=12){lamp(x,104,Math.PI/2);lamp(x+6,113.9,-Math.PI/2)}
+ const onRoad=(x,z)=>(Math.abs(x-TWN.AV)<5.2&&z>84)||(z>102.8&&z<115.2&&Math.abs(x-TWN.AV)<5.6)||(z>105.6&&z<112.4);const L2=(x,z,r)=>{if(!onRoad(x,z))lamp(x,z,r)};
+ for(let z=90;z<128;z+=10){L2(TWN.AV-4.6,z,0);L2(TWN.AV+4.6,z+5,Math.PI)}for(let x=-40;x<36;x+=12){L2(x,104,Math.PI/2);L2(x+6,113.9,-Math.PI/2)}
  // dükkanlar
  for(const o of SHOPS){const H0=o.big?5:3.4,top=H0+o.fl*3;TOWNB.push(o);BLD.push([o.x0,o.x1,o.z0,o.z1]);addCol(o.x0,o.z0,o.x1,o.z1,top+1);
    const gm=newMat({color:o.col,roughness:.9});part(G.box,gm,o.x1-o.x0,H0,o.z1-o.z0,(o.x0+o.x1)/2,H0/2,(o.z0+o.z1)/2,g);
